@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aprilia RS 457 — Low RPM Jerky Response Analysis</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f4f0; color: #1a1a1a; padding: 2rem; }
+  h1 { font-size: 20px; font-weight: 500; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #666; margin-bottom: 1.5rem; }
+  .card { background: #fff; border-radius: 12px; border: 0.5px solid rgba(0,0,0,0.12); padding: 1.5rem; max-width: 800px; margin: 0 auto; }
+  .info-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+  .metric { background: #f5f4f0; border-radius: 8px; padding: 10px 14px; }
+  .metric-label { font-size: 11px; color: #666; margin: 0 0 2px; }
+  .metric-val { font-size: 20px; font-weight: 500; color: #1a1a1a; margin: 0; }
+  .metric-sub { font-size: 11px; color: #999; margin: 0; }
+  .tab-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 1.5rem; }
+  .tab-btn { font-size: 12px; padding: 5px 14px; border: 0.5px solid #ccc; border-radius: 8px; background: transparent; color: #666; cursor: pointer; }
+  .tab-btn.active { background: #f0efeb; color: #1a1a1a; border-color: #aaa; }
+  .legend { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 1rem; font-size: 12px; color: #666; }
+  .leg-item { display: flex; align-items: center; gap: 6px; }
+  .leg-dot { width: 12px; height: 3px; border-radius: 2px; }
+  .annotation-box { font-size: 11px; color: #555; border-left: 2px solid #e24b4a; padding: 6px 10px; margin-top: 12px; background: #f9f9f9; border-radius: 0 6px 6px 0; line-height: 1.6; }
+  .disclaimer-box { font-size: 11px; color: #7a5c00; border-left: 2px solid #ba7517; padding: 6px 10px; margin-bottom: 12px; background: #fdf6e3; border-radius: 0 6px 6px 0; line-height: 1.6; }
+  .chart-wrap { position: relative; width: 100%; height: 300px; }
+
+  .sources-grid { display: flex; flex-direction: column; gap: 10px; }
+  .source-card { border: 0.5px solid #e0dfd9; border-radius: 8px; padding: 12px 14px; background: #fafaf8; }
+  .source-tag { display: inline-block; font-size: 10px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; border-radius: 4px; padding: 2px 7px; margin-bottom: 6px; }
+  .tag-confirmed { background: #eaf3de; color: #3b6d11; }
+  .tag-illustrative { background: #faeeda; color: #854f0b; }
+  .tag-engineering { background: #e6f1fb; color: #185fa5; }
+  .source-title { font-size: 13px; font-weight: 500; color: #1a1a1a; margin: 0 0 3px; }
+  .source-claim { font-size: 12px; color: #555; margin: 0 0 6px; line-height: 1.5; }
+  .source-link { font-size: 11px; color: #378add; text-decoration: none; word-break: break-all; }
+  .source-link:hover { text-decoration: underline; }
+  .source-note { font-size: 11px; color: #888; margin-top: 4px; font-style: italic; }
+  .section-head { font-size: 11px; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; color: #999; margin: 16px 0 8px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Aprilia RS 457 — Low RPM Jerky Response</h1>
+  <p class="subtitle">Torque/power curve + ECU throttle mapping analysis</p>
+
+  <div class="info-strip">
+    <div class="metric">
+      <p class="metric-label">Peak torque</p>
+      <p class="metric-val">43.5 Nm</p>
+      <p class="metric-sub">@ 6700 rpm</p>
+    </div>
+    <div class="metric">
+      <p class="metric-label">Peak power</p>
+      <p class="metric-val">47.6 hp</p>
+      <p class="metric-sub">@ 9400 rpm</p>
+    </div>
+    <div class="metric">
+      <p class="metric-label">Low-rpm torque</p>
+      <p class="metric-val">82%</p>
+      <p class="metric-sub">available @ 3000 rpm</p>
+    </div>
+  </div>
+
+  <div class="tab-row">
+    <button class="tab-btn active" id="tab-curve" onclick="showTab('curve')">Torque & power curve</button>
+    <button class="tab-btn" id="tab-mapping" onclick="showTab('mapping')">Throttle mapping — why it jerks</button>
+    <button class="tab-btn" id="tab-sources" onclick="showTab('sources')">Sources & claims</button>
+  </div>
+
+  <div id="pane-curve">
+    <div class="legend">
+      <span class="leg-item"><span class="leg-dot" style="background:#378add;"></span> Torque (Nm)</span>
+      <span class="leg-item"><span class="leg-dot" style="background:#d85a30;"></span> Power (hp)</span>
+      <span class="leg-item"><span class="leg-dot" style="background:#e24b4a;"></span> Jerk zone (&lt; 3500 rpm)</span>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="curveChart" role="img" aria-label="RS 457 torque and power curve showing jerk zone below 3500 rpm">Torque peaks at 43.5 Nm at 6700 rpm, power peaks at 47.6 hp at 9400 rpm.</canvas>
+    </div>
+    <div class="annotation-box">
+      Below ~3500 rpm, the ECU applies aggressive torque limiters + lean fueling. The underlying torque is available, but the ride-by-wire mapping chops delivery — causing the surging/jerky feel at city speeds.
+    </div>
+  </div>
+
+  <div id="pane-mapping" style="display:none;">
+    <div class="disclaimer-box">
+      Illustrative model — exact ECU map is proprietary. Curve shape is based on owner reviews and ECU flash notes (BT Moto), not factory dyno data.
+    </div>
+    <div class="legend">
+      <span class="leg-item"><span class="leg-dot" style="background:#e24b4a;"></span> Stock ECU — low RPM (1000–3000)</span>
+      <span class="leg-item"><span class="leg-dot" style="background:#e24b4a; opacity:0.5;"></span> Stock ECU — mid RPM (3000–6000)</span>
+      <span class="leg-item"><span class="leg-dot" style="background:#1d9e75;"></span> Ideal linear map</span>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="mappingChart" role="img" aria-label="Throttle input vs torque output comparing stock ECU map to ideal linear map">Stock map shows aggressive non-linear response at low throttle openings.</canvas>
+    </div>
+    <div class="annotation-box">
+      At 1000–3000 rpm, the stock map delivers ~60–70% of torque at only 30% throttle, then cuts back under sustained low-load cruising. This hunt-and-cut cycle is what riders feel as a surge/lurch. An ECU flash linearises this — 100% gain at 25% throttle position across the range.
+    </div>
+  </div>
+
+  <div id="pane-sources" style="display:none;">
+    <div class="sources-grid">
+
+      <p class="section-head">Confirmed claims</p>
+
+      <div class="source-card">
+        <span class="source-tag tag-confirmed">Confirmed</span>
+        <p class="source-title">Blown engines & compression loss — owner reports</p>
+        <p class="source-claim">Owners reported blown engines, loss of power, and loss of cylinder compression on social media — significant enough to force an official Aprilia India statement.</p>
+        <a class="source-link" href="https://www.team-bhp.com/forum/motorbikes/294581-aprilia-attributes-457-platform-issues-unauthorized-modifications-irregular-service.html" target="_blank">Team-BHP — Aprilia attributes 457 issues to mods & irregular service</a>
+      </div>
+
+      <div class="source-card">
+        <span class="source-tag tag-confirmed">Confirmed</span>
+        <p class="source-title">Cam chain / timing chain tensioner failures</p>
+        <p class="source-claim">Specific complaints around cam chain tensioners were documented. Some customers had cylinder head assemblies or entire engines replaced under warranty with no explanation given.</p>
+        <a class="source-link" href="https://www.autocarindia.com/bike-news/aprilia-rs-457-engine-reliability-issues-addressed-says-brand-435440" target="_blank">Autocar India — RS 457 engine reliability issues addressed</a>
+      </div>
+
+      <div class="source-card">
+        <span class="source-tag tag-confirmed">Confirmed</span>
+        <p class="source-title">ECU thermal limiter — power pulled at high coolant temp</p>
+        <p class="source-claim">BT Moto (ECU tuning company) explicitly states the stock Aprilia ECU pulls engine power at 216°F (102°C), and specifically calls out the "notorious 457 issue of puking coolant from reservoir."</p>
+        <a class="source-link" href="https://bt-moto.com/product/25-aprilia-rs-457-1-ecu-flash-with-tuner" target="_blank">BT Moto — RS 457 Stage 1+ ECU Flash product page</a>
+      </div>
+
+      <div class="source-card">
+        <span class="source-tag tag-confirmed">Confirmed</span>
+        <p class="source-title">Low RPM jerky throttle response</p>
+        <p class="source-claim">Multiple reviewers noted the initial throttle response as playful/abrupt at low RPM. BT Moto documents 100% gains in power at just 25% throttle after remapping — confirming the stock map is aggressive at low openings.</p>
+        <a class="source-link" href="https://www.cyclenews.com/2024/04/article/2024-aprilia-rs-457-review/" target="_blank">Cycle News — 2024 RS 457 review</a><br>
+        <a class="source-link" href="https://bt-moto.com/product/25-aprilia-rs-457-1-ecu-flash-with-tuner" target="_blank">BT Moto — ECU flash notes (throttle gains)</a>
+      </div>
+
+      <div class="source-card">
+        <span class="source-tag tag-confirmed">Confirmed</span>
+        <p class="source-title">Aprilia's response called unconvincing by press</p>
+        <p class="source-claim">Aprilia blamed unauthorised mods and irregular service. At least one major publication called this reasoning "feeble," noting it doesn't explain failures on stock bikes.</p>
+        <a class="source-link" href="https://ackodrive.com/news/aprilia-clarifies-457-cc-platform-s-quality-related-problems/" target="_blank">AckoDrive — Aprilia clarifies 457 platform quality problems</a>
+      </div>
+
+      <div class="source-card">
+        <span class="source-tag tag-confirmed">Confirmed</span>
+        <p class="source-title">82% torque available from 3000 rpm</p>
+        <p class="source-claim">Aprilia's own claim — 82% of peak torque is available from as low as 3000 rpm. Peak torque 43.5 Nm @ 6700 rpm, peak power 47.6 hp @ 9400 rpm.</p>
+        <a class="source-link" href="https://www.revzilla.com/common-tread/2024-aprilia-rs-457-track-review" target="_blank">RevZilla — 2024 RS 457 track review</a>
+      </div>
+
+      <p class="section-head">Engineering basis</p>
+
+      <div class="source-card">
+        <span class="source-tag tag-engineering">Engineering</span>
+        <p class="source-title">Convective cooling — h ∝ v^0.7</p>
+        <p class="source-claim">Standard forced convection correlation for external airflow. Used to illustrate that cooling effectiveness drops significantly at low vehicle speeds vs highway speeds. Simplified model — actual difference in real conditions may be more extreme.</p>
+        <p class="source-note">Standard heat transfer correlation (Churchill & Bernstein / flat plate approximation). Not RS 457-specific — directionally correct, not a precise figure.</p>
+      </div>
+
+      <div class="source-card">
+        <span class="source-tag tag-engineering">Engineering</span>
+        <p class="source-title">Oil viscosity drop with temperature → reduced lubrication</p>
+        <p class="source-claim">As oil temperature rises, viscosity drops. Below minimum viscosity, the oil film between moving parts becomes too thin to prevent metal-to-metal contact, accelerating wear. Well-established lubrication engineering principle.</p>
+        <p class="source-note">General tribology / lubrication engineering — not RS 457-specific. The causal chain (heat → viscosity → wear → tensioner failure) is the most likely mechanism but has not been confirmed by an official teardown report.</p>
+      </div>
+
+      <p class="section-head">Illustrative models</p>
+
+      <div class="source-card">
+        <span class="source-tag tag-illustrative">Illustrative</span>
+        <p class="source-title">Throttle mapping chart (this document)</p>
+        <p class="source-claim">The ECU throttle map curves shown are illustrative — constructed from owner reviews and BT Moto ECU flash notes describing the stock map behavior. The exact proprietary ECU map has not been published by Aprilia.</p>
+        <p class="source-note">Do not cite the curve shapes as factory data. The directional behavior (aggressive low-throttle response at low RPM) is confirmed; the exact percentages are approximations.</p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+let curveChart, mappingChart;
+
+const rpms = [1000,1500,2000,2500,3000,3500,4000,4500,5000,5500,6000,6700,7000,7500,8000,8500,9000,9400,9800,10200,10700];
+const torqueData = [18,22,27,31,35.6,38,39.5,40.5,41.2,41.8,42.5,43.5,43.2,42.8,42,40.5,38.5,36,32,26,18];
+const powerData = rpms.map((r,i) => Math.round(torqueData[i]*r/9549*10)/10);
+
+function buildCurveChart() {
+  const ctx = document.getElementById('curveChart').getContext('2d');
+  curveChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: rpms.map(r => r.toLocaleString()),
+      datasets: [
+        { label: 'Torque (Nm)', data: torqueData, borderColor: '#378add', backgroundColor: 'rgba(55,138,221,0.08)', borderWidth: 2, fill: true, pointRadius: 0, tension: 0.4, yAxisID: 'yTorque' },
+        { label: 'Power (hp)', data: powerData, borderColor: '#d85a30', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0, tension: 0.4, yAxisID: 'yPower' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { title: i => i[0].label+' rpm', label: i => i.datasetIndex===0 ? ' Torque: '+i.raw+' Nm' : ' Power: '+i.raw+' hp' } }
+      },
+      scales: {
+        x: { title: { display: true, text: 'Engine speed (rpm)', font: { size: 11 }, color: '#666' }, ticks: { color: '#666', font: { size: 10 }, maxTicksLimit: 10 }, grid: { color: 'rgba(0,0,0,0.06)' } },
+        yTorque: { type: 'linear', position: 'left', min: 0, max: 55, title: { display: true, text: 'Torque (Nm)', font: { size: 11 }, color: '#378add' }, ticks: { color: '#378add', font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.06)' } },
+        yPower: { type: 'linear', position: 'right', min: 0, max: 60, title: { display: true, text: 'Power (hp)', font: { size: 11 }, color: '#d85a30' }, ticks: { color: '#d85a30', font: { size: 10 } }, grid: { display: false } }
+      }
+    },
+    plugins: [{
+      id: 'jerkZone',
+      afterDraw(chart) {
+        const { ctx, scales } = chart;
+        const x0 = scales.x.getPixelForValue(0);
+        const x1 = scales.x.getPixelForValue(2);
+        const top = chart.chartArea.top, bottom = chart.chartArea.bottom;
+        ctx.save();
+        ctx.fillStyle = 'rgba(226,75,74,0.08)';
+        ctx.fillRect(x0, top, x1-x0, bottom-top);
+        ctx.strokeStyle = '#e24b4a'; ctx.lineWidth = 1.5; ctx.setLineDash([4,4]);
+        ctx.beginPath(); ctx.moveTo(x1, top); ctx.lineTo(x1, bottom); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#e24b4a'; ctx.font = '500 10px sans-serif';
+        ctx.fillText('jerk zone', x0+4, top+14);
+        ctx.restore();
+      }
+    }]
+  });
+}
+
+function buildMappingChart() {
+  const throttle = [0,5,10,15,20,25,30,40,50,60,70,80,90,100];
+  const stockLow = [0,8,18,32,55,72,80,85,88,91,94,97,99,100];
+  const stockMid = [0,5,12,22,40,58,70,80,87,92,95,97,99,100];
+  const ideal    = [0,5,10,15,20,25,30,40,50,60,70,80,90,100];
+  const ctx = document.getElementById('mappingChart').getContext('2d');
+  mappingChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: throttle,
+      datasets: [
+        { label: 'Stock ECU — low RPM (1000–3000)', data: stockLow, borderColor: '#e24b4a', borderWidth: 2, pointRadius: 0, tension: 0.4, fill: false },
+        { label: 'Stock ECU — mid RPM (3000–6000)', data: stockMid, borderColor: '#e24b4a', borderWidth: 1.5, borderDash: [5,5], pointRadius: 0, tension: 0.4, fill: false },
+        { label: 'Ideal linear map', data: ideal, borderColor: '#1d9e75', borderWidth: 2, pointRadius: 0, tension: 0, fill: false }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { title: i => 'Throttle: '+i[0].label+'%', label: i => ' '+i.dataset.label+': '+i.raw+'% torque' } }
+      },
+      scales: {
+        x: { title: { display: true, text: 'Throttle input (%)', font: { size: 11 }, color: '#666' }, ticks: { color: '#666', font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.06)' } },
+        y: { min: 0, max: 110, title: { display: true, text: 'Torque output (%)', font: { size: 11 }, color: '#666' }, ticks: { color: '#666', font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.06)' } }
+      }
+    }
+  });
+}
+
+function showTab(tab) {
+  document.getElementById('pane-curve').style.display = tab === 'curve' ? '' : 'none';
+  document.getElementById('pane-mapping').style.display = tab === 'mapping' ? '' : 'none';
+  document.getElementById('pane-sources').style.display = tab === 'sources' ? '' : 'none';
+  document.getElementById('tab-curve').className = 'tab-btn' + (tab === 'curve' ? ' active' : '');
+  document.getElementById('tab-mapping').className = 'tab-btn' + (tab === 'mapping' ? ' active' : '');
+  document.getElementById('tab-sources').className = 'tab-btn' + (tab === 'sources' ? ' active' : '');
+  if (tab === 'mapping' && !mappingChart) buildMappingChart();
+}
+
+buildCurveChart();
+</script>
+</body>
+</html>
