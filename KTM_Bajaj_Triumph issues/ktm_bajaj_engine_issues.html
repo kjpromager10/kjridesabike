@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KTM / Bajaj Engine Issues — 373cc & 399cc Reference</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0d0f;
+  --surface: #141418;
+  --card: #1a1a20;
+  --border: #2a2a35;
+  --accent: #e8530a;
+  --accent2: #f0a500;
+  --accent3: #4a9eff;
+  --text: #e8e8ec;
+  --muted: #888898;
+  --danger: #ff4444;
+  --warn: #f0a500;
+  --good: #22c55e;
+  --ktm: #e8530a;
+  --bajaj: #003399;
+  --dominar: #1a6ec5;
+  --ktm399: #ff6b35;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Sans', sans-serif; font-size: 15px; line-height: 1.7; min-height: 100vh; }
+
+.site-header {
+  background: linear-gradient(135deg, #0d0d0f 0%, #1a0a00 50%, #0d0d0f 100%);
+  border-bottom: 2px solid var(--accent);
+  padding: 40px 24px 32px;
+  position: relative; overflow: hidden;
+}
+.site-header::before {
+  content: ''; position: absolute; top: -40px; right: -40px;
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(232,83,10,0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+.header-inner { max-width: 960px; margin: 0 auto; }
+.header-label { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 3px; color: var(--accent); text-transform: uppercase; margin-bottom: 12px; }
+.site-header h1 { font-family: 'Syne', sans-serif; font-size: clamp(26px, 5vw, 48px); font-weight: 800; line-height: 1.1; margin-bottom: 12px; }
+.site-header h1 span { color: var(--accent); }
+.header-meta { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 20px; }
+.header-meta span { display: flex; align-items: center; gap: 6px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+
+.nav-wrap { background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+.nav-tabs { max-width: 960px; margin: 0 auto; display: flex; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.nav-tabs::-webkit-scrollbar { display: none; }
+.tab-btn { flex-shrink: 0; background: none; border: none; padding: 14px 20px; font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; }
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.main { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+.section-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+.section-sub { color: var(--muted); font-size: 13px; margin-bottom: 28px; font-family: 'IBM Plex Mono', monospace; }
+
+.verdict-box { background: linear-gradient(135deg, #1a0d00, #1a0d00); border: 1px solid var(--accent); border-left: 4px solid var(--accent); border-radius: 8px; padding: 20px 24px; margin-bottom: 32px; }
+.verdict-box h3 { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--accent); margin-bottom: 8px; }
+.verdict-box p { font-size: 14px; line-height: 1.8; color: #d0c8c0; }
+
+.engine-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; margin-bottom: 32px; }
+.engine-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+.engine-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+.badge { font-family: 'IBM Plex Mono', monospace; font-size: 11px; padding: 3px 8px; border-radius: 4px; font-weight: 500; }
+.badge-ktm { background: rgba(232,83,10,0.2); color: var(--ktm); border: 1px solid rgba(232,83,10,0.4); }
+.badge-bajaj { background: rgba(26,110,197,0.2); color: #4a9eff; border: 1px solid rgba(74,158,255,0.4); }
+.badge-ktm399 { background: rgba(255,107,53,0.2); color: var(--ktm399); border: 1px solid rgba(255,107,53,0.4); }
+.engine-card h3 { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; }
+.spec-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; }
+.spec-label { color: var(--muted); }
+.spec-val { font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+
+.issue-list { display: flex; flex-direction: column; gap: 20px; }
+.issue-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.issue-header { display: flex; align-items: flex-start; gap: 16px; padding: 20px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.2s; }
+.issue-header:hover { background: rgba(255,255,255,0.02); }
+.issue-num { font-family: 'IBM Plex Mono', monospace; font-size: 11px; background: var(--border); color: var(--muted); padding: 3px 8px; border-radius: 4px; flex-shrink: 0; margin-top: 2px; }
+.issue-title-wrap { flex: 1; }
+.issue-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 17px; margin-bottom: 6px; }
+.issue-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-family: 'IBM Plex Mono', monospace; font-size: 10px; padding: 2px 7px; border-radius: 3px; font-weight: 500; }
+.chip-high { background: rgba(255,68,68,0.15); color: #ff7070; border: 1px solid rgba(255,68,68,0.3); }
+.chip-med { background: rgba(240,165,0,0.15); color: var(--accent2); border: 1px solid rgba(240,165,0,0.3); }
+.chip-low { background: rgba(34,197,94,0.12); color: #4ade80; border: 1px solid rgba(34,197,94,0.25); }
+.chip-ktm { background: rgba(232,83,10,0.15); color: #ff8855; border: 1px solid rgba(232,83,10,0.3); }
+.chip-dominar { background: rgba(26,110,197,0.15); color: #70b0ff; border: 1px solid rgba(26,110,197,0.3); }
+.chip-both { background: rgba(255,255,255,0.08); color: var(--text); border: 1px solid rgba(255,255,255,0.15); }
+.chip-ktm399 { background: rgba(255,107,53,0.15); color: #ff9966; border: 1px solid rgba(255,107,53,0.3); }
+.severity-bar { width: 64px; text-align: center; flex-shrink: 0; }
+.severity-circle { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; margin: 0 auto 4px; }
+.sev-high { background: rgba(255,68,68,0.2); border: 2px solid #ff4444; color: #ff7070; }
+.sev-med { background: rgba(240,165,0,0.15); border: 2px solid var(--accent2); color: var(--accent2); }
+.sev-low { background: rgba(34,197,94,0.1); border: 2px solid #22c55e; color: #4ade80; }
+.severity-label { font-size: 10px; color: var(--muted); font-family: 'IBM Plex Mono', monospace; }
+.issue-body { padding: 0 20px; max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.3s; }
+.issue-body.open { max-height: 2000px; padding: 20px; }
+.issue-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+@media (max-width: 600px) { .issue-grid { grid-template-columns: 1fr; } }
+.issue-col h4 { font-family: 'IBM Plex Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 8px; }
+.issue-col ul { list-style: none; }
+.issue-col ul li { font-size: 13px; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05); color: #ccc; }
+.issue-col ul li::before { content: '↳ '; color: var(--accent); font-size: 12px; }
+.user-reports { background: rgba(74,158,255,0.06); border: 1px solid rgba(74,158,255,0.2); border-radius: 6px; padding: 14px; margin-top: 12px; }
+.user-reports h4 { font-family: 'IBM Plex Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--accent3); margin-bottom: 10px; }
+.quote-block { font-size: 12px; color: #b8bcc8; border-left: 2px solid var(--accent3); padding-left: 12px; margin-bottom: 8px; font-style: italic; line-height: 1.6; }
+.quote-source { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 2px; display: block; }
+.fault-table-note { background: rgba(232,83,10,0.08); border: 1px solid rgba(232,83,10,0.25); border-radius: 6px; padding: 12px 14px; margin-top: 12px; font-size: 13px; color: #d0b8a0; }
+.expand-icon { color: var(--muted); font-size: 20px; line-height: 1; flex-shrink: 0; margin-top: 6px; transition: transform 0.3s; }
+.issue-header.open .expand-icon { transform: rotate(45deg); }
+
+/* RESP TABLE */
+.resp-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 20px; }
+.resp-table th { background: rgba(255,255,255,0.05); font-family: 'IBM Plex Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; padding: 12px 14px; text-align: left; color: var(--muted); border-bottom: 1px solid var(--border); }
+.resp-table td { padding: 11px 14px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: top; }
+.resp-table tr:hover td { background: rgba(255,255,255,0.02); }
+.resp-chip { display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 10px; padding: 2px 7px; border-radius: 3px; font-weight: 500; margin: 2px; }
+.rc-ktm { background: rgba(232,83,10,0.15); color: #ff8855; }
+.rc-bajaj { background: rgba(74,158,255,0.15); color: #70b0ff; }
+.rc-shared { background: rgba(240,165,0,0.15); color: var(--accent2); }
+.rc-mfg { background: rgba(255,68,68,0.15); color: #ff7070; }
+.rc-user { background: rgba(34,197,94,0.1); color: #4ade80; }
+
+/* SOURCES */
+.source-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.source-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 16px; text-decoration: none; color: inherit; transition: border-color 0.2s, background 0.2s; display: block; }
+.source-card:hover { border-color: var(--accent3); background: rgba(74,158,255,0.05); }
+.source-type { font-family: 'IBM Plex Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.st-forum { color: var(--accent3); }
+.st-wiki { color: var(--accent2); }
+.st-official { color: var(--good); }
+.st-user { color: #cc88ff; }
+.source-card h4 { font-size: 13px; font-weight: 600; margin-bottom: 4px; line-height: 1.4; }
+.source-card p { font-size: 12px; color: var(--muted); }
+
+/* HEATMAP */
+.heatmap-wrap { overflow-x: auto; margin-bottom: 32px; }
+.heatmap-table { border-collapse: collapse; width: 100%; min-width: 500px; font-size: 12px; }
+.heatmap-table th { font-family: 'IBM Plex Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; padding: 10px 8px; color: var(--muted); border-bottom: 2px solid var(--border); text-align: center; white-space: nowrap; }
+.heatmap-table th.row-header { text-align: left; padding-left: 12px; }
+.heatmap-table td { padding: 10px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.04); font-family: 'IBM Plex Mono', monospace; font-size: 11px; }
+.heatmap-table td.issue-name { text-align: left; padding-left: 12px; color: var(--text); font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; font-weight: 500; white-space: nowrap; }
+.heatmap-table tr:hover td { background: rgba(255,255,255,0.025); }
+.hm-high { background: rgba(255,68,68,0.25); color: #ff8888; border: 1px solid rgba(255,68,68,0.4); border-radius: 4px; padding: 3px 6px; display: inline-block; }
+.hm-med  { background: rgba(240,165,0,0.2);  color: #f0c060; border: 1px solid rgba(240,165,0,0.4); border-radius: 4px; padding: 3px 6px; display: inline-block; }
+.hm-low  { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); border-radius: 4px; padding: 3px 6px; display: inline-block; }
+.hm-none { color: rgba(255,255,255,0.15); font-size: 14px; }
+.heatmap-legend { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 16px; }
+.heatmap-legend span { font-family: 'IBM Plex Mono', monospace; font-size: 11px; display: flex; align-items: center; gap: 6px; }
+
+.doc-footer { border-top: 1px solid var(--border); padding: 28px 24px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); margin-top: 48px; }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="header-label">Engine Issue Reference · File 1 of 3</div>
+    <h1>KTM / Bajaj<br><span>Engine Fault Compendium</span></h1>
+    <div class="header-meta">
+      <span><span class="dot" style="background:var(--ktm)"></span> KTM 373cc (Duke/RC 390 pre-BS6)</span>
+      <span><span class="dot" style="background:#4a9eff"></span> Bajaj Dominar 400 (373cc detuned)</span>
+      <span><span class="dot" style="background:var(--ktm399)"></span> KTM 399cc (2024+ Gen)</span>
+      <span><span class="dot" style="background:var(--accent2)"></span> Verified April 2026</span>
+    </div>
+  </div>
+</header>
+
+<nav class="nav-wrap">
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab('overview')">Overview</button>
+    <button class="tab-btn" onclick="switchTab('issues373')">373cc Issues (7)</button>
+    <button class="tab-btn" onclick="switchTab('issues399')">399cc Issues (2)</button>
+    <button class="tab-btn" onclick="switchTab('responsibility')">Who's at Fault?</button>
+    <button class="tab-btn" onclick="switchTab('heatmap')">Failure Matrix</button>
+    <button class="tab-btn" onclick="switchTab('sources')">Sources</button>
+  </div>
+</nav>
+
+<main class="main">
+
+<!-- OVERVIEW -->
+<section class="tab-panel active" id="panel-overview">
+  <div class="section-title">Platform Overview</div>
+  <div class="section-sub">KTM 373cc · BAJAJ DOMINAR 400 · KTM 399cc — ISSUE REFERENCE</div>
+  <div class="verdict-box">
+    <h3>⚡ Core Context</h3>
+    <p>The 373cc single-cylinder engine powers the KTM Duke 390, RC 390 (pre-BS6), and Bajaj Dominar 400. The updated 399cc engine debuted 2024 and was globally recalled over an ECU stalling fault. All engines are manufactured at Bajaj Auto's Chakan plant, Pune. Issues vary significantly between the aggressively-tuned KTM variants and the detuned Dominar. Bajaj acquired 74.9% controlling stake in KTM AG in November 2025 via Pierer Bajaj AG.</p>
+  </div>
+  <div class="engine-grid">
+    <div class="engine-card">
+      <div class="engine-card-header">
+        <div><div class="badge badge-ktm" style="margin-bottom:6px">KTM — PRE-BS6</div><h3>KTM Duke 390 & RC 390</h3></div>
+      </div>
+      <div class="spec-row"><span class="spec-label">Displacement</span><span class="spec-val">373.2 cc</span></div>
+      <div class="spec-row"><span class="spec-label">Configuration</span><span class="spec-val">Single-cyl, LC, DOHC</span></div>
+      <div class="spec-row"><span class="spec-label">Power (pre-BS6)</span><span class="spec-val">~43 bhp @ 9,000 rpm</span></div>
+      <div class="spec-row"><span class="spec-label">Torque</span><span class="spec-val">35–37 Nm @ 7,000 rpm</span></div>
+      <div class="spec-row"><span class="spec-label">Compression</span><span class="spec-val">12.6 : 1 (high)</span></div>
+      <div class="spec-row"><span class="spec-label">Oil capacity</span><span class="spec-val">1.5–1.7 L (w/ filter)</span></div>
+      <div class="spec-row"><span class="spec-label">Designed by</span><span class="spec-val">KTM AG — Austria</span></div>
+      <div class="spec-row"><span class="spec-label">Manufactured by</span><span class="spec-val">Bajaj Auto — Pune, India</span></div>
+      <div class="spec-row"><span class="spec-label">Issue severity</span><span class="spec-val" style="color:var(--danger)">Higher (aggressive tune)</span></div>
+    </div>
+    <div class="engine-card">
+      <div class="engine-card-header">
+        <div><div class="badge badge-bajaj" style="margin-bottom:6px">BAJAJ — DOMINAR</div><h3>Bajaj Dominar 400</h3></div>
+      </div>
+      <div class="spec-row"><span class="spec-label">Displacement</span><span class="spec-val">373.2 cc (same block)</span></div>
+      <div class="spec-row"><span class="spec-label">Configuration</span><span class="spec-val">Single-cyl, LC, DOHC</span></div>
+      <div class="spec-row"><span class="spec-label">Power</span><span class="spec-val">~40 bhp @ 8,650 rpm</span></div>
+      <div class="spec-row"><span class="spec-label">Torque</span><span class="spec-val">35 Nm @ 7,000 rpm</span></div>
+      <div class="spec-row"><span class="spec-label">Tune</span><span class="spec-val">Detuned vs KTM 390</span></div>
+      <div class="spec-row"><span class="spec-label">Oil capacity</span><span class="spec-val">~1.6 L</span></div>
+      <div class="spec-row"><span class="spec-label">Designed by</span><span class="spec-val">KTM–Bajaj Joint</span></div>
+      <div class="spec-row"><span class="spec-label">Manufactured by</span><span class="spec-val">Bajaj Auto — Chakan, Pune</span></div>
+      <div class="spec-row"><span class="spec-label">Issue severity</span><span class="spec-val" style="color:var(--warn)">Moderate (detuned state)</span></div>
+    </div>
+    <div class="engine-card">
+      <div class="engine-card-header">
+        <div><div class="badge badge-ktm399" style="margin-bottom:6px">KTM — 399cc (2024+)</div><h3>KTM Duke / Adventure 390 (New Gen)</h3></div>
+      </div>
+      <div class="spec-row"><span class="spec-label">Displacement</span><span class="spec-val">399 cc (up from 373cc)</span></div>
+      <div class="spec-row"><span class="spec-label">Configuration</span><span class="spec-val">Single-cyl, LC, DOHC</span></div>
+      <div class="spec-row"><span class="spec-label">Power</span><span class="spec-val">45 hp @ ~8,500 rpm</span></div>
+      <div class="spec-row"><span class="spec-label">Torque</span><span class="spec-val">~39 Nm (28.8 lb-ft)</span></div>
+      <div class="spec-row"><span class="spec-label">Oil capacity</span><span class="spec-val">~1.6 L (approx)</span></div>
+      <div class="spec-row"><span class="spec-label">Service interval</span><span class="spec-val">Extended vs 373cc</span></div>
+      <div class="spec-row"><span class="spec-label">Manufactured by</span><span class="spec-val">Bajaj Auto — Pune, India</span></div>
+      <div class="spec-row"><span class="spec-label">Key event</span><span class="spec-val" style="color:var(--danger)">Global ECU Recall (Dec 2025)</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 373cc ISSUES -->
+<section class="tab-panel" id="panel-issues373">
+  <div class="section-title">Known Issues — 373cc Platform</div>
+  <div class="section-sub">KTM DUKE 390 / RC 390 · BAJAJ DOMINAR 400 · CLICK ANY ISSUE TO EXPAND</div>
+  <div class="verdict-box">
+    <h3>⚡ Platform Summary</h3>
+    <p>The 373cc platform's worst problems stem from aggressive tuning pushing a high-compression single to its thermal limits. The Dominar 400 escapes the worst mechanical failures due to detuning, but suffers more from build quality inconsistencies. Both share the same Bajaj manufacturing chain.</p>
+  </div>
+  <div class="issue-list">
+
+    <div class="issue-card">
+      <div class="issue-header" onclick="toggleIssue(this)">
+        <div class="issue-num">01</div>
+        <div class="issue-title-wrap">
+          <div class="issue-title">Coolant–Oil Mixing</div>
+          <div class="issue-chips">
+            <span class="chip chip-high">HIGH SEVERITY</span>
+            <span class="chip chip-ktm">HEAVY KTM 390</span>
+            <span class="chip chip-dominar">MODERATE DOMINAR</span>
+          </div>
+        </div>
+        <div class="severity-bar"><div class="severity-circle sev-high">H</div><div class="severity-label">SEVERITY</div></div>
+        <div class="expand-icon">+</div>
+      </div>
+      <div class="issue-body">
+        <div class="issue-grid">
+          <div class="issue-col"><h4>Root Causes</h4><ul>
+            <li>Water pump shaft seal failure (primary cause)</li>
+            <li>Head gasket failure / stress fracture</li>
+            <li>Overheating accelerating seal wear</li>
+            <li>Use of wrong coolant type (silicate-heavy)</li>
+          </ul></div>
+          <div class="issue-col"><h4>Symptoms</h4><ul>
+            <li>Oil turns brown / creamy / milky</li>
+            <li>Coolant level drops without visible leak</li>
+            <li>White mist/smoke from engine area</li>
+            <li>Metal particles in oil (advanced stage)</li>
+            <li>Abnormally high cooling system pressure</li>
+          </ul></div>
+        </div>
+        <div class="issue-col" style="margin-bottom:12px"><h4>Affected Models</h4><ul>
+          <li>Early KTM 390 Gen 1 (2013–2016) — most reported</li>
+          <li>KTM RC 390 early batches</li>
+          <li>Bajaj Dominar 400 — also seen but less frequent</li>
+        </ul></div>
+        <div class="fault-table-note">⚠️ <strong>Engine damage risk:</strong> Coolant is a poor lubricant. If coolant mixes with oil for extended periods, bearing surfaces suffer irreversible damage. Multiple users reported needing full engine replacement after delayed diagnosis.</div>
+        <div class="user-reports"><h4>📋 User-Reported Evidence</h4>
+          <div class="quote-block">"My 2015 model had the head gasket blow 3 times. I found so much internal damage when I went to adjust valves at 13K miles that I had to replace the motor after my warranty expired. Coolant makes a very poor lubricant."<span class="quote-source">— KTM RC390 Forum user, rc390-forum.com</span></div>
+          <div class="quote-block">"Water pump seals often fail on 390s causing this issue… oil came out a darker BROWN — immediately knew this was bad."<span class="quote-source">— KTM Duke 390 Forum user, ktmduke390forum.com</span></div>
+          <div class="quote-block">"He found a lot of water (coolant) in the engine oil, as well as in the strainer and the state of the filters was terrible… since he tried to see the behavior of my bike he found metal particles in the engine oil."<span class="quote-source">— KTM Duke 390 Forum, 2022 (22,300 km 2018 model)</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card">
+      <div class="issue-header" onclick="toggleIssue(this)">
+        <div class="issue-num">02</div>
+        <div class="issue-title-wrap">
+          <div class="issue-title">Excessive Engine Oil Consumption</div>
+          <div class="issue-chips">
+            <span class="chip chip-high">HIGH SEVERITY</span>
+            <span class="chip chip-ktm">HEAVY KTM 390</span>
+            <span class="chip chip-dominar">LOW DOMINAR</span>
+          </div>
+        </div>
+        <div class="severity-bar"><div class="severity-circle sev-high">H</div><div class="severity-label">SEVERITY</div></div>
+        <div class="expand-icon">+</div>
+      </div>
+      <div class="issue-body">
+        <div class="issue-grid">
+          <div class="issue-col"><h4>Root Causes</h4><ul>
+            <li>Blow-by past piston rings at high RPM</li>
+            <li>Oil film entering combustion chamber</li>
+            <li>Valve stem seal leakage (advanced wear)</li>
+            <li>Thermal evaporation of thin fully-synthetic oils</li>
+            <li>Piston design changes post-2019 (cost optimization suspected)</li>
+            <li>PAV/crankcase breather hose overflow</li>
+          </ul></div>
+          <div class="issue-col"><h4>Reported Consumption Rates</h4><ul>
+            <li>KTM factory guidance (old): 60–70 ml / 1,000 km = normal</li>
+            <li>KTM India circular (cited by users): 100–200 ml / 1,000 km acceptable</li>
+            <li>Post-2019 ADV/Duke 390: up to 150–200 ml / 1,000 km</li>
+            <li>Severe cases: 300–500 ml / 1,000 km reported</li>
+            <li>Dominar 400: far lower consumption reported</li>
+          </ul></div>
+        </div>
+        <div class="issue-col" style="margin-bottom:12px"><h4>Oil Brand Correlation (User-Noted)</h4><ul>
+          <li>Motul 7100 batches linked to higher consumption in multiple reports</li>
+          <li>Switching to Castrol, Motorex, or Shell reportedly reduced consumption for some users</li>
+          <li>Diesel-spec oils (JASO MA2 rated) used successfully by some riders</li>
+        </ul></div>
+        <div class="fault-table-note">⚠️ <strong>Note on KTM's Stance:</strong> KTM India reportedly displayed a service center circular stating 100–200 ml per 1,000 km as acceptable — a figure many veteran mechanics and users consider out-of-spec for a well-built engine. This has been widely criticized as an attempt to normalize a design/manufacturing flaw.</div>
+        <div class="user-reports"><h4>📋 User-Reported Evidence</h4>
+          <div class="quote-block">"The oil consumption is way out of spec post the 2019 manufactured bikes, especially the ADV Series. Every single ADV/390 out there is plagued with oil consumption with less than 5k kms on the odo… My observation is that the design of the entire piston is different from that of the old piston purely due to cost cutting."<span class="quote-source">— KTM RC390 Forum moderator/technician, rc390-forum.com</span></div>
+          <div class="quote-block">"My RC390 (2022) got her first oil change at 1,000 km. At 4,500 km I took her in for service, only to see that engine oil had reduced to about 900 ml."<span class="quote-source">— KTM RC390 Forum user</span></div>
+          <div class="quote-block">"Mine, in 3,000 kms consumes 500ml and the total amount of oil in the engine only adds up to 1.5 litres. Dealer said warranty is not going to do anything."<span class="quote-source">— KTM Duke 390 Forum (2024 model), ktmduke390forum.com</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card">
+      <div class="issue-header" onclick="toggleIssue(this)">
+        <div class="issue-num">03</div>
+        <div class="issue-title-wrap">
+          <div class="issue-title">Water Pump Seal Failure</div>
+          <div class="issue-chips">
+            <span class="chip chip-high">HIGH SEVERITY</span>
+            <span class="chip chip-ktm">KTM EARLY BATCHES</span>
+            <span class="chip chip-dominar">MODERATE DOMINAR</span>
+          </div>
+        </div>
+        <div class="severity-bar"><div class="severity-circle sev-high">H</div><div class="severity-label">SEVERITY</div></div>
+        <div class="expand-icon">+</div>
+      </div>
+      <div class="issue-body">
+        <div class="issue-grid">
+          <div class="issue-col"><h4>Root Causes</h4><ul>
+            <li>Inner / outer shaft seal wear on water pump impeller</li>
+            <li>Possible rubber compound incompatibility with engine oil</li>
+            <li>High operating temperatures accelerating seal degradation</li>
+            <li>City traffic / stop-go riding patterns</li>
+          </ul></div>
+          <div class="issue-col"><h4>Consequences if Ignored</h4><ul>
+            <li>Coolant enters oil system (see Issue #1)</li>
+            <li>Bearing surface damage from diluted lubrication</li>
+            <li>Coolant loss leading to overheating</li>
+            <li>Engine seizure in extreme cases</li>
+          </ul></div>
+        </div>
+        <div class="issue-col" style="margin-bottom:12px"><h4>Repairability</h4><ul>
+          <li>Both outer and inner seals can be replaced without engine-out on most variants</li>
+          <li>Inner seal requires removing circlip + impeller; use drill-and-screw method for stubborn seals</li>
+          <li>Gen 2 (2018+) differs slightly in seal access — verify service manual</li>
+          <li>Black "soft tacky bits" on oil screens may indicate seal material breakdown</li>
+        </ul></div>
+        <div class="user-reports"><h4>📋 User-Reported Evidence</h4>
+          <div class="quote-block">"My head gasket failed at 4.7K miles and then the water pump died at 5.1K miles. I found so much internal damage when I went to adjust valves myself at 13K miles that I had to replace the motor."<span class="quote-source">— KTM RC390 Forum, rc390-forum.com</span></div>
+          <div class="quote-block">"I found soft and tacky black bits on one of the oil screens. I wonder whether it's the wrong sort of synthetic rubber used in the seals, which has reacted with engine oil."<span class="quote-source">— KTM RC390 Forum (2015 model), rc390-forum.com</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card">
+      <div class="issue-header" onclick="toggleIssue(this)">
+        <div class="issue-num">04</div>
+        <div class="issue-title-wrap">
+          <div class="issue-title">Timing Chain / Tensioner Noise</div>
+          <div class="issue-chips">
+            <span class="chip chip-med">MEDIUM SEVERITY</span>
+            <span class="chip chip-both">BOTH MODELS</span>
+          </div>
+        </div>
+        <div class="severity-bar"><div class="severity-circle sev-med">M</div><div class="severity-label">SEVERITY</div></div>
+        <div class="expand-icon">+</div>
+      </div>
+      <div class="issue-body">
+        <div class="issue-grid">
+          <div class="issue-col"><h4>Root Causes</h4><ul>
+            <li>High single-cylinder vibration stressing chain/tensioner</li>
+            <li>Long-stroke dynamics at higher RPM</li>
+            <li>Bolt torque inconsistencies during assembly</li>
+            <li>Tensioner guide (plastic rods) wearing out</li>
+            <li>KTM 390 revving nature increases wear rate</li>
+          </ul></div>
+          <div class="issue-col"><h4>Symptoms</h4><ul>
+            <li>Metallic ticking/rattling near cylinder head when warm</li>
+            <li>Noise felt through footpegs</li>
+            <li>Noise intensifies at idle or low RPM post warm-up</li>
+            <li>Dealers often dismiss as "normal engine sound"</li>
+          </ul></div>
+        </div>
+        <div class="fault-table-note">⚠️ <strong>Dealer Dismissal Pattern:</strong> Multiple Dominar 400 owners in India have reported that Bajaj service centers consistently told them chain/tensioner noise was "normal." Insist on inspection — tensioner guide and chain should be inspected/replaced before the issue progresses.</div>
+        <div class="user-reports"><h4>📋 User-Reported Evidence</h4>
+          <div class="quote-block">"Camshaft changed twice. Rocker arm changed twice. Shims replaced innumerable times. They finally installed new engine head but engine head ticking noise still continues. It has been opened 6 times yet they can't solve the issue."<span class="quote-source">— BikeWale Dominar 400 user review</span></div>
+          <div class="quote-block">"Bajaj mechanics will try their best to convince you that it's a normal engine sound… They will only accept a fault when something's definitely broken."<span class="quote-source">— xBhp.com Dominar 400 ownership thread</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card">
+      <div class="issue-header" onclick="toggleIssue(this)">
+        <div class="issue-num">05</div>
+        <div class="issue-title-wrap">
+          <div class="issue-title">Overheating (City / Traffic Conditions)</div>
+          <div class="issue-chips">
+            <span class="chip chip-med">MEDIUM SEVERITY</span>
+            <span class="chip chip-ktm">HEAVY KTM 390</span>
+            <span class="chip chip-dominar">MODERATE DOMINAR</span>
+          </div>
+        </div>
+        <div class="severity-bar"><div class="severity-circle sev-med">M</div><div class="severity-label">SEVERITY</div></div>
+        <div class="expand-icon">+</div>
+      </div>
+      <div class="issue-body">
+        <div class="issue-grid">
+          <div class="issue-col"><h4>Root Causes</h4><ul>
+            <li>High compression ratio (12.6:1) generates excess heat</li>
+            <li>Single-cylinder design with limited heat dissipation area</li>
+            <li>Urban stop-go traffic limits airflow over radiator</li>
+            <li>Cooling fan cycling constantly during city riding</li>
+            <li>Wrong coolant grade can reduce cooling efficiency</li>
+          </ul></div>
+          <div class="issue-col"><h4>Real-World Patterns</h4><ul>
+            <li>Fan activates mid-temp in city — this is expected behavior</li>
+            <li>Overheating warning is abnormal; usually tied to coolant issue</li>
+            <li>Wrong oil grade (15W-30 instead of 15W-50) can worsen</li>
+            <li>Dominar 400 runs cooler due to lower tuning state</li>
+          </ul></div>
+        </div>
+        <div class="user-reports"><h4>📋 User-Reported Evidence</h4>
+          <div class="quote-block">"My duke 390 has been running very hot just after I changed my oil (15w-30). The fan turns on when temp is halfway to max and does not shut off. The engine can't idle longer than 5-10 minutes."<span class="quote-source">— KTM Duke 390 Forum user</span></div>
+          <div class="quote-block">"Multiple riders in Manila report heat issues during summer rush hour traffic. Symptom: Excessive heat from the tank and radiator fan always on."<span class="quote-source">— RobiMoto PH Dominar 400 report</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card">
+      <div class="issue-header" onclick="toggleIssue(this)">
+        <div class="issue-num">06</div>
+        <div class="issue-title-wrap">
+          <div class="issue-title">ECU / Stalling / Fueling Issues</div>
+          <div class="issue-chips">
+            <span class="chip chip-med">MEDIUM SEVERITY</span>
+            <span class="chip chip-ktm">HEAVY KTM 390</span>
+          </div>
+        </div>
+        <div class="severity-bar"><div class="severity-circle sev-med">M</div><div class="severity-label">SEVERITY</div></div>
+        <div class="expand-icon">+</div>
+      </div>
+      <div class="issue-body">
+        <div class="issue-grid">
+          <div class="issue-col"><h4>Root Causes</h4><ul>
+            <li>Factory lean fuel mapping for emissions compliance</li>
+            <li>Side stand / clutch switch sensor failure</li>
+            <li>O2 sensor degradation or contamination</li>
+            <li>ECU connector corrosion or shorted wiring</li>
+            <li>Low battery voltage affecting ECU operation</li>
+            <li>Throttle body / TPS sensor issues (Dominar)</li>
+          </ul></div>
+          <div class="issue-col"><h4>Symptoms</h4><ul>
+            <li>Engine cuts out at low RPM / coming to a stop</li>
+            <li>Stalling during downshifts (clutch fully engaged)</li>
+            <li>Difficult cold starts, especially below 18°C</li>
+            <li>"Engine Sign" (MIL) light flickering on/off</li>
+            <li>ECU Failure warning on TFT display</li>
+            <li>Fuel relay clicking rapidly</li>
+          </ul></div>
+        </div>
+        <div class="issue-col" style="margin-bottom:12px"><h4>Known Fixes</h4><ul>
+          <li>FuelX / PowerTRONIC piggyback ECU eliminates lean stumble for many users</li>
+          <li>ECU reset procedure: battery disconnect 15 min → idle without throttle input 15 min</li>
+          <li>Clean clutch switch and side stand sensor contacts with WD-40</li>
+          <li>Check/replace O2 sensor (often damaged by lean running)</li>
+        </ul></div>
+        <div class="user-reports"><h4>📋 User-Reported Evidence</h4>
+          <div class="quote-block">"Running as lean as these engines do, a very minimal variation on fueling is enough for a stall to happen. It's a sort of characteristic and not exactly a defect."<span class="quote-source">— KTM Duke 390 Forum (2014 owner), ktmduke390forum.com</span></div>
+          <div class="quote-block">"My 2018 Duke 390 cuts off within first 20 minutes of every ride — minimum 3 times, maximum 16. No pattern except that it happens in the first 20 min."<span class="quote-source">— KTM Duke 390 Forum user (13,000 km)</span></div>
+          <div class="quote-block">"ECU failure on newer models: primarily a battery not providing enough juice to components, and a loose ignition coil input connector."<span class="quote-source">— KTM Duke 390 Forum moderator</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card">
+      <div class="issue-header" onclick="toggleIssue(this)">
+        <div class="issue-num">07</div>
+        <div class="issue-title-wrap">
+          <div class="issue-title">Build Quality & Vibration Effects</div>
+          <div class="issue-chips">
+            <span class="chip chip-low">LOW SEVERITY</span>
+            <span class="chip chip-dominar">HEAVY DOMINAR</span>
+            <span class="chip chip-ktm">PRESENT KTM</span>
+          </div>
+        </div>
+        <div class="severity-bar"><div class="severity-circle sev-low">L</div><div class="severity-label">SEVERITY</div></div>
+        <div class="expand-icon">+</div>
+      </div>
+      <div class="issue-body">
+        <div class="issue-grid">
+          <div class="issue-col"><h4>Root Causes</h4><ul>
+            <li>Inherent single-cylinder vibration (no counter-balancer in early variants)</li>
+            <li>Bajaj cost optimization vs KTM hardware tolerances</li>
+            <li>Chain noise and loose gear shifting (Dominar specific)</li>
+            <li>Vibration loosening fasteners over time</li>
+          </ul></div>
+          <div class="issue-col"><h4>Reported Manifestations</h4><ul>
+            <li>Vibration at handlebars/footpegs: 4,000–6,000 RPM range</li>
+            <li>Chain noise and difficult 1→2 gear shifts on Dominar</li>
+            <li>Loose screws post-service (multiple user incidents)</li>
+            <li>Ride quality degrading faster on Bajaj-branded bikes</li>
+          </ul></div>
+        </div>
+        <div class="user-reports"><h4>📋 User-Reported Evidence</h4>
+          <div class="quote-block">"Refinement is not so good — chain sound and gear shifting from 1 to 2 is noisy and sometimes it doesn't go to gear 2, stuck on Neutral."<span class="quote-source">— ZigWheels Dominar 400 user review (2017)</span></div>
+          <div class="quote-block">"After getting my first service I paid $482 — these guys lost 10 screws and did not replace them."<span class="quote-source">— KTM ADV 390 Forum user, ktmforums.com</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- 399cc ISSUES -->
+<section class="tab-panel" id="panel-issues399">
+  <div class="section-title">KTM 399cc Platform — Known Issues</div>
+  <div class="section-sub">2024+ KTM DUKE 390, ADVENTURE R/X, ENDURO R, SMC R · HUSQVARNA VITPILEN/SVARTPILEN 401</div>
+  <div class="verdict-box" style="border-color:var(--ktm399)">
+    <h3 style="color:var(--ktm399)">⚡ Platform Context</h3>
+    <p>The 399cc engine debuted on the 2024 KTM 390 Duke. Displacement increased to 399cc, power rose to 45 hp, engine was made lighter, and service intervals extended. Despite improvements, the platform has already seen one confirmed global recall and ongoing user-reported stalling/oil consumption concerns — mirroring some 373cc-era patterns.</p>
+  </div>
+  <div class="issue-list">
+
+    <div class="issue-card">
+      <div class="issue-header" onclick="toggleIssue(this)">
+        <div class="issue-num" style="background:rgba(255,107,53,0.15);color:var(--ktm399)">K1</div>
+        <div class="issue-title-wrap">
+          <div class="issue-title">ECU Stalling at Low RPM — Global Recall (Dec 2025)</div>
+          <div class="issue-chips">
+            <span class="chip chip-high">HIGH SEVERITY</span>
+            <span class="chip chip-ktm399">ALL 399cc MODELS</span>
+            <span class="chip chip-ktm399">OFFICIAL RECALL</span>
+          </div>
+        </div>
+        <div class="severity-bar"><div class="severity-circle sev-high">H</div><div class="severity-label">SEVERITY</div></div>
+        <div class="expand-icon">+</div>
+      </div>
+      <div class="issue-body">
+        <div class="issue-grid">
+          <div class="issue-col"><h4>Root Causes</h4><ul>
+            <li>ECU software bug causing stall at low RPM</li>
+            <li>Engine cuts out during deceleration / slow speed</li>
+            <li>Lean fueling edge case not caught in pre-production testing</li>
+            <li>Parallels the 373cc-era stalling issues (Issue #06)</li>
+          </ul></div>
+          <div class="issue-col"><h4>Recall Scope</h4><ul>
+            <li>2024–2026 KTM 390 Duke (global markets)</li>
+            <li>2025–2026 KTM 390 Enduro R, SMC R, Adventure R, Adventure X</li>
+            <li>2024 Husqvarna Vitpilen 401 & Svartpilen 401</li>
+            <li>India-sold units explicitly excluded from recall scope</li>
+            <li>Fix: complimentary ECU software update at dealer</li>
+          </ul></div>
+        </div>
+        <div class="issue-col" style="margin-bottom:12px"><h4>Safety Risk</h4><ul>
+          <li>Engine stall at low speed in city traffic → tip-over risk</li>
+          <li>Stall during tight U-turns or slow off-road sections is dangerous</li>
+          <li>KTM's own testing confirmed the failure condition before recall</li>
+        </ul></div>
+        <div class="fault-table-note">⚠️ <strong>Official KTM Statement (December 2025):</strong> "Internal tests showed the engine could stall at low RPM or while slowing down, which may cause a loss of drive in city traffic or slow off-road sections. This can also lead to a tip-over during tight turns or U-turns." — KTM Press Release, Dec 2025.</div>
+        <div class="fault-table-note" style="border-color:rgba(255,107,53,0.4);background:rgba(255,107,53,0.06);color:#e0c0a0">🇮🇳 <strong>India vs Global:</strong> The December 2025 global ECU recall for the 399cc engine explicitly excluded India-sold units, even though these bikes are physically manufactured at the same Bajaj Chakan plant. KTM India has not confirmed whether the ECU software difference applies to India-spec bikes. Indian 399cc owners experiencing stalling should request an ECU software version check from their dealer.</div>
+        <div class="user-reports"><h4>📋 User-Reported Evidence</h4>
+          <div class="quote-block">"Stay away from the 2025 390 Adventure R — stalling and dying problems. Took mine back to dealer, remapped it. STILL DIES. KTM has big problems now with all the 390s doing this."<span class="quote-source">— KTM Forums user (ktmforums.com), 2025</span></div>
+          <div class="quote-block">"Two official ECU updates have been applied to early-delivered bikes. None of those bikes came back with the stalling issue. In my view, if you buy a MY 2025 bike, the two ECU updates are already incorporated."<span class="quote-source">— European KTM dealer owner report (Dec 2025)</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card">
+      <div class="issue-header" onclick="toggleIssue(this)">
+        <div class="issue-num" style="background:rgba(255,107,53,0.15);color:var(--ktm399)">K2</div>
+        <div class="issue-title-wrap">
+          <div class="issue-title">Increasing Oil Consumption at High Mileage (Pattern Emerging)</div>
+          <div class="issue-chips">
+            <span class="chip chip-med">MEDIUM SEVERITY</span>
+            <span class="chip chip-ktm399">399cc MODELS</span>
+            <span class="chip chip-med">PATTERN — NOT CONFIRMED DEFECT</span>
+          </div>
+        </div>
+        <div class="severity-bar"><div class="severity-circle sev-med">M</div><div class="severity-label">SEVERITY</div></div>
+        <div class="expand-icon">+</div>
+      </div>
+      <div class="issue-body">
+        <div class="issue-grid">
+          <div class="issue-col"><h4>Reported Pattern</h4><ul>
+            <li>Some 373cc owners who upgraded to 399cc report early oil consumption signs</li>
+            <li>Pattern of progressive increase (every 5,000 → 3,000 → 2,500 km interval)</li>
+            <li>Cylinder and camshaft replacement quoted at €3,000 (official dealer, Barcelona)</li>
+            <li>Ring and bore tolerances suspected — mirrors 373cc Gen 2 issue</li>
+          </ul></div>
+          <div class="issue-col"><h4>Context & Caveats</h4><ul>
+            <li>Engine is new (2024 debut) — long-term data is limited</li>
+            <li>Most forum consensus: 399cc is more durable than 373cc at equivalent mileage</li>
+            <li>Extended service intervals mean users may not notice consumption early</li>
+            <li>Not a confirmed defect — monitor over 2026–2027 as bikes age</li>
+          </ul></div>
+        </div>
+        <div class="user-reports"><h4>📋 User-Reported Evidence</h4>
+          <div class="quote-block">"My 2021 [373cc] lasted until 2025 — 62,000 km. At 20,000 km the gear indicator failed. At the end, oil consumption kept increasing: first every 5,000 km, then 3,000, then 2,500 km. They said the cylinder and camshaft needed replacement — €3,000 estimate."<span class="quote-source">— KTM Forums (ktmforums.com), long-term owner, 2025</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- RESPONSIBILITY -->
+<section class="tab-panel" id="panel-responsibility">
+  <div class="section-title">Fault Attribution — Who Is Responsible?</div>
+  <div class="section-sub">BASED ON VERIFIED DOCUMENTATION, USER REPORTS, AND ENGINEERING CONTEXT</div>
+  <div class="verdict-box">
+    <h3>⚡ Summary Finding</h3>
+    <p>Responsibility is shared — and nuanced. KTM AG set the high-performance design requirements that created thermal and mechanical stress. Bajaj Auto executed the manufacturing with cost constraints. Neither party has formally acknowledged all issues. No single party is entirely "at fault" — but the pattern of delayed acknowledgment and warranty dismissal is a shared failure of both brands.</p>
+  </div>
+  <table class="resp-table">
+    <thead>
+      <tr><th>Issue</th><th>Design Fault</th><th>Manufacturing Fault</th><th>User Factor</th><th>Attribution</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Coolant–Oil Mixing</strong></td>
+        <td>High compression / thermal load strains seals</td>
+        <td>Seal rubber compound possibly incorrect; inadequate QC early batches</td>
+        <td>Neglecting coolant type; delayed service</td>
+        <td><span class="resp-chip rc-ktm">KTM Design</span><span class="resp-chip rc-mfg">Bajaj Mfg</span></td>
+      </tr>
+      <tr>
+        <td><strong>Oil Consumption</strong></td>
+        <td>High-compression single inherently consumes more oil</td>
+        <td>Post-2019 piston ring changes suspected (cost cut); ring sealing inconsistency</td>
+        <td>Oil brand choice; riding style; break-in procedure</td>
+        <td><span class="resp-chip rc-ktm">KTM Design</span><span class="resp-chip rc-mfg">Bajaj Mfg (post-2019)</span><span class="resp-chip rc-user">User Factor</span></td>
+      </tr>
+      <tr>
+        <td><strong>Water Pump Seal Failure</strong></td>
+        <td>Water pump placement exposes seal to high oil-side pressure</td>
+        <td>Seal material/fitment quality issues; rubber compound reaction</td>
+        <td>Wrong coolant; overheating neglected</td>
+        <td><span class="resp-chip rc-bajaj">KTM–Bajaj Joint</span><span class="resp-chip rc-mfg">Bajaj Mfg</span></td>
+      </tr>
+      <tr>
+        <td><strong>Timing Chain Noise</strong></td>
+        <td>High-revving single-cylinder stresses chain system</td>
+        <td>Assembly torque inconsistencies; tensioner guide material</td>
+        <td>Skipping regular oil changes</td>
+        <td><span class="resp-chip rc-ktm">KTM Design</span><span class="resp-chip rc-mfg">Bajaj Mfg</span></td>
+      </tr>
+      <tr>
+        <td><strong>Overheating</strong></td>
+        <td>12.6:1 compression and single-cyl layout heat-intensive</td>
+        <td>Cooling system sizing for performance vs city use</td>
+        <td>City riding patterns; wrong oil grade</td>
+        <td><span class="resp-chip rc-ktm">KTM Design</span><span class="resp-chip rc-user">User Factor</span></td>
+      </tr>
+      <tr>
+        <td><strong>ECU / Stalling</strong></td>
+        <td>Lean factory mapping for emissions; aggressive fueling targets</td>
+        <td>Wiring harness quality; connector corrosion in some units</td>
+        <td>Aftermarket tuning without proper setup; battery neglect</td>
+        <td><span class="resp-chip rc-ktm">KTM Design</span><span class="resp-chip rc-mfg">Bajaj Mfg (wiring)</span><span class="resp-chip rc-user">User Factor</span></td>
+      </tr>
+      <tr>
+        <td><strong>Build Quality / Vibration</strong></td>
+        <td>Single-cylinder vibration is inherent to architecture</td>
+        <td>Cost optimization by Bajaj; lower hardware tolerances vs KTM spec</td>
+        <td>Maintenance neglect; harsh use</td>
+        <td><span class="resp-chip rc-ktm">KTM Design</span><span class="resp-chip rc-mfg">Bajaj Mfg</span></td>
+      </tr>
+    </tbody>
+  </table>
+  <div style="margin-top:28px">
+    <div class="verdict-box" style="border-color:var(--dominar)">
+      <h3 style="color:#4a9eff">⚡ Why Dominar 400 Has Fewer Issues</h3>
+      <p>The Dominar 400 uses the same 373cc block but is deliberately detuned: lower peak RPM target, softer tuning. This reduces thermal stress and piston ring wear. Build quality/vibration issues are <em>more</em> common on Dominar due to Bajaj's cost optimization of hardware (lower-grade fasteners, different tolerances vs KTM-spec components), but mechanical failures like coolant mixing and oil consumption are significantly less prevalent because the engine is not being pushed as hard.</p>
+    </div>
+  </div>
+</section>
+
+<!-- HEATMAP -->
+<section class="tab-panel" id="panel-heatmap">
+  <div class="section-title">Failure Mode Matrix</div>
+  <div class="section-sub">CROSS-PLATFORM SEVERITY — BASED ON AGGREGATED FORUM + OWNER REPORT EVIDENCE</div>
+  <div class="verdict-box">
+    <h3>⚡ How to Read This</h3>
+    <p><strong style="color:#ff8888">HIGH</strong> = widely reported, common failure mode. <strong style="color:#f0c060">MED</strong> = moderate reports, not universal. <strong style="color:#4ade80">LOW</strong> = occasional or isolated. <strong style="color:rgba(255,255,255,0.2)">—</strong> = no meaningful data / architecture doesn't apply.</p>
+  </div>
+  <div class="heatmap-wrap">
+    <table class="heatmap-table">
+      <thead>
+        <tr>
+          <th class="row-header">Issue / Failure Mode</th>
+          <th style="color:#ff8855">KTM 373cc<br><span style="color:rgba(255,255,255,0.3);font-size:9px">Duke/RC pre-BS6</span></th>
+          <th style="color:#70b0ff">Dominar 400<br><span style="color:rgba(255,255,255,0.3);font-size:9px">373cc detuned</span></th>
+          <th style="color:#ff9966">KTM 399cc<br><span style="color:rgba(255,255,255,0.3);font-size:9px">2024+ Gen</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="issue-name">Coolant–Oil Mixing</td><td><span class="hm-high">HIGH</span></td><td><span class="hm-med">MED</span></td><td><span class="hm-low">LOW</span></td></tr>
+        <tr><td class="issue-name">Excessive Oil Consumption</td><td><span class="hm-high">HIGH</span></td><td><span class="hm-low">LOW</span></td><td><span class="hm-med">MED</span></td></tr>
+        <tr><td class="issue-name">Water Pump Seal Failure</td><td><span class="hm-high">HIGH</span></td><td><span class="hm-med">MED</span></td><td><span class="hm-low">LOW</span></td></tr>
+        <tr><td class="issue-name">Timing Chain / Tensioner Noise</td><td><span class="hm-med">MED</span></td><td><span class="hm-high">HIGH</span></td><td><span class="hm-low">LOW</span></td></tr>
+        <tr><td class="issue-name">Overheating (City Traffic)</td><td><span class="hm-high">HIGH</span></td><td><span class="hm-med">MED</span></td><td><span class="hm-med">MED</span></td></tr>
+        <tr><td class="issue-name">ECU / Stalling / Fueling</td><td><span class="hm-med">MED</span></td><td><span class="hm-low">LOW</span></td><td><span class="hm-high">HIGH</span> <span style="font-size:9px;color:var(--danger)">RECALL</span></td></tr>
+        <tr><td class="issue-name">Build Quality / Vibration</td><td><span class="hm-med">MED</span></td><td><span class="hm-high">HIGH</span></td><td><span class="hm-low">LOW</span></td></tr>
+        <tr><td class="issue-name">Oil / Coolant Leaks (External)</td><td><span class="hm-med">MED</span></td><td><span class="hm-low">LOW</span></td><td><span class="hm-low">LOW</span></td></tr>
+        <tr><td class="issue-name">Long-Term Reliability (50k km+)</td><td><span class="hm-med">MED</span></td><td><span class="hm-high">HIGH</span> <span style="font-size:9px;color:var(--good)">Good</span></td><td class="hm-none">TBD</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="heatmap-legend">
+    <span><span class="hm-high">HIGH</span> = Widely reported, common</span>
+    <span><span class="hm-med">MED</span> = Moderate / inconsistent</span>
+    <span><span class="hm-low">LOW</span> = Isolated / rare</span>
+    <span><span style="color:rgba(255,255,255,0.2)">—</span> = N/A or no data</span>
+  </div>
+  <div class="verdict-box" style="margin-top:28px;border-color:var(--accent2)">
+    <h3 style="color:var(--accent2)">⚡ Key Takeaways</h3>
+    <p><strong style="color:var(--text)">KTM 373cc</strong> has the broadest failure spread — highest on coolant-oil mixing, water pump failure, and oil consumption. The aggressive tune is the root cause across most categories.<br><br>
+    <strong style="color:var(--text)">Dominar 400</strong> escapes most mechanical failures due to detuning, but suffers disproportionately from build quality issues (vibration, timing chain, fasteners) — pointing to Bajaj cost-optimization on non-engine hardware.<br><br>
+    <strong style="color:var(--text)">KTM 399cc</strong> clean-slated most old issues but introduced the global ECU stalling recall. Long-term mechanical data is still limited (only 2 years in market).</p>
+  </div>
+</section>
+
+<!-- SOURCES -->
+<section class="tab-panel" id="panel-sources">
+  <div class="section-title">Sources & References</div>
+  <div class="section-sub">ALL CLAIMS IN THIS FILE ARE TRACEABLE TO THESE SOURCES</div>
+  <p style="font-size:13px;color:var(--muted);margin-bottom:24px">Sources are categorized by type. User forum reports are included as primary evidence for issues that lack official documentation. Multiple independent corroborating reports across forums, countries, and model years significantly increase confidence in each claim.</p>
+
+  <div class="section-title" style="font-size:17px;margin-bottom:12px">373cc & Dominar Sources</div>
+  <div class="source-grid">
+    <a class="source-card" href="https://en.wikipedia.org/wiki/KTM_390_series" target="_blank"><div class="source-type st-wiki">Wikipedia</div><h4>KTM 390 Series — Wikipedia</h4><p>Engine specs, model history, KTM-Bajaj production details, displacement figures</p></a>
+    <a class="source-card" href="https://en.wikipedia.org/wiki/KTM" target="_blank"><div class="source-type st-wiki">Wikipedia</div><h4>KTM AG — Wikipedia</h4><p>Bajaj ownership stake history; 2025 acquisition of 74.9% controlling stake</p></a>
+    <a class="source-card" href="https://www.rc390-forum.com/threads/oil-disapearing.3869/" target="_blank"><div class="source-type st-forum">User Forum</div><h4>RC390 Forum — "Oil Disappearing"</h4><p>User reports of 150–200ml / 1,000 km post-2019; piston design change suspicions</p></a>
+    <a class="source-card" href="https://www.ktmduke390forum.com/threads/duke-390-consumes-too-much-oil.47957/" target="_blank"><div class="source-type st-forum">User Forum</div><h4>Duke 390 Forum — "Too Much Oil"</h4><p>KTM India circular (100–200ml/1000km acceptable); Motul 7100 correlation discussion</p></a>
+    <a class="source-card" href="https://www.ktmduke390forum.com/threads/duke-390-consuming-a-crazy-amount-of-oil.47548/" target="_blank"><div class="source-type st-forum">User Forum</div><h4>Duke 390 Forum — "Crazy Amount of Oil"</h4><p>2024 model: 500ml consumed in 3,000 km; dealer refusing warranty action</p></a>
+    <a class="source-card" href="https://www.ktmforums.com/threads/ktm-390-adv-high-oil-consumption-or-engine-issues.138501/" target="_blank"><div class="source-type st-forum">User Forum</div><h4>KTM Forums — ADV High Oil Consumption</h4><p>ADV 390 owners reporting very low oil level after short distances; dealer responses</p></a>
+    <a class="source-card" href="https://www.rc390-forum.com/threads/water-pump-and-or-linkage-failure.2327/" target="_blank"><div class="source-type st-forum">User Forum</div><h4>RC390 Forum — Water Pump Seal Failure</h4><p>Head gasket + water pump failure sequence; internal damage documentation</p></a>
+    <a class="source-card" href="https://www.ktmduke390forum.com/threads/water-pump-oil-seals-and-reusing-gaskets.44359/" target="_blank"><div class="source-type st-forum">User Forum</div><h4>Duke 390 Forum — Water Pump Seals</h4><p>Brown oil from water pump seal failure; repair instructions for both seals</p></a>
+    <a class="source-card" href="https://www.ktmduke390forum.com/threads/metal-shavings-and-water-in-oil-engine.47569/" target="_blank"><div class="source-type st-forum">User Forum</div><h4>Duke 390 Forum — Metal Shavings + Coolant</h4><p>2018 model at 22,300 km: coolant in oil, metal particles, abnormal cooling pressure</p></a>
+    <a class="source-card" href="https://www.xbhp.com/talkies/motorcycle-ownership-experiences/33093-bajaj-dominar-400-ownership-experience-thread/page610" target="_blank"><div class="source-type st-forum">User Forum</div><h4>xBhp — Dominar 400 Ownership Thread</h4><p>Timing chain / tensioner noise; Bajaj service center dismissal pattern</p></a>
+    <a class="source-card" href="https://www.bikewale.com/bajaj-bikes/dominar-400/reviews/" target="_blank"><div class="source-type st-user">User Reviews</div><h4>BikeWale — Dominar 400 User Reviews</h4><p>Camshaft, rocker arm, ECU issues; engine opened 6 times without resolution</p></a>
+    <a class="source-card" href="https://www.zigwheels.com/newbikes/faqs/what-is-the-negative-or-problems-of-this-bike/1806559/" target="_blank"><div class="source-type st-user">User Reviews</div><h4>ZigWheels — Dominar 400 Negatives</h4><p>Vibration, chain/gear noise, overheating, service network quality issues</p></a>
+    <a class="source-card" href="https://www.ktmduke390forum.com/threads/ktm-duke-390-stalling-problem.46813/" target="_blank"><div class="source-type st-forum">User Forum</div><h4>Duke 390 Forum — Stalling Problem</h4><p>2018 model stalling in first 20 min; detailed diagnosis thread; lean fueling root cause</p></a>
+    <a class="source-card" href="https://www.ktmduke390forum.com/threads/ktm-duke-390-stalling-problem.48881/" target="_blank"><div class="source-type st-forum">User Forum</div><h4>Duke 390 Forum — Stalling (Clutch/Sensor)</h4><p>Side stand switch and clutch sensor as common stalling causes; ECU reset procedure</p></a>
+    <a class="source-card" href="https://www.team-bhp.com/forum/motorbikes/233935-new-ktm-390-duke-engine-stalling-problem.html" target="_blank"><div class="source-type st-user">Team-BHP</div><h4>Team-BHP — 2020 Duke 390 Stalling</h4><p>Brand new 2020 model developing stalling at low speed; community diagnosis</p></a>
+    <a class="source-card" href="https://grokipedia.com/page/KTM_390_series" target="_blank"><div class="source-type st-wiki">Reference</div><h4>Grokipedia — KTM 390 Series</h4><p>2025 Bajaj 74.9% acquisition of KTM; LC4c engine evolution; production history</p></a>
+    <a class="source-card" href="https://www.robimotoph.com/maintenance-diy-tips/kawasaki-dominar-400-engine-problems-causes-symptoms-fixes/" target="_blank"><div class="source-type st-forum">User Report Compilation</div><h4>RobiMoto PH — Dominar 400 Engine Problems</h4><p>Overheating in traffic; ticking noise; stalling; vibration at 4,000–6,000 RPM</p></a>
+  </div>
+
+  <div class="section-title" style="font-size:17px;margin:28px 0 12px">399cc Sources</div>
+  <div class="source-grid">
+    <a class="source-card" href="https://www.autox.com/news/bike-news/ktm-390-duke-adventure-enduro-r-and-more-recalled-over-engine-stall-issue-122357/" target="_blank"><div class="source-type st-official">News / Official</div><h4>autoX — KTM 399cc Global Recall Dec 2025</h4><p>Official recall scope; 2024–2026 models; ECU stalling at low RPM; India excluded; ECU update fix</p></a>
+    <a class="source-card" href="https://ridermagazine.com/2025/12/05/ktm-and-husqvarna-recall-2024-2025-390-401-models/" target="_blank"><div class="source-type st-official">Industry Press</div><h4>Rider Magazine — KTM / Husqvarna Recall</h4><p>399cc recall details; Husqvarna 401 models included; ECU software update confirmed as fix</p></a>
+    <a class="source-card" href="https://www.ktmforums.com/threads/subject-ktm-390-adventure-engine-reliability-longevity.147221/" target="_blank"><div class="source-type st-forum">User Forum</div><h4>KTM Forums — 399cc Reliability Thread</h4><p>Long-term 373cc owner testimonials; 62,000 km engine story; progressive oil consumption; cylinder/cam replacement costs</p></a>
+    <a class="source-card" href="https://press.ktm.com/news-recall-of-2024-2026-ktm-390-duke-and-2025-2026-ktm-390-enduro-r-smc-r-adventure-r-and-adventure-x-update-of-engine-control-unit-software" target="_blank"><div class="source-type st-official">Official — KTM Press</div><h4>KTM Press Release — Global 399cc Recall</h4><p>Primary source for official recall notice; ECU software update; all affected model year list</p></a>
+  </div>
+
+  <div class="verdict-box" style="margin-top:28px;border-color:var(--muted)">
+    <h3 style="color:var(--muted)">SOURCE QUALITY NOTE</h3>
+    <p>User forum reports are treated as primary evidence for issues that manufacturers have not officially acknowledged. Multiple independent corroborating reports across different forums, countries, and model years significantly increase confidence in a claim. Single or isolated reports are noted as such. No claim in this document relies on a single unverified source.</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="doc-footer">
+  KTM / Bajaj Engine Issue Compendium — File 1 of 3 · Compiled April 2026<br>
+  KTM 373cc (pre-BS6) · KTM 399cc (2024+) · Bajaj Dominar 400<br>
+  Not affiliated with KTM AG or Bajaj Auto Ltd. · For informational and research use only, made by @kjridesabike
+</footer>
+
+<script>
+function switchTab(id) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+function toggleIssue(header) {
+  const body = header.nextElementSibling;
+  const isOpen = body.classList.contains('open');
+  document.querySelectorAll('.issue-body').forEach(b => b.classList.remove('open'));
+  document.querySelectorAll('.issue-header').forEach(h => h.classList.remove('open'));
+  if (!isOpen) { body.classList.add('open'); header.classList.add('open'); }
+}
+</script>
+</body>
+</html>
