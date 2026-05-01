@@ -1,492 +1,665 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fork Dive — FBD & Calculations</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap');
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fork Dive — FBD & Calculations</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap");
 
-  :root {
-    --bg: #0a0a0a;
-    --surface: #111111;
-    --border: #222222;
-    --accent: #e8ff00;
-    --accent2: #ff4d00;
-    --green: #00ff88;
-    --text: #e8e8e8;
-    --muted: #666;
-    --mono: 'JetBrains Mono', monospace;
-    --sans: 'Syne', sans-serif;
-  }
+      :root {
+        --bg: #0a0a0a;
+        --surface: #111111;
+        --border: #222222;
+        --accent: #e8ff00;
+        --accent2: #ff4d00;
+        --green: #00ff88;
+        --text: #e8e8e8;
+        --muted: #666;
+        --mono: "JetBrains Mono", monospace;
+        --sans: "Syne", sans-serif;
+      }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--sans);
-    min-height: 100vh;
-    padding: 40px 24px;
-  }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--sans);
+        min-height: 100vh;
+        padding: 40px 24px;
+      }
 
-  h1 {
-    font-size: 2rem;
-    font-weight: 800;
-    letter-spacing: -0.03em;
-    margin-bottom: 4px;
-    color: var(--accent);
-  }
+      h1 {
+        font-size: 2rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        margin-bottom: 4px;
+        color: var(--accent);
+      }
 
-  .subtitle {
-    font-family: var(--mono);
-    font-size: 0.75rem;
-    color: var(--muted);
-    margin-bottom: 8px;
-    letter-spacing: 0.1em;
-  }
+      .subtitle {
+        font-family: var(--mono);
+        font-size: 0.75rem;
+        color: var(--muted);
+        margin-bottom: 8px;
+        letter-spacing: 0.1em;
+      }
 
-  .credit {
-    font-family: var(--mono);
-    font-size: 0.65rem;
-    color: #333;
-    margin-bottom: 40px;
-    letter-spacing: 0.08em;
-  }
+      .credit {
+        font-family: var(--mono);
+        font-size: 0.65rem;
+        color: #333;
+        margin-bottom: 40px;
+        letter-spacing: 0.08em;
+      }
 
-  .section {
-    margin-bottom: 40px;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    overflow: hidden;
-  }
+      .section {
+        margin-bottom: 40px;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        overflow: hidden;
+      }
 
-  .section-header {
-    background: var(--surface);
-    padding: 12px 20px;
-    font-family: var(--mono);
-    font-size: 0.7rem;
-    letter-spacing: 0.15em;
-    color: var(--accent);
-    text-transform: uppercase;
-    border-bottom: 1px solid var(--border);
-  }
+      .section-header {
+        background: var(--surface);
+        padding: 12px 20px;
+        font-family: var(--mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.15em;
+        color: var(--accent);
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border);
+      }
 
-  .section-body {
-    padding: 24px 20px;
-  }
+      .section-body {
+        padding: 24px 20px;
+      }
 
-  /* INPUT GRID */
-  .input-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 16px;
-    margin-bottom: 20px;
-  }
+      /* INPUT GRID */
+      .input-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 16px;
+        margin-bottom: 20px;
+      }
 
-  .input-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
+      .input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
 
-  .input-group label {
-    font-family: var(--mono);
-    font-size: 0.65rem;
-    color: var(--muted);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
+      .input-group label {
+        font-family: var(--mono);
+        font-size: 0.65rem;
+        color: var(--muted);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
 
-  .input-group input {
-    background: #0d0d0d;
-    border: 1px solid var(--border);
-    border-radius: 3px;
-    color: var(--accent);
-    font-family: var(--mono);
-    font-size: 0.85rem;
-    font-weight: 700;
-    padding: 8px 12px;
-    width: 100%;
-    outline: none;
-    transition: border-color 0.15s;
-  }
+      .input-group input {
+        background: #0d0d0d;
+        border: 1px solid var(--border);
+        border-radius: 3px;
+        color: var(--accent);
+        font-family: var(--mono);
+        font-size: 0.85rem;
+        font-weight: 700;
+        padding: 8px 12px;
+        width: 100%;
+        outline: none;
+        transition: border-color 0.15s;
+      }
 
-  .input-group input:focus {
-    border-color: var(--accent);
-  }
+      .input-group input:focus {
+        border-color: var(--accent);
+      }
 
-  .input-group .unit {
-    font-family: var(--mono);
-    font-size: 0.6rem;
-    color: #444;
-    margin-top: 2px;
-  }
+      .input-group .unit {
+        font-family: var(--mono);
+        font-size: 0.6rem;
+        color: #444;
+        margin-top: 2px;
+      }
 
-  .recalc-btn {
-    background: var(--accent);
-    color: #000;
-    border: none;
-    border-radius: 3px;
-    font-family: var(--mono);
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    padding: 10px 24px;
-    cursor: pointer;
-    text-transform: uppercase;
-    transition: opacity 0.15s;
-    margin-top: 4px;
-  }
+      .recalc-btn {
+        background: var(--accent);
+        color: #000;
+        border: none;
+        border-radius: 3px;
+        font-family: var(--mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        padding: 10px 24px;
+        cursor: pointer;
+        text-transform: uppercase;
+        transition: opacity 0.15s;
+        margin-top: 4px;
+      }
 
-  .recalc-btn:hover { opacity: 0.85; }
+      .recalc-btn:hover {
+        opacity: 0.85;
+      }
 
-  .physics-note {
-    font-family: var(--mono);
-    font-size: 0.65rem;
-    color: #444;
-    margin-top: 14px;
-    line-height: 1.6;
-    border-left: 2px solid #1e1e1e;
-    padding-left: 12px;
-  }
+      .physics-note {
+        font-family: var(--mono);
+        font-size: 0.65rem;
+        color: #444;
+        margin-top: 14px;
+        line-height: 1.6;
+        border-left: 2px solid #1e1e1e;
+        padding-left: 12px;
+      }
 
-  .physics-note span { color: var(--accent); }
+      .physics-note span {
+        color: var(--accent);
+      }
 
-  /* FBD */
-  .fbd-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
-  }
+      /* FBD */
+      .fbd-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+      }
 
-  @media (max-width: 700px) {
-    .fbd-container { grid-template-columns: 1fr; }
-  }
+      @media (max-width: 700px) {
+        .fbd-container {
+          grid-template-columns: 1fr;
+        }
+      }
 
-  canvas {
-    width: 100%;
-    height: auto;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    background: #0d0d0d;
-  }
+      canvas {
+        width: 100%;
+        height: auto;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        background: #0d0d0d;
+      }
 
-  .fbd-label {
-    font-family: var(--mono);
-    font-size: 0.65rem;
-    color: var(--muted);
-    text-align: center;
-    margin-top: 8px;
-    letter-spacing: 0.05em;
-  }
+      .fbd-label {
+        font-family: var(--mono);
+        font-size: 0.65rem;
+        color: var(--muted);
+        text-align: center;
+        margin-top: 8px;
+        letter-spacing: 0.05em;
+      }
 
-  /* Calculations */
-  .calc-block { margin-bottom: 28px; }
+      /* Calculations */
+      .calc-block {
+        margin-bottom: 28px;
+      }
 
-  .calc-title {
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: var(--accent2);
-    margin-bottom: 12px;
-    letter-spacing: 0.05em;
-  }
+      .calc-title {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--accent2);
+        margin-bottom: 12px;
+        letter-spacing: 0.05em;
+      }
 
-  .formula {
-    background: #0d0d0d;
-    border-left: 3px solid var(--accent);
-    padding: 12px 16px;
-    font-family: var(--mono);
-    font-size: 0.8rem;
-    line-height: 1.8;
-    margin-bottom: 8px;
-    border-radius: 0 4px 4px 0;
-  }
+      .formula {
+        background: #0d0d0d;
+        border-left: 3px solid var(--accent);
+        padding: 12px 16px;
+        font-family: var(--mono);
+        font-size: 0.8rem;
+        line-height: 1.8;
+        margin-bottom: 8px;
+        border-radius: 0 4px 4px 0;
+      }
 
-  .formula .comment { color: var(--muted); }
-  .formula .result { color: var(--accent); font-weight: 700; }
-  .formula .input-val { color: #7eb8f7; }
+      .formula .comment {
+        color: var(--muted);
+      }
+      .formula .result {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .formula .input-val {
+        color: #7eb8f7;
+      }
 
-  /* Results */
-  .results-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-  }
+      /* Results */
+      .results-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
 
-  @media (max-width: 600px) {
-    .results-grid { grid-template-columns: 1fr; }
-  }
+      @media (max-width: 600px) {
+        .results-grid {
+          grid-template-columns: 1fr;
+        }
+      }
 
-  .result-card {
-    background: #0d0d0d;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 16px;
-  }
+      .result-card {
+        background: #0d0d0d;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 16px;
+      }
 
-  .result-card.braking { border-top: 2px solid var(--accent2); }
-  .result-card.accel   { border-top: 2px solid var(--green); }
+      .result-card.braking {
+        border-top: 2px solid var(--accent2);
+      }
+      .result-card.accel {
+        border-top: 2px solid var(--green);
+      }
 
-  .result-card h3 {
-    font-family: var(--mono);
-    font-size: 0.65rem;
-    letter-spacing: 0.12em;
-    color: var(--muted);
-    margin-bottom: 12px;
-    text-transform: uppercase;
-  }
+      .result-card h3 {
+        font-family: var(--mono);
+        font-size: 0.65rem;
+        letter-spacing: 0.12em;
+        color: var(--muted);
+        margin-bottom: 12px;
+        text-transform: uppercase;
+      }
 
-  .result-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    padding: 5px 0;
-    border-bottom: 1px solid #1a1a1a;
-    font-family: var(--mono);
-    font-size: 0.72rem;
-  }
+      .result-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        padding: 5px 0;
+        border-bottom: 1px solid #1a1a1a;
+        font-family: var(--mono);
+        font-size: 0.72rem;
+      }
 
-  .result-row:last-child { border-bottom: none; }
-  .result-row .label { color: var(--muted); }
-  .result-row .val { font-weight: 700; }
-  .result-row .val.up   { color: var(--green); }
-  .result-row .val.down { color: var(--accent2); }
-  .result-row .val.neutral { color: var(--text); }
+      .result-row:last-child {
+        border-bottom: none;
+      }
+      .result-row .label {
+        color: var(--muted);
+      }
+      .result-row .val {
+        font-weight: 700;
+      }
+      .result-row .val.up {
+        color: var(--green);
+      }
+      .result-row .val.down {
+        color: var(--accent2);
+      }
+      .result-row .val.neutral {
+        color: var(--text);
+      }
 
-  .note {
-    font-family: var(--mono);
-    font-size: 0.68rem;
-    color: var(--muted);
-    line-height: 1.7;
-    padding: 12px 16px;
-    background: #0d0d0d;
-    border-radius: 4px;
-    border-left: 3px solid var(--border);
-    margin-top: 16px;
-  }
+      .note {
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        color: var(--muted);
+        line-height: 1.7;
+        padding: 12px 16px;
+        background: #0d0d0d;
+        border-radius: 4px;
+        border-left: 3px solid var(--border);
+        margin-top: 16px;
+      }
 
-  .note span { color: var(--accent); }
+      .note span {
+        color: var(--accent);
+      }
 
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-family: var(--mono);
-    font-size: 0.75rem;
-  }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: var(--mono);
+        font-size: 0.75rem;
+      }
 
-  th {
-    text-align: left;
-    padding: 8px 12px;
-    color: var(--muted);
-    font-weight: 400;
-    border-bottom: 1px solid var(--border);
-    letter-spacing: 0.08em;
-  }
+      th {
+        text-align: left;
+        padding: 8px 12px;
+        color: var(--muted);
+        font-weight: 400;
+        border-bottom: 1px solid var(--border);
+        letter-spacing: 0.08em;
+      }
 
-  td {
-    padding: 10px 12px;
-    border-bottom: 1px solid #1a1a1a;
-  }
+      td {
+        padding: 10px 12px;
+        border-bottom: 1px solid #1a1a1a;
+      }
 
-  td:first-child { color: var(--muted); }
-  td:nth-child(2) { color: var(--accent); font-weight: 700; }
-  td:last-child { color: #888; font-size: 0.7rem; }
-</style>
-</head>
-<body>
+      td:first-child {
+        color: var(--muted);
+      }
+      td:nth-child(2) {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      td:last-child {
+        color: #888;
+        font-size: 0.7rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>FORK DIVE — FBD & CALCULATIONS</h1>
+    <p class="subtitle" id="mainSubtitle">
+      200KG BIKE · 21° RAKE · 1500MM WHEELBASE · 50↔0 KMPH IN 2.5S
+    </p>
+    <p class="credit">KANISHK JAIN — full math in file linked in bio</p>
 
-<h1>FORK DIVE — FBD & CALCULATIONS</h1>
-<p class="subtitle" id="mainSubtitle">200KG BIKE · 21° RAKE · 1500MM WHEELBASE · 50↔0 KMPH IN 2.5S</p>
-<p class="credit">KANISHK JAIN — full math in file linked in bio</p>
-
-<!-- INPUTS -->
-<div class="section">
-  <div class="section-header">00 — Inputs (edit and recalculate)</div>
-  <div class="section-body">
-    <div class="input-grid">
-      <div class="input-group">
-        <label>Total Mass</label>
-        <input type="number" id="inp_mass" value="200" min="50" max="500" step="1">
-        <span class="unit">kg</span>
-      </div>
-      <div class="input-group">
-        <label>Rake Angle (from vertical)</label>
-        <input type="number" id="inp_rake" value="21" min="15" max="35" step="0.1">
-        <span class="unit">degrees</span>
-      </div>
-      <div class="input-group">
-        <label>Wheelbase</label>
-        <input type="number" id="inp_wb" value="1500" min="1200" max="1800" step="1">
-        <span class="unit">mm</span>
-      </div>
-      <div class="input-group">
-        <label>Speed</label>
-        <input type="number" id="inp_speed" value="50" min="10" max="200" step="1">
-        <span class="unit">kmph</span>
-      </div>
-      <div class="input-group">
-        <label>Time (brake/accel)</label>
-        <input type="number" id="inp_time" value="2.5" min="0.5" max="10" step="0.1">
-        <span class="unit">seconds</span>
-      </div>
-      <div class="input-group">
-        <label>CG Height</label>
-        <input type="number" id="inp_cgh" value="600" min="300" max="900" step="1">
-        <span class="unit">mm</span>
-      </div>
-      <div class="input-group">
-        <label>Fork Spring Rate (total)</label>
-        <input type="number" id="inp_spring" value="18" min="5" max="60" step="0.5">
-        <span class="unit">N/mm (both legs combined)</span>
-      </div>
-      <div class="input-group">
-        <label>Front Wheel Radius</label>
-        <input type="number" id="inp_radius" value="320" min="250" max="380" step="1">
-        <span class="unit">mm (17" wheel = 320mm)</span>
-      </div>
-      <div class="input-group">
-        <label>Fork Offset</label>
-        <input type="number" id="inp_offset" value="30" min="0" max="60" step="1">
-        <span class="unit">mm</span>
+    <!-- INPUTS -->
+    <div class="section">
+      <div class="section-header">00 — Inputs (edit and recalculate)</div>
+      <div class="section-body">
+        <div class="input-grid">
+          <div class="input-group">
+            <label>Total Mass</label>
+            <input
+              type="number"
+              id="inp_mass"
+              value="200"
+              min="50"
+              max="500"
+              step="1"
+            />
+            <span class="unit">kg</span>
+          </div>
+          <div class="input-group">
+            <label>Rake Angle (from vertical)</label>
+            <input
+              type="number"
+              id="inp_rake"
+              value="21"
+              min="15"
+              max="35"
+              step="0.1"
+            />
+            <span class="unit">degrees</span>
+          </div>
+          <div class="input-group">
+            <label>Wheelbase</label>
+            <input
+              type="number"
+              id="inp_wb"
+              value="1500"
+              min="1200"
+              max="1800"
+              step="1"
+            />
+            <span class="unit">mm</span>
+          </div>
+          <div class="input-group">
+            <label>Speed</label>
+            <input
+              type="number"
+              id="inp_speed"
+              value="50"
+              min="10"
+              max="200"
+              step="1"
+            />
+            <span class="unit">kmph</span>
+          </div>
+          <div class="input-group">
+            <label>Time (brake/accel)</label>
+            <input
+              type="number"
+              id="inp_time"
+              value="2.5"
+              min="0.5"
+              max="10"
+              step="0.1"
+            />
+            <span class="unit">seconds</span>
+          </div>
+          <div class="input-group">
+            <label>CG Height</label>
+            <input
+              type="number"
+              id="inp_cgh"
+              value="600"
+              min="300"
+              max="900"
+              step="1"
+            />
+            <span class="unit">mm</span>
+          </div>
+          <div class="input-group">
+            <label>Fork Spring Rate (total)</label>
+            <input
+              type="number"
+              id="inp_spring"
+              value="18"
+              min="5"
+              max="60"
+              step="0.5"
+            />
+            <span class="unit">N/mm (both legs combined)</span>
+          </div>
+          <div class="input-group">
+            <label>Front Wheel Radius</label>
+            <input
+              type="number"
+              id="inp_radius"
+              value="320"
+              min="250"
+              max="380"
+              step="1"
+            />
+            <span class="unit">mm (17" wheel = 320mm)</span>
+          </div>
+          <div class="input-group">
+            <label>Fork Offset</label>
+            <input
+              type="number"
+              id="inp_offset"
+              value="30"
+              min="0"
+              max="60"
+              step="1"
+            />
+            <span class="unit">mm</span>
+          </div>
+        </div>
+        <button class="recalc-btn" onclick="recalculate()">
+          ↻ Recalculate
+        </button>
+        <div class="physics-note">
+          <span>Physics guarantee:</span> Weight transfer direction (front on
+          braking, rear on accel), wheelbase direction change, and trail
+          direction change are exact — not assumption-dependent.<br />
+          CG height, spring rate, wheel radius, fork offset affect
+          <span>magnitude</span> only.
+        </div>
       </div>
     </div>
-    <button class="recalc-btn" onclick="recalculate()">↻ Recalculate</button>
-    <div class="physics-note">
-      <span>Physics guarantee:</span> Weight transfer direction (front on braking, rear on accel), wheelbase direction change, and trail direction change are exact — not assumption-dependent.<br>
-      CG height, spring rate, wheel radius, fork offset affect <span>magnitude</span> only.
-    </div>
-  </div>
-</div>
 
-<!-- FBD -->
-<div class="section">
-  <div class="section-header">01 — Free Body Diagrams</div>
-  <div class="section-body">
-    <div class="fbd-container">
-      <div>
-        <canvas id="fbdBraking" width="400" height="320"></canvas>
-        <p class="fbd-label">FBD — BRAKING</p>
-      </div>
-      <div>
-        <canvas id="fbdAccel" width="400" height="320"></canvas>
-        <p class="fbd-label">FBD — ACCELERATION</p>
+    <!-- FBD -->
+    <div class="section">
+      <div class="section-header">01 — Free Body Diagrams</div>
+      <div class="section-body">
+        <div class="fbd-container">
+          <div>
+            <canvas id="fbdBraking" width="400" height="320"></canvas>
+            <p class="fbd-label">FBD — BRAKING</p>
+          </div>
+          <div>
+            <canvas id="fbdAccel" width="400" height="320"></canvas>
+            <p class="fbd-label">FBD — ACCELERATION</p>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-</div>
 
-<!-- CALCULATIONS -->
-<div class="section">
-  <div class="section-header">02 — Step by Step Calculations</div>
-  <div class="section-body" id="calcBody">
-    <!-- filled by JS -->
-  </div>
-</div>
-
-<!-- RESULTS -->
-<div class="section">
-  <div class="section-header">03 — Results Summary</div>
-  <div class="section-body">
-    <div class="results-grid">
-      <div class="result-card braking">
-        <h3>🔴 Braking</h3>
-        <div class="result-row"><span class="label">Deceleration</span><span class="val neutral" id="r_decel">—</span></div>
-        <div class="result-row"><span class="label">Weight to front</span><span class="val down" id="r_dw_b">—</span></div>
-        <div class="result-row"><span class="label">Fork dive</span><span class="val down" id="r_dive">—</span></div>
-        <div class="result-row"><span class="label">Wheelbase</span><span class="val down" id="r_wb_b">—</span></div>
-        <div class="result-row"><span class="label">Rake angle</span><span class="val down" id="r_rake_b">—</span></div>
-        <div class="result-row"><span class="label">Trail</span><span class="val down" id="r_trail_b">—</span></div>
-        <div class="result-row"><span class="label">Effect</span><span class="val down">More turnable</span></div>
-      </div>
-      <div class="result-card accel">
-        <h3>🟢 Acceleration</h3>
-        <div class="result-row"><span class="label">Acceleration</span><span class="val neutral" id="r_accel">—</span></div>
-        <div class="result-row"><span class="label">Weight to rear</span><span class="val up" id="r_dw_a">—</span></div>
-        <div class="result-row"><span class="label">Fork extension</span><span class="val up" id="r_ext">—</span></div>
-        <div class="result-row"><span class="label">Wheelbase</span><span class="val up" id="r_wb_a">—</span></div>
-        <div class="result-row"><span class="label">Rake angle</span><span class="val up" id="r_rake_a">—</span></div>
-        <div class="result-row"><span class="label">Trail</span><span class="val up" id="r_trail_a">—</span></div>
-        <div class="result-row"><span class="label">Effect</span><span class="val up">More stable</span></div>
+    <!-- CALCULATIONS -->
+    <div class="section">
+      <div class="section-header">02 — Step by Step Calculations</div>
+      <div class="section-body" id="calcBody">
+        <!-- filled by JS -->
       </div>
     </div>
-    <div class="note" style="margin-top:16px">
-      <span>Trail is the answer.</span> Trail = horizontal distance between where the steering axis hits the ground and the front contact patch. Less trail → less self-correction → steering feels light, bike wants to turn. More trail → more self-correction → straight-line stability. Braking drops trail. Acceleration raises it. Same number, opposite direction.
+
+    <!-- RESULTS -->
+    <div class="section">
+      <div class="section-header">03 — Results Summary</div>
+      <div class="section-body">
+        <div class="results-grid">
+          <div class="result-card braking">
+            <h3>🔴 Braking</h3>
+            <div class="result-row">
+              <span class="label">Deceleration</span
+              ><span class="val neutral" id="r_decel">—</span>
+            </div>
+            <div class="result-row">
+              <span class="label">Weight to front</span
+              ><span class="val down" id="r_dw_b">—</span>
+            </div>
+            <div class="result-row">
+              <span class="label">Fork dive</span
+              ><span class="val down" id="r_dive">—</span>
+            </div>
+            <div class="result-row">
+              <span class="label">Wheelbase</span
+              ><span class="val down" id="r_wb_b">—</span>
+            </div>
+            <div class="result-row">
+              <span class="label">Rake angle</span
+              ><span class="val down" id="r_rake_b">—</span>
+            </div>
+            <div class="result-row">
+              <span class="label">Trail</span
+              ><span class="val down" id="r_trail_b">—</span>
+            </div>
+            <div class="result-row">
+              <span class="label">Effect</span
+              ><span class="val down">More turnable</span>
+            </div>
+          </div>
+          <div class="result-card accel">
+            <h3>🟢 Acceleration</h3>
+            <div class="result-row">
+              <span class="label">Acceleration</span
+              ><span class="val neutral" id="r_accel">—</span>
+            </div>
+            <div class="result-row">
+              <span class="label">Weight to rear</span
+              ><span class="val up" id="r_dw_a">—</span>
+            </div>
+            <div class="result-row">
+              <span class="label">Fork extension</span
+              ><span class="val up" id="r_ext">—</span>
+            </div>
+            <div class="result-row">
+              <span class="label">Wheelbase</span
+              ><span class="val up" id="r_wb_a">—</span>
+            </div>
+            <div class="result-row">
+              <span class="label">Rake angle</span
+              ><span class="val up" id="r_rake_a">—</span>
+            </div>
+            <div class="result-row">
+              <span class="label">Trail</span
+              ><span class="val up" id="r_trail_a">—</span>
+            </div>
+            <div class="result-row">
+              <span class="label">Effect</span
+              ><span class="val up">More stable</span>
+            </div>
+          </div>
+        </div>
+        <div class="note" style="margin-top: 16px">
+          <span>Trail is the answer.</span> Trail = horizontal distance between
+          where the steering axis hits the ground and the front contact patch.
+          Less trail → less self-correction → steering feels light, bike wants
+          to turn. More trail → more self-correction → straight-line stability.
+          Braking drops trail. Acceleration raises it. Same number, opposite
+          direction.
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
-<script>
-// ─── CALCULATION ENGINE ───────────────────────────────────────────────────────
+    <script>
+      // ─── CALCULATION ENGINE ───────────────────────────────────────────────────────
 
-function calcAll(p) {
-  const g = 9.81;
-  const v = p.speed * 1000 / 3600;             // m/s
-  const a = v / p.time;                         // m/s²
-  const rakeRad = p.rake * Math.PI / 180;
+      function calcAll(p) {
+        const g = 9.81;
+        const v = (p.speed * 1000) / 3600; // m/s
+        const a = v / p.time; // m/s²
+        const rakeRad = (p.rake * Math.PI) / 180;
 
-  // Weight transfer
-  const dW_N = p.mass * a * (p.cgh / 1000) / (p.wb / 1000); // Newtons
-  const dW_kg = dW_N / g;
+        // Weight transfer
+        const dW_N = (p.mass * a * (p.cgh / 1000)) / (p.wb / 1000); // Newtons
+        const dW_kg = dW_N / g;
 
-  const Nf_brake = p.mass / 2 + dW_kg;
-  const Nr_brake = p.mass / 2 - dW_kg;
-  const Nf_accel = p.mass / 2 - dW_kg;
-  const Nr_accel = p.mass / 2 + dW_kg;
+        const Nf_brake = p.mass / 2 + dW_kg;
+        const Nr_brake = p.mass / 2 - dW_kg;
+        const Nf_accel = p.mass / 2 - dW_kg;
+        const Nr_accel = p.mass / 2 + dW_kg;
 
-  // Fork compression
-  // The front wheel carries a vertical load increase of dW_N (Newtons).
-  // The fork is inclined at rake° from vertical, so the force along the fork axis
-  // is the vertical component resolved onto the fork axis: F_axis = dW_N / cos(rake).
-  const forkForce_N = dW_N / Math.cos(rakeRad); // force along fork axis (N)
-  const dive_mm = forkForce_N / p.spring;        // x = F/k  (N / (N/mm) = mm)
+        // Fork compression
+        // The front wheel carries a vertical load increase of dW_N (Newtons).
+        // The fork is inclined at rake° from vertical, so the force along the fork axis
+        // is the vertical component resolved onto the fork axis: F_axis = dW_N / cos(rake).
+        const forkForce_N = dW_N / Math.cos(rakeRad); // force along fork axis (N)
+        const dive_mm = forkForce_N / p.spring; // x = F/k  (N / (N/mm) = mm)
 
-  // Wheelbase change
-  // When the fork compresses by dive_mm along its axis, the axle moves
-  // horizontally by dive_mm * sin(rake) toward the steering head → WB shortens.
-  const dwb_mm = dive_mm * Math.sin(rakeRad);
+        // Wheelbase change
+        // When the fork compresses by dive_mm along its axis, the axle moves
+        // horizontally by dive_mm * sin(rake) toward the steering head → WB shortens.
+        const dwb_mm = dive_mm * Math.sin(rakeRad);
 
-  const wb_brake = p.wb - dwb_mm;
-  const wb_accel = p.wb + dwb_mm;
+        const wb_brake = p.wb - dwb_mm;
+        const wb_accel = p.wb + dwb_mm;
 
-  // Rake angle — does NOT change from fork compression.
-  // Fork compression telescopes the tubes; the steering axis (head tube angle)
-  // is fixed to the frame. Only the axle position moves along that fixed axis.
-  // Therefore rake_brake = rake_accel = p.rake.
-  const deltaRake_deg = 0;
-  const rake_brake = p.rake;
-  const rake_accel = p.rake;
+        // Rake angle — does NOT change from fork compression.
+        // Fork compression telescopes the tubes; the steering axis (head tube angle)
+        // is fixed to the frame. Only the axle position moves along that fixed axis.
+        // Therefore rake_brake = rake_accel = p.rake.
+        const deltaRake_deg = 0;
+        const rake_brake = p.rake;
+        const rake_accel = p.rake;
 
-  // Trail: T = (R * sin(α) - offset) / cos(α)
-  // With rake fixed, trail changes because the contact patch shifts horizontally
-  // by ±dwb_mm (the same as the wheelbase change).
-  // Steering-axis ground intercept is fixed → ΔTrail = ∓dwb_mm.
-  function trail(rakeD) {
-    const r = rakeD * Math.PI / 180;
-    return (p.radius * Math.sin(r) - p.offset) / Math.cos(r);
-  }
+        // Trail: T = (R * sin(α) - offset) / cos(α)
+        // With rake fixed, trail changes because the contact patch shifts horizontally
+        // by ±dwb_mm (the same as the wheelbase change).
+        // Steering-axis ground intercept is fixed → ΔTrail = ∓dwb_mm.
+        function trail(rakeD) {
+          const r = (rakeD * Math.PI) / 180;
+          return (p.radius * Math.sin(r) - p.offset) / Math.cos(r);
+        }
 
-  const trail_static = trail(p.rake);
-  const trail_brake  = trail_static - dwb_mm;   // contact patch moves rearward → less trail
-  const trail_accel  = trail_static + dwb_mm;   // contact patch moves forward → more trail
+        const trail_static = trail(p.rake);
+        const trail_brake = trail_static - dwb_mm; // contact patch moves rearward → less trail
+        const trail_accel = trail_static + dwb_mm; // contact patch moves forward → more trail
 
-  return {
-    v, a,
-    dW_kg, dW_N,
-    Nf_brake, Nr_brake, Nf_accel, Nr_accel,
-    dive_mm, dwb_mm,
-    wb_brake, wb_accel,
-    rake_brake, rake_accel,
-    trail_static, trail_brake, trail_accel,
-    deltaRake_deg
-  };
-}
+        return {
+          v,
+          a,
+          dW_kg,
+          dW_N,
+          Nf_brake,
+          Nr_brake,
+          Nf_accel,
+          Nr_accel,
+          dive_mm,
+          dwb_mm,
+          wb_brake,
+          wb_accel,
+          rake_brake,
+          rake_accel,
+          trail_static,
+          trail_brake,
+          trail_accel,
+          deltaRake_deg,
+        };
+      }
 
-// ─── RENDER CALCULATIONS ─────────────────────────────────────────────────────
+      // ─── RENDER CALCULATIONS ─────────────────────────────────────────────────────
 
-function renderCalcs(p, r) {
-  const body = document.getElementById('calcBody');
-  body.innerHTML = `
+      function renderCalcs(p, r) {
+        const body = document.getElementById("calcBody");
+        body.innerHTML = `
     <div class="calc-block">
       <div class="calc-title">STEP 1 — Deceleration / Acceleration</div>
       <div class="formula">
@@ -503,10 +676,10 @@ function renderCalcs(p, r) {
       <div class="formula">
         <span class="comment">// Moment balance about rear contact patch</span><br>
         ΔW = (m × a × h) / L<br><br>
-        ΔW = (<span class="input-val">${p.mass}</span> × <span class="input-val">${r.a.toFixed(2)}</span> × <span class="input-val">${(p.cgh/1000).toFixed(3)}</span>) / <span class="input-val">${(p.wb/1000).toFixed(3)}</span><br>
-        ΔW = ${(p.mass * r.a * p.cgh/1000).toFixed(1)} / ${(p.wb/1000).toFixed(3)} = <span class="result">${r.dW_N.toFixed(1)} N ≈ ${r.dW_kg.toFixed(1)} kg equivalent</span><br><br>
-        <span class="comment">// BRAKING: front ${(p.mass/2).toFixed(1)} + ${r.dW_kg.toFixed(1)} = ${r.Nf_brake.toFixed(1)} kg | rear ${r.Nr_brake.toFixed(1)} kg</span><br>
-        <span class="comment">// ACCEL:   front ${r.Nf_accel.toFixed(1)} kg | rear ${(p.mass/2).toFixed(1)} + ${r.dW_kg.toFixed(1)} = ${r.Nr_accel.toFixed(1)} kg</span>
+        ΔW = (<span class="input-val">${p.mass}</span> × <span class="input-val">${r.a.toFixed(2)}</span> × <span class="input-val">${(p.cgh / 1000).toFixed(3)}</span>) / <span class="input-val">${(p.wb / 1000).toFixed(3)}</span><br>
+        ΔW = ${((p.mass * r.a * p.cgh) / 1000).toFixed(1)} / ${(p.wb / 1000).toFixed(3)} = <span class="result">${r.dW_N.toFixed(1)} N ≈ ${r.dW_kg.toFixed(1)} kg equivalent</span><br><br>
+        <span class="comment">// BRAKING: front ${(p.mass / 2).toFixed(1)} + ${r.dW_kg.toFixed(1)} = ${r.Nf_brake.toFixed(1)} kg | rear ${r.Nr_brake.toFixed(1)} kg</span><br>
+        <span class="comment">// ACCEL:   front ${r.Nf_accel.toFixed(1)} kg | rear ${(p.mass / 2).toFixed(1)} + ${r.dW_kg.toFixed(1)} = ${r.Nr_accel.toFixed(1)} kg</span>
       </div>
       <div class="note"><span>Derivation:</span> Inertial force (m×a) acts at CG height (h), resisted by normal forces at wheels separated by wheelbase (L). ΔW = m×a×h/L — exact physics, not assumption-dependent.</div>
     </div>
@@ -516,9 +689,9 @@ function renderCalcs(p, r) {
       <div class="formula">
         <span class="comment">// The vertical load ΔW_N acts on the front wheel, but the fork is inclined</span><br>
         <span class="comment">// at ${p.rake}° from vertical → resolve force along fork axis: F_axis = ΔW_N / cos(α)</span><br>
-        F_axis = ${r.dW_N.toFixed(1)} / cos(${p.rake}°) = ${r.dW_N.toFixed(1)} / ${Math.cos(p.rake*Math.PI/180).toFixed(4)} = <span class="result">${(r.dW_N / Math.cos(p.rake*Math.PI/180)).toFixed(1)} N</span><br><br>
+        F_axis = ${r.dW_N.toFixed(1)} / cos(${p.rake}°) = ${r.dW_N.toFixed(1)} / ${Math.cos((p.rake * Math.PI) / 180).toFixed(4)} = <span class="result">${(r.dW_N / Math.cos((p.rake * Math.PI) / 180)).toFixed(1)} N</span><br><br>
         <span class="comment">// Hooke's law: F = k × x → x = F_axis / k</span><br>
-        x = ${(r.dW_N / Math.cos(p.rake*Math.PI/180)).toFixed(1)} / <span class="input-val">${p.spring}</span> = <span class="result">${r.dive_mm.toFixed(1)} mm</span><br><br>
+        x = ${(r.dW_N / Math.cos((p.rake * Math.PI) / 180)).toFixed(1)} / <span class="input-val">${p.spring}</span> = <span class="result">${r.dive_mm.toFixed(1)} mm</span><br><br>
         <span class="comment">// Braking: fork compresses ${r.dive_mm.toFixed(1)}mm along its axis (at ${p.rake}° from vertical)</span><br>
         <span class="comment">// Acceleration: fork extends ${r.dive_mm.toFixed(1)}mm</span>
       </div>
@@ -529,7 +702,7 @@ function renderCalcs(p, r) {
       <div class="formula">
         <span class="comment">// Horizontal component of fork compression = wheelbase change</span><br>
         ΔL = x × sin(α)<br>
-        ΔL = ${r.dive_mm.toFixed(1)} × sin(${p.rake}°) = ${r.dive_mm.toFixed(1)} × ${Math.sin(p.rake*Math.PI/180).toFixed(3)} = <span class="result">${r.dwb_mm.toFixed(1)} mm</span><br><br>
+        ΔL = ${r.dive_mm.toFixed(1)} × sin(${p.rake}°) = ${r.dive_mm.toFixed(1)} × ${Math.sin((p.rake * Math.PI) / 180).toFixed(3)} = <span class="result">${r.dwb_mm.toFixed(1)} mm</span><br><br>
         <span class="comment">// BRAKING:  WB = ${p.wb} − ${r.dwb_mm.toFixed(1)} = ${r.wb_brake.toFixed(1)} mm (shorter)</span><br>
         <span class="comment">// ACCEL:    WB = ${p.wb} + ${r.dwb_mm.toFixed(1)} = ${r.wb_accel.toFixed(1)} mm (longer)</span>
       </div>
@@ -565,185 +738,314 @@ function renderCalcs(p, r) {
       </div>
     </div>
   `;
-}
+      }
 
-// ─── RENDER RESULTS ──────────────────────────────────────────────────────────
+      // ─── RENDER RESULTS ──────────────────────────────────────────────────────────
 
-function renderResults(p, r) {
-  document.getElementById('r_decel').textContent    = `${r.a.toFixed(2)} m/s²`;
-  document.getElementById('r_accel').textContent    = `${r.a.toFixed(2)} m/s²`;
-  document.getElementById('r_dw_b').textContent     = `+${r.dW_kg.toFixed(1)} kg`;
-  document.getElementById('r_dw_a').textContent     = `+${r.dW_kg.toFixed(1)} kg`;
-  document.getElementById('r_dive').textContent     = `${r.dive_mm.toFixed(1)} mm`;
-  document.getElementById('r_ext').textContent      = `${r.dive_mm.toFixed(1)} mm`;
-  document.getElementById('r_wb_b').textContent     = `${r.wb_brake.toFixed(1)} mm (−${r.dwb_mm.toFixed(1)}mm)`;
-  document.getElementById('r_wb_a').textContent     = `${r.wb_accel.toFixed(1)} mm (+${r.dwb_mm.toFixed(1)}mm)`;
-  document.getElementById('r_rake_b').textContent   = `${r.rake_brake.toFixed(2)}° (unchanged)`;
-  document.getElementById('r_rake_a').textContent   = `${r.rake_accel.toFixed(2)}° (unchanged)`;
-  document.getElementById('r_trail_b').textContent  = `${r.trail_brake.toFixed(1)} mm (−${(r.trail_static - r.trail_brake).toFixed(1)}mm)`;
-  document.getElementById('r_trail_a').textContent  = `${r.trail_accel.toFixed(1)} mm (+${(r.trail_accel - r.trail_static).toFixed(1)}mm)`;
+      function renderResults(p, r) {
+        document.getElementById("r_decel").textContent =
+          `${r.a.toFixed(2)} m/s²`;
+        document.getElementById("r_accel").textContent =
+          `${r.a.toFixed(2)} m/s²`;
+        document.getElementById("r_dw_b").textContent =
+          `+${r.dW_kg.toFixed(1)} kg`;
+        document.getElementById("r_dw_a").textContent =
+          `+${r.dW_kg.toFixed(1)} kg`;
+        document.getElementById("r_dive").textContent =
+          `${r.dive_mm.toFixed(1)} mm`;
+        document.getElementById("r_ext").textContent =
+          `${r.dive_mm.toFixed(1)} mm`;
+        document.getElementById("r_wb_b").textContent =
+          `${r.wb_brake.toFixed(1)} mm (−${r.dwb_mm.toFixed(1)}mm)`;
+        document.getElementById("r_wb_a").textContent =
+          `${r.wb_accel.toFixed(1)} mm (+${r.dwb_mm.toFixed(1)}mm)`;
+        document.getElementById("r_rake_b").textContent =
+          `${r.rake_brake.toFixed(2)}° (unchanged)`;
+        document.getElementById("r_rake_a").textContent =
+          `${r.rake_accel.toFixed(2)}° (unchanged)`;
+        document.getElementById("r_trail_b").textContent =
+          `${r.trail_brake.toFixed(1)} mm (−${(r.trail_static - r.trail_brake).toFixed(1)}mm)`;
+        document.getElementById("r_trail_a").textContent =
+          `${r.trail_accel.toFixed(1)} mm (+${(r.trail_accel - r.trail_static).toFixed(1)}mm)`;
 
-  document.getElementById('mainSubtitle').textContent =
-    `${p.mass}KG BIKE · ${p.rake}° RAKE · ${p.wb}MM WHEELBASE · ${p.speed}↔0 KMPH IN ${p.time}S`;
-}
+        document.getElementById("mainSubtitle").textContent =
+          `${p.mass}KG BIKE · ${p.rake}° RAKE · ${p.wb}MM WHEELBASE · ${p.speed}↔0 KMPH IN ${p.time}S`;
+      }
 
-// ─── FBD DRAW ────────────────────────────────────────────────────────────────
+      // ─── FBD DRAW ────────────────────────────────────────────────────────────────
 
-function drawFBD(canvasId, isBraking, p, r) {
-  const canvas = document.getElementById(canvasId);
-  const ctx = canvas.getContext('2d');
-  const W = canvas.width, H = canvas.height;
+      function drawFBD(canvasId, isBraking, p, r) {
+        const canvas = document.getElementById(canvasId);
+        const ctx = canvas.getContext("2d");
+        const W = canvas.width,
+          H = canvas.height;
 
-  ctx.clearRect(0, 0, W, H);
-  ctx.fillStyle = '#0d0d0d';
-  ctx.fillRect(0, 0, W, H);
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = "#0d0d0d";
+        ctx.fillRect(0, 0, W, H);
 
-  const accent = '#e8ff00', orange = '#ff4d00', green = '#00ff88';
-  const blue = '#7eb8f7', muted = '#444', textC = '#aaa';
+        const accent = "#e8ff00",
+          orange = "#ff4d00",
+          green = "#00ff88";
+        const blue = "#7eb8f7",
+          muted = "#444",
+          textC = "#aaa";
 
-  // Ground
-  ctx.strokeStyle = muted; ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(30, H-40); ctx.lineTo(W-30, H-40); ctx.stroke();
-  for (let x = 40; x < W-30; x += 20) {
-    ctx.beginPath(); ctx.moveTo(x, H-40); ctx.lineTo(x-10, H-55);
-    ctx.strokeStyle = muted; ctx.lineWidth = 0.8; ctx.stroke();
-  }
+        // Ground
+        ctx.strokeStyle = muted;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(30, H - 40);
+        ctx.lineTo(W - 30, H - 40);
+        ctx.stroke();
+        for (let x = 40; x < W - 30; x += 20) {
+          ctx.beginPath();
+          ctx.moveTo(x, H - 40);
+          ctx.lineTo(x - 10, H - 55);
+          ctx.strokeStyle = muted;
+          ctx.lineWidth = 0.8;
+          ctx.stroke();
+        }
 
-  const rearX = 90, frontX = 290;
-  const wheelY = H - 40;
-  const cgY = H - 160, frameY = H - 130;
-  const rakeRad = p.rake * Math.PI / 180;
+        const rearX = 90,
+          frontX = 290;
+        const wheelY = H - 40;
+        const cgY = H - 160,
+          frameY = H - 130;
+        const rakeRad = (p.rake * Math.PI) / 180;
 
-  // Wheels
-  [rearX, frontX].forEach(cx => {
-    ctx.beginPath(); ctx.arc(cx, wheelY-25, 25, 0, Math.PI*2);
-    ctx.strokeStyle = textC; ctx.lineWidth = 2; ctx.stroke();
-  });
+        // Wheels
+        [rearX, frontX].forEach((cx) => {
+          ctx.beginPath();
+          ctx.arc(cx, wheelY - 25, 25, 0, Math.PI * 2);
+          ctx.strokeStyle = textC;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        });
 
-  // Frame
-  ctx.strokeStyle = '#555'; ctx.lineWidth = 8;
-  ctx.strokeRect(rearX, frameY-20, frontX-rearX, 20);
+        // Frame
+        ctx.strokeStyle = "#555";
+        ctx.lineWidth = 8;
+        ctx.strokeRect(rearX, frameY - 20, frontX - rearX, 20);
 
-  // Fork
-  const forkLen = 80;
-  const forkTopX = frontX - forkLen * Math.sin(rakeRad);
-  const forkTopY = frameY - 20 - forkLen * Math.cos(rakeRad);
-  ctx.beginPath(); ctx.moveTo(frontX, wheelY-25); ctx.lineTo(forkTopX, forkTopY);
-  ctx.strokeStyle = '#777'; ctx.lineWidth = 4; ctx.stroke();
+        // Fork
+        const forkLen = 80;
+        const forkTopX = frontX - forkLen * Math.sin(rakeRad);
+        const forkTopY = frameY - 20 - forkLen * Math.cos(rakeRad);
+        ctx.beginPath();
+        ctx.moveTo(frontX, wheelY - 25);
+        ctx.lineTo(forkTopX, forkTopY);
+        ctx.strokeStyle = "#777";
+        ctx.lineWidth = 4;
+        ctx.stroke();
 
-  // Rake dashed line + label
-  ctx.strokeStyle = accent; ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(forkTopX, forkTopY); ctx.lineTo(forkTopX, forkTopY+40);
-  ctx.setLineDash([3,3]); ctx.stroke(); ctx.setLineDash([]);
-  ctx.fillStyle = accent; ctx.font = '11px JetBrains Mono';
-  ctx.fillText(`${p.rake}°`, forkTopX+6, forkTopY+22);
+        // Rake dashed line + label
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(forkTopX, forkTopY);
+        ctx.lineTo(forkTopX, forkTopY + 40);
+        ctx.setLineDash([3, 3]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = accent;
+        ctx.font = "11px JetBrains Mono";
+        ctx.fillText(`${p.rake}°`, forkTopX + 6, forkTopY + 22);
 
-  // CG
-  ctx.beginPath(); ctx.arc((rearX+frontX)/2, cgY, 6, 0, Math.PI*2);
-  ctx.fillStyle = blue; ctx.fill();
-  ctx.fillStyle = blue; ctx.font = '10px JetBrains Mono';
-  ctx.fillText(`CG (h=${p.cgh}mm)`, (rearX+frontX)/2-45, cgY-10);
+        // CG
+        ctx.beginPath();
+        ctx.arc((rearX + frontX) / 2, cgY, 6, 0, Math.PI * 2);
+        ctx.fillStyle = blue;
+        ctx.fill();
+        ctx.fillStyle = blue;
+        ctx.font = "10px JetBrains Mono";
+        ctx.fillText(`CG (h=${p.cgh}mm)`, (rearX + frontX) / 2 - 45, cgY - 10);
 
-  // mg arrow
-  arrow(ctx, (rearX+frontX)/2, cgY, (rearX+frontX)/2, cgY+35, blue, 2);
-  ctx.fillStyle = blue; ctx.font = '10px JetBrains Mono';
-  ctx.fillText('mg', (rearX+frontX)/2+6, cgY+30);
+        // mg arrow
+        arrow(
+          ctx,
+          (rearX + frontX) / 2,
+          cgY,
+          (rearX + frontX) / 2,
+          cgY + 35,
+          blue,
+          2,
+        );
+        ctx.fillStyle = blue;
+        ctx.font = "10px JetBrains Mono";
+        ctx.fillText("mg", (rearX + frontX) / 2 + 6, cgY + 30);
 
-  // ma arrow
-  const dir = isBraking ? 1 : -1;
-  arrow(ctx, (rearX+frontX)/2, cgY, (rearX+frontX)/2 + dir*45, cgY, orange, 2);
-  ctx.fillStyle = orange; ctx.font = '10px JetBrains Mono';
-  ctx.fillText('ma', (rearX+frontX)/2 + dir*16, cgY-6);
+        // ma arrow
+        const dir = isBraking ? 1 : -1;
+        arrow(
+          ctx,
+          (rearX + frontX) / 2,
+          cgY,
+          (rearX + frontX) / 2 + dir * 45,
+          cgY,
+          orange,
+          2,
+        );
+        ctx.fillStyle = orange;
+        ctx.font = "10px JetBrains Mono";
+        ctx.fillText("ma", (rearX + frontX) / 2 + dir * 16, cgY - 6);
 
-  // Normal forces
-  const Nf = isBraking ? r.Nf_brake : r.Nf_accel;
-  const Nr = isBraking ? r.Nr_brake : r.Nr_accel;
-  const Nf_size = Math.max(15, Math.min(70, Nf/3));
-  const Nr_size = Math.max(15, Math.min(70, Nr/3));
+        // Normal forces
+        const Nf = isBraking ? r.Nf_brake : r.Nf_accel;
+        const Nr = isBraking ? r.Nr_brake : r.Nr_accel;
+        const Nf_size = Math.max(15, Math.min(70, Nf / 3));
+        const Nr_size = Math.max(15, Math.min(70, Nr / 3));
 
-  arrow(ctx, frontX, wheelY-50, frontX, wheelY-50-Nf_size, green, 2);
-  ctx.fillStyle = green; ctx.font = '10px JetBrains Mono';
-  ctx.fillText(`Nf=${Nf.toFixed(0)}kg`, frontX+6, wheelY-50-Nf_size/2);
+        arrow(
+          ctx,
+          frontX,
+          wheelY - 50,
+          frontX,
+          wheelY - 50 - Nf_size,
+          green,
+          2,
+        );
+        ctx.fillStyle = green;
+        ctx.font = "10px JetBrains Mono";
+        ctx.fillText(
+          `Nf=${Nf.toFixed(0)}kg`,
+          frontX + 6,
+          wheelY - 50 - Nf_size / 2,
+        );
 
-  arrow(ctx, rearX, wheelY-50, rearX, wheelY-50-Nr_size, green, 2);
-  ctx.fillStyle = green; ctx.font = '10px JetBrains Mono';
-  ctx.fillText(`Nr=${Nr.toFixed(0)}kg`, rearX-68, wheelY-50-Nr_size/2);
+        arrow(ctx, rearX, wheelY - 50, rearX, wheelY - 50 - Nr_size, green, 2);
+        ctx.fillStyle = green;
+        ctx.font = "10px JetBrains Mono";
+        ctx.fillText(
+          `Nr=${Nr.toFixed(0)}kg`,
+          rearX - 68,
+          wheelY - 50 - Nr_size / 2,
+        );
 
-  // Brake/traction force
-  if (isBraking) {
-    arrow(ctx, frontX+65, wheelY-25, frontX+25, wheelY-25, orange, 2);
-    ctx.fillStyle = orange; ctx.font = '10px JetBrains Mono';
-    ctx.fillText('Fb', frontX+38, wheelY-30);
-  } else {
-    arrow(ctx, rearX-65, wheelY-25, rearX-25, wheelY-25, orange, 2);
-    ctx.fillStyle = orange; ctx.font = '10px JetBrains Mono';
-    ctx.fillText('Ft', rearX-55, wheelY-30);
-  }
+        // Brake/traction force
+        if (isBraking) {
+          arrow(
+            ctx,
+            frontX + 65,
+            wheelY - 25,
+            frontX + 25,
+            wheelY - 25,
+            orange,
+            2,
+          );
+          ctx.fillStyle = orange;
+          ctx.font = "10px JetBrains Mono";
+          ctx.fillText("Fb", frontX + 38, wheelY - 30);
+        } else {
+          arrow(
+            ctx,
+            rearX - 65,
+            wheelY - 25,
+            rearX - 25,
+            wheelY - 25,
+            orange,
+            2,
+          );
+          ctx.fillStyle = orange;
+          ctx.font = "10px JetBrains Mono";
+          ctx.fillText("Ft", rearX - 55, wheelY - 30);
+        }
 
-  // Fork dive/extend indicator
-  const diveColor = isBraking ? orange : green;
-  const diveLabel = isBraking ? `DIVE ${r.dive_mm.toFixed(1)}mm` : `EXT ${r.dive_mm.toFixed(1)}mm`;
-  ctx.strokeStyle = diveColor; ctx.lineWidth = 1.5; ctx.setLineDash([2,2]);
-  ctx.beginPath();
-  if (isBraking) { ctx.moveTo(frontX+5, wheelY-80); ctx.lineTo(frontX+5, wheelY-55); }
-  else           { ctx.moveTo(frontX+5, wheelY-55); ctx.lineTo(frontX+5, wheelY-80); }
-  ctx.stroke(); ctx.setLineDash([]);
-  ctx.fillStyle = diveColor; ctx.font = '9px JetBrains Mono';
-  ctx.fillText(diveLabel, frontX+10, wheelY-65);
+        // Fork dive/extend indicator
+        const diveColor = isBraking ? orange : green;
+        const diveLabel = isBraking
+          ? `DIVE ${r.dive_mm.toFixed(1)}mm`
+          : `EXT ${r.dive_mm.toFixed(1)}mm`;
+        ctx.strokeStyle = diveColor;
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([2, 2]);
+        ctx.beginPath();
+        if (isBraking) {
+          ctx.moveTo(frontX + 5, wheelY - 80);
+          ctx.lineTo(frontX + 5, wheelY - 55);
+        } else {
+          ctx.moveTo(frontX + 5, wheelY - 55);
+          ctx.lineTo(frontX + 5, wheelY - 80);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = diveColor;
+        ctx.font = "9px JetBrains Mono";
+        ctx.fillText(diveLabel, frontX + 10, wheelY - 65);
 
-  // Wheelbase label
-  ctx.beginPath(); ctx.moveTo(rearX, wheelY+10); ctx.lineTo(frontX, wheelY+10);
-  ctx.strokeStyle = muted; ctx.lineWidth = 1; ctx.stroke();
-  const wbVal = isBraking ? r.wb_brake : r.wb_accel;
-  ctx.fillStyle = textC; ctx.font = '10px JetBrains Mono';
-  ctx.fillText(`WB: ${p.wb}→${wbVal.toFixed(0)}mm`, (rearX+frontX)/2-55, wheelY+25);
+        // Wheelbase label
+        ctx.beginPath();
+        ctx.moveTo(rearX, wheelY + 10);
+        ctx.lineTo(frontX, wheelY + 10);
+        ctx.strokeStyle = muted;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        const wbVal = isBraking ? r.wb_brake : r.wb_accel;
+        ctx.fillStyle = textC;
+        ctx.font = "10px JetBrains Mono";
+        ctx.fillText(
+          `WB: ${p.wb}→${wbVal.toFixed(0)}mm`,
+          (rearX + frontX) / 2 - 55,
+          wheelY + 25,
+        );
 
-  // Title
-  ctx.fillStyle = isBraking ? orange : green;
-  ctx.font = 'bold 12px JetBrains Mono';
-  ctx.fillText(isBraking ? 'BRAKING' : 'ACCELERATION', 16, 20);
-}
+        // Title
+        ctx.fillStyle = isBraking ? orange : green;
+        ctx.font = "bold 12px JetBrains Mono";
+        ctx.fillText(isBraking ? "BRAKING" : "ACCELERATION", 16, 20);
+      }
 
-function arrow(ctx, x1, y1, x2, y2, color, lw) {
-  ctx.strokeStyle = color; ctx.lineWidth = lw;
-  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-  // arrowhead
-  const angle = Math.atan2(y2-y1, x2-x1);
-  ctx.beginPath();
-  ctx.moveTo(x2, y2);
-  ctx.lineTo(x2 - 8*Math.cos(angle-0.4), y2 - 8*Math.sin(angle-0.4));
-  ctx.moveTo(x2, y2);
-  ctx.lineTo(x2 - 8*Math.cos(angle+0.4), y2 - 8*Math.sin(angle+0.4));
-  ctx.stroke();
-}
+      function arrow(ctx, x1, y1, x2, y2, color, lw) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = lw;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        // arrowhead
+        const angle = Math.atan2(y2 - y1, x2 - x1);
+        ctx.beginPath();
+        ctx.moveTo(x2, y2);
+        ctx.lineTo(
+          x2 - 8 * Math.cos(angle - 0.4),
+          y2 - 8 * Math.sin(angle - 0.4),
+        );
+        ctx.moveTo(x2, y2);
+        ctx.lineTo(
+          x2 - 8 * Math.cos(angle + 0.4),
+          y2 - 8 * Math.sin(angle + 0.4),
+        );
+        ctx.stroke();
+      }
 
-// ─── MAIN ────────────────────────────────────────────────────────────────────
+      // ─── MAIN ────────────────────────────────────────────────────────────────────
 
-function getParams() {
-  return {
-    mass:   parseFloat(document.getElementById('inp_mass').value)   || 200,
-    rake:   parseFloat(document.getElementById('inp_rake').value)   || 21,
-    wb:     parseFloat(document.getElementById('inp_wb').value)     || 1500,
-    speed:  parseFloat(document.getElementById('inp_speed').value)  || 50,
-    time:   parseFloat(document.getElementById('inp_time').value)   || 2.5,
-    cgh:    parseFloat(document.getElementById('inp_cgh').value)    || 600,
-    spring: parseFloat(document.getElementById('inp_spring').value) || 18,
-    radius: parseFloat(document.getElementById('inp_radius').value) || 320,
-    offset: parseFloat(document.getElementById('inp_offset').value) || 30,
-  };
-}
+      function getParams() {
+        return {
+          mass: parseFloat(document.getElementById("inp_mass").value) || 200,
+          rake: parseFloat(document.getElementById("inp_rake").value) || 21,
+          wb: parseFloat(document.getElementById("inp_wb").value) || 1500,
+          speed: parseFloat(document.getElementById("inp_speed").value) || 50,
+          time: parseFloat(document.getElementById("inp_time").value) || 2.5,
+          cgh: parseFloat(document.getElementById("inp_cgh").value) || 600,
+          spring: parseFloat(document.getElementById("inp_spring").value) || 18,
+          radius:
+            parseFloat(document.getElementById("inp_radius").value) || 320,
+          offset: parseFloat(document.getElementById("inp_offset").value) || 30,
+        };
+      }
 
-function recalculate() {
-  const p = getParams();
-  const r = calcAll(p);
-  renderCalcs(p, r);
-  renderResults(p, r);
-  drawFBD('fbdBraking', true, p, r);
-  drawFBD('fbdAccel', false, p, r);
-}
+      function recalculate() {
+        const p = getParams();
+        const r = calcAll(p);
+        renderCalcs(p, r);
+        renderResults(p, r);
+        drawFBD("fbdBraking", true, p, r);
+        drawFBD("fbdAccel", false, p, r);
+      }
 
-// Run on load with defaults
-recalculate();
-</script>
-</body>
+      // Run on load with defaults
+      recalculate();
+    </script>
+  </body>
 </html>

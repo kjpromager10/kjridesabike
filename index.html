@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KJ Rides — Knowledge Pages</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <div class="header-inner">
+        <div class="kicker">KJ RIDES · MASTER INDEX</div>
+        <h1>Engineering <span>Tools</span> & Issue Notes</h1>
+        <div class="header-sub">
+          <span>Interactive calculators</span>
+          <span>Reliability references</span>
+          <span>Data-backed explanations</span>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div class="section-title">Pages</div>
+      <div class="section-sub">Open any module below.</div>
+
+      <div class="search-wrap">
+        <input
+          id="search"
+          class="search-input"
+          type="search"
+          placeholder="Search pages..."
+          aria-label="Search pages"
+        />
+      </div>
+      <div id="no-results" class="no-results" aria-live="polite">
+        No pages match your search.
+      </div>
+
+      <div class="grid">
+        <a class="card" href="Aprillia 457/aprilia_rs457_low_rpm_chart.html">
+          <div class="card-tag" style="color: var(--accent)">
+            Aprilia RS 457
+          </div>
+          <div class="card-title">Low RPM Jerky Response</div>
+          <div class="card-desc">
+            Torque/power curve and throttle mapping analysis with sources.
+          </div>
+          <div class="card-meta"><span>Chart</span><span>Sources</span></div>
+        </a>
+        <a class="card" href="Aprillia 457/rs457_spec_card_vertical.html">
+          <div class="card-tag" style="color: var(--accent)">
+            Aprilia RS 457
+          </div>
+          <div class="card-title">Spec Card</div>
+          <div class="card-desc">
+            Vertical spec layout for quick reference and sharing.
+          </div>
+          <div class="card-meta"><span>Spec</span><span>Card</span></div>
+        </a>
+
+        <a
+          class="card"
+          href="Engine Oil consumption calculator/oil_consumption_calculator.html"
+        >
+          <div class="card-tag" style="color: var(--accent2)">Oil Model</div>
+          <div class="card-title">Engine Oil Consumption Calculator</div>
+          <div class="card-desc">
+            Semi-empirical estimator with assumptions and viscosity chart.
+          </div>
+          <div class="card-meta"><span>Calculator</span><span>Model</span></div>
+        </a>
+
+        <a class="card" href="Fork Trail Calculator/fork_dive_calculator.html">
+          <div class="card-tag" style="color: #e8ff00">Chassis Dynamics</div>
+          <div class="card-title">Fork Dive & Trail Calculator</div>
+          <div class="card-desc">
+            Free-body diagrams and geometry changes under braking/accel.
+          </div>
+          <div class="card-meta"><span>Physics</span><span>FBD</span></div>
+        </a>
+
+        <a class="card" href="Suspension Simulator Basic/suspension-tool.html">
+          <div class="card-tag" style="color: #47ffe8">Suspension</div>
+          <div class="card-title">Damped Oscillator Simulator</div>
+          <div class="card-desc">
+            Interactive SDOF model with regime indicators and charts.
+          </div>
+          <div class="card-meta"><span>Simulator</span><span>Chart</span></div>
+        </a>
+
+        <a
+          class="card"
+          href="KTM_Bajaj_Triumph issues/ktm_bajaj_engine_issues.html"
+        >
+          <div class="card-tag" style="color: var(--accent3)">KTM / Bajaj</div>
+          <div class="card-title">Engine Fault Compendium</div>
+          <div class="card-desc">
+            Issue breakdowns, severity tags, and evidence summary.
+          </div>
+          <div class="card-meta"><span>Issues</span><span>Sources</span></div>
+        </a>
+
+        <a
+          class="card"
+          href="KTM_Bajaj_Triumph issues/triumph_engine_issues.html"
+        >
+          <div class="card-tag" style="color: #22c55e">Triumph TR</div>
+          <div class="card-title">TR-Series Issue Notes</div>
+          <div class="card-desc">
+            Known faults, ECU stalling, QC items, and comparisons.
+          </div>
+          <div class="card-meta">
+            <span>Issues</span><span>Comparisons</span>
+          </div>
+        </a>
+      </div>
+    </main>
+
+    <!-- Can remove but looks cool so I might leave it here -->
+    <div class="footer">KJ Rides knowledge pages.</div>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const cards = Array.from(document.querySelectorAll(".grid .card"));
+        const search = document.getElementById("search");
+        const noResults = document.getElementById("no-results");
+        function norm(s) {
+          return (s || "").toLowerCase();
+        }
+        function filter() {
+          const q = search ? norm(search.value) : "";
+          let any = false;
+          cards.forEach((card) => {
+            const text = norm(card.textContent);
+            const match = q === "" || text.indexOf(q) !== -1;
+            card.style.display = match ? "" : "none";
+            if (match) any = true;
+          });
+          if (noResults) noResults.style.display = any ? "none" : "";
+        }
+        if (search) {
+          search.addEventListener("input", filter);
+          search.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") {
+              search.value = "";
+              filter();
+            }
+          });
+        }
+        cards.forEach((card) => {
+          if (!card.hasAttribute("aria-label")) {
+            const titleEl = card.querySelector(".card-title");
+            const descEl = card.querySelector(".card-desc");
+            const title = titleEl ? titleEl.textContent.trim() : "";
+            const desc = descEl ? descEl.textContent.trim() : "";
+            if (title || desc)
+              card.setAttribute("aria-label", (title + " — " + desc).trim());
+          }
+        });
+        const external = Array.from(
+          document.querySelectorAll('a[href^="http"]'),
+        );
+        external.forEach((a) => {
+          if (!a.target) a.target = "_blank";
+          a.rel = "noopener noreferrer";
+        });
+      });
+    </script>
+  </body>
+</html>
