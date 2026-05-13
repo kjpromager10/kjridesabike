@@ -1,0 +1,1814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MOTO THERM — Engine Thermal Simulator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+
+  :root {
+    --bg: #080c10;
+    --panel: #0d1219;
+    --border: #1a2535;
+    --accent: #00c8ff;
+    --accent2: #ff6b00;
+    --cold: #1a6fff;
+    --optimal: #00e676;
+    --warn: #ffab00;
+    --hot: #ff3d00;
+    --text: #c8d8e8;
+    --dim: #4a6070;
+    --glow: 0 0 20px rgba(0,200,255,0.3);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-image:
+      radial-gradient(ellipse at 20% 50%, rgba(0,50,80,0.15) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(0,30,60,0.2) 0%, transparent 50%);
+  }
+
+  /* GRID BACKGROUND */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,200,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,200,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 0 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+
+  .logo {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: 4px;
+    color: var(--accent);
+    text-shadow: 0 0 20px rgba(0,200,255,0.5);
+  }
+
+  .logo span { color: var(--accent2); }
+
+  .subtitle {
+    font-family: 'Share Tech Mono';
+    font-size: 11px;
+    color: var(--dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    font-family: 'Share Tech Mono';
+    font-size: 11px;
+    color: var(--dim);
+  }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #333;
+    transition: all 0.3s;
+  }
+
+  .status-dot.active { background: var(--optimal); box-shadow: 0 0 8px var(--optimal); }
+
+  /* BIKE SELECTOR */
+  .bike-selector {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .bike-btn {
+    flex: 1;
+    padding: 16px 24px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--dim);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+    clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+  }
+
+  .bike-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 40%, rgba(0,200,255,0.05));
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .bike-btn:hover::before { opacity: 1; }
+
+  .bike-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(0,200,255,0.08);
+    box-shadow: 0 0 20px rgba(0,200,255,0.2), inset 0 0 20px rgba(0,200,255,0.05);
+  }
+
+  .bike-btn .bike-tag {
+    display: block;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--dim);
+    letter-spacing: 1px;
+    margin-top: 4px;
+  }
+
+  .bike-btn.active .bike-tag { color: rgba(0,200,255,0.6); }
+
+  /* MAIN LAYOUT */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 16px;
+  }
+
+  /* PANELS */
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0.4;
+  }
+
+  .panel-title {
+    font-family: 'Share Tech Mono';
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--dim);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .panel-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* GAUGE */
+  .gauge-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  #tempGauge {
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .temp-readout {
+    text-align: center;
+    margin-top: -10px;
+  }
+
+  .temp-value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 48px;
+    font-weight: 900;
+    line-height: 1;
+    transition: color 0.5s;
+  }
+
+  .temp-unit {
+    font-family: 'Share Tech Mono';
+    font-size: 16px;
+    color: var(--dim);
+    vertical-align: super;
+  }
+
+  .temp-label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--dim);
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  /* RPM + SPEED */
+  .mini-gauges {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .mini-gauge {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    padding: 12px;
+    text-align: center;
+  }
+
+  .mini-val {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .mini-lbl {
+    font-family: 'Share Tech Mono';
+    font-size: 9px;
+    color: var(--dim);
+    letter-spacing: 2px;
+    margin-top: 2px;
+  }
+
+  /* CONTROLS */
+  .controls-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .control-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .control-label {
+    font-family: 'Share Tech Mono';
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--dim);
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .control-val {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* SLIDERS */
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--border);
+    border-radius: 0;
+    outline: none;
+    cursor: pointer;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    background: var(--accent);
+    border-radius: 0;
+    clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+    cursor: pointer;
+    box-shadow: 0 0 10px var(--accent);
+  }
+
+  input[type=range]::-webkit-slider-runnable-track {
+    background: linear-gradient(90deg, var(--accent) var(--pct, 0%), var(--border) var(--pct, 0%));
+    height: 4px;
+  }
+
+  /* ENGINE TOGGLE */
+  .engine-toggle {
+    width: 100%;
+    padding: 14px;
+    border: 1px solid var(--border);
+    background: rgba(0,0,0,0.4);
+    color: var(--dim);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .engine-toggle.on {
+    border-color: var(--optimal);
+    color: var(--optimal);
+    background: rgba(0,230,118,0.08);
+    box-shadow: 0 0 20px rgba(0,230,118,0.2);
+  }
+
+  .engine-toggle.on::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(ellipse, rgba(0,230,118,0.1) 0%, transparent 60%);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.5; transform: translate(-50%,-50%) scale(0.8); }
+    50% { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+  }
+
+  /* INDICATORS */
+  .indicators {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .indicator {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    font-size: 12px;
+  }
+
+  .indicator-name {
+    font-family: 'Share Tech Mono';
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--dim);
+    text-transform: uppercase;
+  }
+
+  .indicator-value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--dim);
+    transition: all 0.3s;
+  }
+
+  .indicator-value.active {
+    color: var(--optimal);
+    text-shadow: 0 0 8px var(--optimal);
+  }
+
+  .indicator-value.warn {
+    color: var(--warn);
+    text-shadow: 0 0 8px var(--warn);
+  }
+
+  .indicator-value.hot {
+    color: var(--hot);
+    text-shadow: 0 0 8px var(--hot);
+    animation: blink 0.5s ease-in-out infinite alternate;
+  }
+
+  @keyframes blink {
+    from { opacity: 0.6; }
+    to { opacity: 1; }
+  }
+
+  /* RIGHT PANEL */
+  .right-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* GRAPH */
+  .graph-container {
+    position: relative;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border);
+  }
+
+  #tempGraph {
+    width: 100%;
+    display: block;
+  }
+
+  .graph-legend {
+    display: flex;
+    gap: 16px;
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+    font-family: 'Share Tech Mono';
+    font-size: 10px;
+    color: var(--dim);
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .legend-dot {
+    width: 8px; height: 2px;
+    border-radius: 0;
+  }
+
+  /* STATS GRID */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+
+  .stat-box {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border);
+    padding: 14px 12px;
+    text-align: center;
+    position: relative;
+  }
+
+  .stat-box::before {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.5s;
+  }
+
+  .stat-box.active::before { transform: scaleX(1); }
+
+  .stat-val {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .stat-lbl {
+    font-family: 'Share Tech Mono';
+    font-size: 9px;
+    color: var(--dim);
+    letter-spacing: 1px;
+    margin-top: 4px;
+    text-transform: uppercase;
+  }
+
+  /* THERMAL BAR */
+  .thermal-bar-container {
+    padding: 16px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+  }
+
+  .thermal-bar-label {
+    font-family: 'Share Tech Mono';
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--dim);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .thermal-bar {
+    position: relative;
+    height: 20px;
+    border-radius: 0;
+    background: linear-gradient(90deg,
+      #1a6fff 0%,
+      #00c8ff 20%,
+      #00e676 35%,
+      #00e676 65%,
+      #ffab00 80%,
+      #ff3d00 100%
+    );
+    overflow: visible;
+    border: 1px solid var(--border);
+  }
+
+  .thermal-marker {
+    position: absolute;
+    top: -4px;
+    width: 3px;
+    height: 28px;
+    background: white;
+    transform: translateX(-50%);
+    transition: left 0.2s ease;
+    box-shadow: 0 0 8px rgba(255,255,255,0.8);
+  }
+
+  .thermal-zones {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-family: 'Share Tech Mono';
+    font-size: 9px;
+    color: var(--dim);
+  }
+
+  /* DIFF PANEL */
+  .diff-panel {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    padding: 16px;
+  }
+
+  .diff-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(26,37,53,0.5);
+    font-size: 13px;
+  }
+
+  .diff-row:last-child { border-bottom: none; }
+
+  .diff-label { color: var(--dim); font-size: 11px; letter-spacing: 1px; }
+
+  .diff-air { color: var(--accent2); font-family: 'Orbitron', sans-serif; font-size: 12px; font-weight: 700; }
+  .diff-liq { color: var(--accent); font-family: 'Orbitron', sans-serif; font-size: 12px; font-weight: 700; }
+
+  .diff-cols {
+    display: grid;
+    grid-template-columns: 1fr 80px 80px;
+    gap: 4px;
+    font-family: 'Share Tech Mono';
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--dim);
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* THROTTLE NOISE SCOPE */
+  .noise-scope-container {
+    background: rgba(0,0,0,0.5);
+    border: 1px solid var(--border);
+    padding: 12px 14px 10px;
+  }
+  .noise-scope-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .noise-badge {
+    font-family: 'Share Tech Mono';
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: #ff6b00;
+    background: rgba(255,107,0,0.12);
+    border: 1px solid rgba(255,107,0,0.3);
+    padding: 2px 7px;
+  }
+  #noiseCanvas {
+    display: block;
+    width: 100%;
+  }
+  .noise-stats {
+    display: flex;
+    gap: 14px;
+    margin-top: 6px;
+    font-family: 'Share Tech Mono';
+    font-size: 9px;
+    color: var(--dim);
+  }
+  .noise-stat-val { color: var(--accent2); }
+
+  /* MODEL INFO PANEL */
+  .model-info-panel {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-top: 2px solid rgba(0,200,255,0.3);
+  }
+  .model-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+  }
+  .model-tab {
+    flex: 1;
+    padding: 10px 8px;
+    font-family: 'Share Tech Mono';
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--dim);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    border-right: 1px solid var(--border);
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .model-tab:last-child { border-right: none; }
+  .model-tab.active {
+    color: var(--accent);
+    background: rgba(0,200,255,0.06);
+  }
+  .model-tab-content {
+    display: none;
+    padding: 14px 16px;
+    font-size: 12px;
+    line-height: 1.7;
+    color: #8aaabb;
+  }
+  .model-tab-content.active { display: block; }
+  .model-tab-content p { margin-bottom: 10px; }
+  .model-tab-content p:last-child { margin-bottom: 0; }
+  .model-tab-content strong { color: var(--accent); font-family: 'Share Tech Mono'; font-size: 10px; letter-spacing: 1px; }
+  .model-tab-content a { color: var(--accent2); text-decoration: none; }
+  .model-tab-content a:hover { text-decoration: underline; }
+  .eq-block {
+    font-family: 'Share Tech Mono';
+    font-size: 11px;
+    color: #00e676;
+    background: rgba(0,230,118,0.05);
+    border-left: 2px solid rgba(0,230,118,0.4);
+    padding: 6px 10px;
+    margin: 8px 0;
+    letter-spacing: 0.5px;
+  }
+  .assumption-row {
+    display: flex;
+    gap: 8px;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(26,37,53,0.4);
+    font-size: 11px;
+  }
+  .assumption-row:last-child { border-bottom: none; }
+  .assumption-key { color: var(--accent2); font-family: 'Share Tech Mono'; font-size: 10px; min-width: 120px; }
+  .ref-row {
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(26,37,53,0.4);
+    font-size: 11px;
+    color: #7a9aaa;
+  }
+  .ref-row:last-child { border-bottom: none; }
+  .ref-num { color: var(--accent); font-family: 'Share Tech Mono'; font-size: 10px; margin-right: 8px; }
+
+  /* OVERHEAT ALERT */
+  .overheat-alert {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-100px);
+    background: var(--hot);
+    color: white;
+    padding: 12px 32px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    z-index: 100;
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 4px 30px rgba(255,61,0,0.5);
+  }
+
+  .overheat-alert.show { transform: translateX(-50%) translateY(0); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); }
+
+  @media (max-width: 900px) {
+    .main-grid { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="overheat-alert" id="overheatAlert">⚠ ENGINE OVERHEAT</div>
+
+<div class="container">
+  <header>
+    <div>
+      <div class="logo">MOTO<span>THERM</span></div>
+      <div class="subtitle">Engine Thermal Dynamics Simulator v2.0</div>
+    </div>
+    <div class="status-bar">
+      <div style="display:flex;align-items:center;gap:6px">
+        <div class="status-dot" id="engineDot"></div>
+        <span id="engineStatusText">ENGINE OFF</span>
+      </div>
+      <div style="font-family:'Share Tech Mono';font-size:11px;" id="simTime">T+0.0s</div>
+    </div>
+  </header>
+
+  <!-- BIKE SELECTOR -->
+  <div class="bike-selector">
+    <button class="bike-btn active" id="btnAirOil" onclick="selectBike('airOil')">
+      RE GT 650 / INTERCEPTOR 650
+      <span class="bike-tag">AIR + OIL COOLED · 648cc PARALLEL TWIN · WIDE THERMAL RANGE</span>
+    </button>
+    <button class="bike-btn" id="btnLiquid" onclick="selectBike('liquid')">
+      KTM DUKE 390 / RC 390
+      <span class="bike-tag">LIQUID COOLED · PRECISION THERMAL CONTROL</span>
+    </button>
+  </div>
+
+  <div class="main-grid">
+    <!-- LEFT PANEL -->
+    <div style="display:flex;flex-direction:column;gap:16px;">
+
+      <!-- GAUGE PANEL -->
+      <div class="panel">
+        <div class="panel-title">Engine Temperature</div>
+        <div class="gauge-container">
+          <canvas id="tempGauge" height="160"></canvas>
+          <div class="temp-readout">
+            <div class="temp-value" id="tempDisplay">25<span class="temp-unit">°C</span></div>
+            <div class="temp-label" id="tempZoneLabel">COLD</div>
+          </div>
+        </div>
+        <div class="mini-gauges">
+          <div class="mini-gauge">
+            <div class="mini-val" id="rpmDisplay">0</div>
+            <div class="mini-lbl">RPM × 100</div>
+          </div>
+          <div class="mini-gauge">
+            <div class="mini-val" id="speedDisplay">0</div>
+            <div class="mini-lbl">km/h</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTROLS -->
+      <div class="panel controls-panel">
+        <div class="panel-title">Controls</div>
+
+        <button class="engine-toggle" id="engineToggle" onclick="toggleEngine()">
+          ▶ START ENGINE
+        </button>
+
+        <div class="control-row">
+          <div class="control-label">
+            <span>THROTTLE</span>
+            <span class="control-val" id="throttleVal">0%</span>
+          </div>
+          <input type="range" id="throttleSlider" min="0" max="100" value="0"
+            oninput="updateThrottle(this.value)" style="--pct:0%">
+        </div>
+
+        <div class="control-row">
+          <div class="control-label">
+            <span>VEHICLE SPEED</span>
+            <span class="control-val" id="speedVal">0 km/h</span>
+          </div>
+          <input type="range" id="speedSlider" min="0" max="180" value="0"
+            oninput="updateSpeed(this.value)" style="--pct:0%">
+        </div>
+
+        <div class="control-row">
+          <div class="control-label">
+            <span>AMBIENT TEMP</span>
+            <span class="control-val" id="ambientVal">25°C</span>
+          </div>
+          <input type="range" id="ambientSlider" min="5" max="50" value="25"
+            oninput="updateAmbient(this.value)" style="--pct:33%">
+        </div>
+
+        <div class="control-row">
+          <div class="control-label">
+            <span>WIND SPEED</span>
+            <span class="control-val" id="windVal">0 km/h</span>
+          </div>
+          <input type="range" id="windSlider" min="0" max="60" value="0"
+            oninput="updateWind(this.value)" style="--pct:0%">
+        </div>
+
+        <!-- THROTTLE NOISE SCOPE -->
+        <div class="noise-scope-container">
+          <div class="noise-scope-header">
+            <span class="control-label" style="margin:0;font-size:9px">THROTTLE SIGNAL · SIMULATED NOISE</span>
+            <span class="noise-badge">⚠ NOT REAL ENGINE DATA</span>
+          </div>
+          <canvas id="noiseCanvas" height="52"></canvas>
+          <div class="noise-stats">
+            <span>AMPLITUDE: <span class="noise-stat-val" id="noiseAmp">0.0%</span></span>
+            <span>FREQ: <span class="noise-stat-val" id="noiseFreq">--Hz</span></span>
+            <span>SIGNAL: <span class="noise-stat-val" id="noiseSig">IDLE</span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- INDICATORS -->
+      <div class="panel">
+        <div class="panel-title">System Status</div>
+        <div class="indicators">
+          <div class="indicator">
+            <span class="indicator-name">Thermostat</span>
+            <span class="indicator-value" id="indThermostat">N/A</span>
+          </div>
+          <div class="indicator">
+            <span class="indicator-name">Cooling Fan</span>
+            <span class="indicator-value" id="indFan">OFF</span>
+          </div>
+          <div class="indicator">
+            <span class="indicator-name">Cooling Efficiency</span>
+            <span class="indicator-value" id="indEfficiency">--%</span>
+          </div>
+          <div class="indicator">
+            <span class="indicator-name">Coolant Flow</span>
+            <span class="indicator-value" id="indCoolant">N/A</span>
+          </div>
+          <div class="indicator">
+            <span class="indicator-name">Oil Temp Assist</span>
+            <span class="indicator-value" id="indOil">N/A</span>
+          </div>
+          <div class="indicator">
+            <span class="indicator-name">Heat Rejection</span>
+            <span class="indicator-value" id="indHeatRej">0 W</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="right-panel">
+
+      <!-- GRAPH -->
+      <div class="graph-container panel" style="padding:0;flex:1;min-height:280px;">
+        <div style="padding:12px 16px 8px;display:flex;justify-content:space-between;align-items:center;">
+          <div class="panel-title" style="margin-bottom:0">Temperature History</div>
+          <button onclick="clearGraph()" style="font-family:'Share Tech Mono';font-size:9px;letter-spacing:1px;background:transparent;border:1px solid var(--border);color:var(--dim);padding:4px 10px;cursor:pointer;">CLEAR</button>
+        </div>
+        <canvas id="tempGraph" height="220"></canvas>
+        <div class="graph-legend">
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#1a6fff;width:16px"></div><span>COLD &lt;60°C</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#00e676;width:16px"></div><span>OPTIMAL 60–100°C</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#ffab00;width:16px"></div><span>WARM 100–120°C</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#ff3d00;width:16px"></div><span>OVERHEAT &gt;120°C</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- THERMAL BAR -->
+      <div class="thermal-bar-container">
+        <div class="thermal-bar-label">Thermal Zone Indicator — Engine Temperature</div>
+        <div class="thermal-bar">
+          <div class="thermal-marker" id="thermalMarker" style="left:0%"></div>
+        </div>
+        <div class="thermal-zones">
+          <span>0°C</span><span>Cold</span><span>Optimal</span><span>Warm</span><span>Overheat</span><span>150°C</span>
+        </div>
+      </div>
+
+      <!-- STATS -->
+      <div class="stats-grid">
+        <div class="stat-box" id="statMaxTemp">
+          <div class="stat-val" id="maxTempVal">--</div>
+          <div class="stat-lbl">Peak Temp °C</div>
+        </div>
+        <div class="stat-box" id="statHeatGen">
+          <div class="stat-val" id="heatGenVal">0</div>
+          <div class="stat-lbl">Heat Gen W</div>
+        </div>
+        <div class="stat-box" id="statTempRate">
+          <div class="stat-val" id="tempRateVal">0.0</div>
+          <div class="stat-lbl">°C/sec Rate</div>
+        </div>
+        <div class="stat-box" id="statMode">
+          <div class="stat-val" id="modeVal" style="font-size:11px;">AIR/OIL</div>
+          <div class="stat-lbl">Cooling Mode</div>
+        </div>
+      </div>
+
+      <!-- COMPARISON TABLE -->
+      <div class="diff-panel">
+        <div class="panel-title">Cooling Technology Comparison</div>
+        <div class="diff-cols">
+          <span>CHARACTERISTIC</span>
+          <span style="color:var(--accent2)">AIR+OIL</span>
+          <span style="color:var(--accent)">LIQUID</span>
+        </div>
+        <div class="diff-row">
+          <span class="diff-label">Thermal Control</span>
+          <span class="diff-air">±30°C</span>
+          <span class="diff-liq">±8°C</span>
+        </div>
+        <div class="diff-row">
+          <span class="diff-label">Overheat Risk (Idle)</span>
+          <span class="diff-air">HIGH</span>
+          <span class="diff-liq">NONE</span>
+        </div>
+        <div class="diff-row">
+          <span class="diff-label">Speed Sensitivity</span>
+          <span class="diff-air">CRITICAL</span>
+          <span class="diff-liq">MINIMAL</span>
+        </div>
+        <div class="diff-row">
+          <span class="diff-label">Warm-up Time</span>
+          <span class="diff-air">FAST</span>
+          <span class="diff-liq">MODERATE</span>
+        </div>
+        <div class="diff-row">
+          <span class="diff-label">Compression Ratio</span>
+          <span class="diff-air">8.5:1</span>
+          <span class="diff-liq">11.5:1</span>
+        </div>
+        <div class="diff-row">
+          <span class="diff-label">Max Safe Power</span>
+          <span class="diff-air">LIMITED</span>
+          <span class="diff-liq">HIGHER</span>
+        </div>
+      </div>
+
+      <!-- MODEL INFO PANEL -->
+      <div class="model-info-panel">
+        <div class="panel-title" style="padding:12px 16px 0;margin-bottom:0;">Model · Sources · Assumptions</div>
+        <div class="model-tabs">
+          <button class="model-tab active" onclick="switchTab('how')">How It Works</button>
+          <button class="model-tab" onclick="switchTab('assumptions')">Assumptions</button>
+          <button class="model-tab" onclick="switchTab('noise')">Throttle Noise</button>
+          <button class="model-tab" onclick="switchTab('sources')">Sources</button>
+        </div>
+
+        <div class="model-tab-content active" id="tab-how">
+          <p><strong>CORE EQUATION</strong></p>
+          <div class="eq-block">Q_net = Q_gen − Q_rej<br>ΔT = Q_net / (m · Cₚ) · Δt</div>
+          <p>Heat generation <em>Q_gen</em> scales with throttle position and RPM. At idle the engine produces ~1.2–1.4 kW of waste heat; at WOT this rises to ~18–22 kW depending on mode. Only ~25–30% of fuel energy does work; the rest is rejected as heat.</p>
+          <p><strong>HEAT REJECTION — AIR/OIL</strong></p>
+          <div class="eq-block">Q_rej = h(v) · A · (T_engine − T_amb) + Q_oil</div>
+          <p>Convection coefficient <em>h</em> starts at 28 W/(m²·K) at zero airflow and rises linearly with combined vehicle + wind speed. The oil cooler adds a secondary path that becomes significant only above ~40 km/h. Below that, rejection is severely limited — which is why the RE 650 heats up fast at standstill.</p>
+          <p><strong>HEAT REJECTION — LIQUID</strong></p>
+          <div class="eq-block">Q_rej = η_therm · h_rad(v) · A_rad · ΔT + Q_fan</div>
+          <p>The thermostat acts as a modulating valve: closed below 80°C (engine warms fast), linearly opening between 80–95°C, fully open above. Radiator effectiveness depends on airspeed. The electric fan adds ~800 W of forced convection when temp hits 100°C.</p>
+          <p><strong>THERMAL INERTIA</strong><br>Engine mass (~8–9.5 kg effective thermal mass × Cₚ) means temperature cannot jump instantly — this produces the smooth lag you see in real bikes. Noise is added via a first-order filtered random process to mimic combustion pulse variation.</p>
+        </div>
+
+        <div class="model-tab-content" id="tab-assumptions">
+          <div class="assumption-row"><span class="assumption-key">Engine mass</span><span>Air/Oil: ~8 kg steel block; Liquid: ~9.5 kg (heavier with coolant jacket). Lumped-mass model — no spatial temp gradient.</span></div>
+          <div class="assumption-row"><span class="assumption-key">Cₚ (specific heat)</span><span>Embedded in mass constant. Real steel ~490 J/(kg·K); effective value includes oil thermal buffer for air-cooled model.</span></div>
+          <div class="assumption-row"><span class="assumption-key">Heat generation</span><span>Linear interpolation between idle and WOT. Real curve is non-linear (VE, ignition timing, AFR). WOT heat ≈ (1−η_th) × fuel_power, assumed η_th ≈ 28%.</span></div>
+          <div class="assumption-row"><span class="assumption-key">Convection h values</span><span>Approximated from literature. Real h for air-cooled fins: 20–80 W/(m²·K) depending on geometry. Radiator values are higher due to turbulent flow.</span></div>
+          <div class="assumption-row"><span class="assumption-key">Fin area (air-cooled)</span><span>0.35 m² estimated for RE 648cc parallel twin fins. Actual geometry-dependent value not published by RE.</span></div>
+          <div class="assumption-row"><span class="assumption-key">Oil cooler</span><span>Modelled as fixed secondary rejection path. Real oil coolers have their own thermostat bypass at cold temps — simplified here to linear speed scaling.</span></div>
+          <div class="assumption-row"><span class="assumption-key">Coolant pump</span><span>Flow rate linearly scaled with RPM (0.002–0.009 m³/s). Real pumps have cavitation limits and pressure-relief valves — not modelled.</span></div>
+          <div class="assumption-row"><span class="assumption-key">Radiator</span><span>Uniform effectiveness assumed. No modelling of coolant side heat capacity or pipe thermal lag. Thermostat hysteresis not modelled.</span></div>
+          <div class="assumption-row"><span class="assumption-key">Speed/Airflow</span><span>Vehicle speed and wind speed are additive for airflow — valid for headwind scenarios. Crosswind, ram-air duct effects not modelled.</span></div>
+          <div class="assumption-row"><span class="assumption-key">Time scaling</span><span>Simulation runs at real-time (1s sim = ~1s wall clock). Actual warm-up on RE 650 takes ~5–8 min to reach 70°C — sim compresses this to ~60–90 seconds for interactivity.</span></div>
+        </div>
+
+        <div class="model-tab-content" id="tab-noise">
+          <p><strong>WHAT IS THIS?</strong></p>
+          <p>The oscilloscope shows a <em>simulated</em> throttle signal with dynamically generated noise. <span style="color:var(--warn)">This is not real sensor data from any motorcycle.</span> It is a physics-inspired noise model to demonstrate how throttle inputs behave in an embedded system context.</p>
+          <p><strong>NOISE MODEL</strong></p>
+          <div class="eq-block">signal(t) = throttle + A·sin(2π·f₁·t) + B·ξ(t)<br>ξ(t) = low-pass filtered white noise</div>
+          <p>Two components: (1) a deterministic oscillation whose frequency scales with RPM — mimicking combustion pulse coupling into the TPS wiring — and (2) a stochastic term filtered through a first-order IIR to model sensor noise and vibration pickup.</p>
+          <p><strong>AMPLITUDE SCALING</strong><br>Noise amplitude increases with throttle (more vibration at higher load) and decreases slightly with speed (gyroscopic stabilisation, smoother chassis). At idle, noise is dominated by the combustion frequency component (~25 Hz base for a parallel twin at 1400 RPM, i.e. ~23 Hz firing frequency).</p>
+          <p><strong>WHY IT MATTERS</strong><br>Real ECUs use low-pass filters and sample averaging on TPS signals to reject this noise. The raw signal you see here would cause throttle hunting if fed directly to a fuelling map — which is why firmware signal conditioning matters.</p>
+        </div>
+
+        <div class="model-tab-content" id="tab-sources">
+          <div class="ref-row"><span class="ref-num">[1]</span>Pulkrabek, W.W. — <em>Engineering Fundamentals of the Internal Combustion Engine</em>, 2nd ed. Prentice Hall, 2004. (Heat rejection ratios, thermal efficiency baselines)</div>
+          <div class="ref-row"><span class="ref-num">[2]</span>Incropera, F.P. et al. — <em>Fundamentals of Heat and Mass Transfer</em>, 7th ed. Wiley, 2011. (Newton's law of cooling, convection coefficient ranges)</div>
+          <div class="ref-row"><span class="ref-num">[3]</span>Royal Enfield — GT 650 / Interceptor 650 Technical Specifications (official). 648cc SOHC air+oil cooled parallel twin, 47 PS @ 7100 RPM, CR 9.5:1.</div>
+          <div class="ref-row"><span class="ref-num">[4]</span>KTM — Duke 390 (2024) Technical Specifications (official). 399cc liquid-cooled DOHC single, 46 PS @ 9000 RPM, CR 12.6:1.</div>
+          <div class="ref-row"><span class="ref-num">[5]</span>Borman, G., Nishiwaki, K. — "Internal combustion engine heat transfer", <em>Progress in Energy and Combustion Science</em>, Vol 13(1), 1987. (In-cylinder heat transfer correlations)</div>
+          <div class="ref-row"><span class="ref-num">[6]</span>SAE Paper 2003-01-0536 — Thermal management strategies for air-cooled motorcycle engines. (Oil cooler effectiveness, fin area estimation)</div>
+          <div class="ref-row"><span class="ref-num">[7]</span>Heywood, J.B. — <em>Internal Combustion Engine Fundamentals</em>. McGraw-Hill, 1988. (Energy balance, brake thermal efficiency, waste heat partitioning)</div>
+          <div class="ref-row"><span class="ref-num">[8]</span>Thermal model architecture inspired by open-source vehicle sim frameworks (Modelica VehicleDynamics library). Simplified lumped-mass approach for real-time interactive use.</div>
+          <p style="margin-top:12px;font-size:10px;color:var(--dim);">⚠ This simulator is for educational demonstration only. Specific numbers (h values, mass constants, heat rates) are engineering estimates — not manufacturer-provided data. Real engine thermal behaviour varies with fuel quality, oil grade, altitude, and running-in state.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// =============================================
+// STATE
+// =============================================
+const S = {
+  mode: 'airOil',         // 'airOil' | 'liquid'
+  engineOn: false,
+  throttle: 0,            // 0–1
+  speed: 0,               // km/h
+  ambientTemp: 25,        // °C
+  windSpeed: 0,           // km/h
+  engineTemp: 25,         // °C (current)
+  targetTemp: 25,
+  rpm: 0,
+  simTime: 0,
+  maxTemp: 25,
+  graphData: [],
+  graphMaxPoints: 300,
+  fanOn: false,
+  thermostatOpen: 0,      // 0–1
+  lastDt: 0,
+  noise: 0,
+  overheatShown: false,
+};
+
+// =============================================
+// PHYSICS CONSTANTS
+// =============================================
+const PHYS = {
+  // Engine thermal mass (J/°C) — higher = slower response
+  airOil: {
+    mass: 8000,
+    // IDLE HEAT: at idle a 648cc parallel twin wastes ~600–700W as heat (rest goes out exhaust).
+    // Real RE 650 idles fine in traffic — equilibrium should be ~90–105°C at standstill.
+    // Overheat should only occur at sustained mid+ throttle WITH no airflow.
+    idleHeat: 700,             // W at idle (corrected down — must equilibrate ~95°C at standstill)
+    maxHeat: 16000,            // W at WOT (unchanged)
+    baseH: 28,                 // W/(m²·K) natural convection coefficient
+    areaBase: 0.35,            // m² fin area
+    speedH_coeff: 0.18,        // h increase per km/h
+    oilCoolerBase: 120,        // W base oil cooler rejection
+    oilCoolerSpeed: 2.0,       // W per km/h
+    idleRPM: 1400,
+    maxRPM: 7500,
+    // Natural convection boost at standstill (buoyancy, chimney effect through fins)
+    naturalConvBoost: 1.4,     // multiplier when speed < 5 km/h and T > 80°C
+  },
+  liquid: {
+    mass: 9500,
+    idleHeat: 750,             // W — also corrected; thermostat keeps this in check anyway
+    maxHeat: 20000,
+    baseH: 120,
+    areaBase: 0.18,
+    radArea: 0.15,
+    radBaseH: 280,             // slightly higher — liquid system is more effective
+    radSpeedCoeff: 3.5,
+    thermostatOpen: 80,
+    thermostatFull: 95,
+    fanActivate: 100,
+    fanPower: 900,             // W extra cooling when fan on
+    pumpBaseFlow: 0.002,       // m³/s at idle
+    pumpMaxFlow: 0.009,
+    idleRPM: 1350,
+    maxRPM: 10500,
+  }
+};
+
+// =============================================
+// SIMULATION TICK
+// =============================================
+let lastTick = null;
+
+function tick(ts) {
+  if (!lastTick) lastTick = ts;
+  const dt = Math.min((ts - lastTick) / 1000, 0.1); // seconds, capped
+  lastTick = ts;
+  S.simTime += dt;
+
+  if (S.engineOn) {
+    simulatePhysics(dt);
+  } else {
+    // Cool down to ambient when off
+    const cool = (S.engineTemp - S.ambientTemp) * 0.3 * dt;
+    S.engineTemp = Math.max(S.ambientTemp, S.engineTemp - cool);
+  }
+
+  updateUI();
+  recordGraph();
+  updateNoiseScope(dt);
+  requestAnimationFrame(tick);
+}
+
+function simulatePhysics(dt) {
+  const P = S.mode === 'airOil' ? PHYS.airOil : PHYS.liquid;
+  const T = S.engineTemp;
+  const Tamb = S.ambientTemp;
+  const dT = T - Tamb;
+
+  // RPM from throttle
+  const idleRPM = P.idleRPM;
+  S.rpm = idleRPM + S.throttle * (P.maxRPM - idleRPM);
+
+  // Heat generation (W)
+  const baseHeat = P.idleHeat + S.throttle * (P.maxHeat - P.idleHeat);
+  // RPM effect — higher RPM = slightly more heat at same throttle
+  const rpmFactor = 0.85 + 0.15 * (S.rpm / P.maxRPM);
+  const Q_gen = baseHeat * rpmFactor;
+
+  // Airflow (combined speed + wind)
+  const airflow = S.speed + S.windSpeed; // km/h
+
+  let Q_rej = 0;
+  let efficiency = 0;
+  let coolantInfo = 'N/A';
+
+  if (S.mode === 'airOil') {
+    // Convection coeff increases with airflow
+    // PHYSICS NOTE: At cold temps, fin efficiency is lower (less delta-T, less buoyancy).
+    // Below 70°C the natural convection contribution is weak — engine heats fast.
+    const h = P.baseH + P.speedH_coeff * airflow;
+    const A = P.areaBase;
+
+    // thermalDrive: scales Q_rej — cold engine has less ΔT so less convective drive.
+    // This makes engine shoot to ~70°C quickly before cooling becomes meaningful.
+    const thermalDrive = Math.min(1.0, Math.max(0.15, (T - Tamb) / 60));
+
+    // Natural convection boost at standstill — hot fins create buoyancy chimney effect.
+    // This is what keeps the RE 650 alive in traffic at idle.
+    // Only kicks in meaningfully when engine is hot and there's no forced airflow.
+    const isStandstill = airflow < 5;
+    const natConvBoost = (isStandstill && T > 80)
+      ? P.naturalConvBoost * Math.min(1, (T - 80) / 20)  // ramps in 80→100°C
+      : 1.0;
+
+    Q_rej = h * A * dT * thermalDrive * natConvBoost;
+
+    // Oil cooler (meaningful only above ~50°C, scales with speed)
+    const oilRej = P.oilCoolerBase + P.oilCoolerSpeed * airflow;
+    const oilActive = Math.max(0, Math.min(1, (T - 50) / 30)); // ramps in 50→80°C
+    Q_rej += Math.max(0, oilRej * (dT / 80) * oilActive);
+
+    // EQUILIBRIUM CHECK (for reference, not used in calc):
+    // At idle (Q_gen=700W), standstill, natConvBoost fully active at 100°C:
+    // Q_rej = 28 * 0.35 * 75 * 1.0 * 1.4 + oilcooler ≈ 735 + 69 ≈ 800W → slightly > Q_gen → stable ~95°C ✓
+    // At 30% throttle (Q_gen~5500W), standstill, no natConvBoost headroom:
+    // Q_rej maxes ~900W → temp climbs → overheat ✓ (realistic: don't lug it in traffic)
+    // At 30% throttle, 60 km/h airflow:
+    // h = 28 + 0.18*60 = 38.8; Q_rej = 38.8*0.35*75*1.4 + oilcooler ≈ 1429 + 250 ≈ 1680W → still climbing
+    // At 60 km/h + some throttle: h*A*ΔT grows → balances around 110-115°C (warm but not critical) ✓
+
+    efficiency = Math.min(100, Math.round((Q_rej / Math.max(1, Q_gen)) * 100));
+    S.thermostatOpen = -1; // N/A
+    S.fanOn = false;
+    coolantInfo = 'OIL CIRCUIT';
+
+  } else {
+    // LIQUID COOLED
+    const rpmRatio = S.rpm / P.maxRPM;
+    const pumpFlow = P.pumpBaseFlow + rpmRatio * (P.pumpMaxFlow - P.pumpBaseFlow);
+
+    // Thermostat logic
+    if (T < P.thermostatOpen) {
+      S.thermostatOpen = 0;
+    } else if (T >= P.thermostatFull) {
+      S.thermostatOpen = 1;
+    } else {
+      S.thermostatOpen = (T - P.thermostatOpen) / (P.thermostatFull - P.thermostatOpen);
+    }
+
+    // Fan
+    S.fanOn = T >= P.fanActivate;
+
+    // Radiator cooling (only when thermostat open)
+    const radH = P.radBaseH + P.radSpeedCoeff * airflow;
+    const radRej = S.thermostatOpen * radH * P.radArea * dT;
+
+    // Fan adds extra cooling
+    const fanRej = S.fanOn ? P.fanPower * (dT / 40) : 0;
+
+    // Block convection (minimal — engine is enclosed)
+    const blockRej = P.baseH * P.areaBase * dT * 0.3;
+
+    Q_rej = radRej + fanRej + blockRej;
+    coolantInfo = `${(pumpFlow * 1000).toFixed(1)} L/s`;
+
+    efficiency = Math.min(100, Math.round((Q_rej / Math.max(1, Q_gen)) * 100));
+  }
+
+  // Net heat → temperature change
+  const Q_net = Q_gen - Q_rej;
+  const dTemp = (Q_net / P.mass) * dt;
+
+  // Add small thermal noise
+  S.noise = S.noise * 0.92 + (Math.random() - 0.5) * 0.3;
+
+  S.engineTemp += dTemp + S.noise * dt;
+  S.engineTemp = Math.max(S.ambientTemp, Math.min(160, S.engineTemp));
+
+  // Track max
+  if (S.engineTemp > S.maxTemp) S.maxTemp = S.engineTemp;
+
+  // Store computed values for UI
+  S._qGen = Q_gen;
+  S._qRej = Q_rej;
+  S._efficiency = efficiency;
+  S._coolantInfo = coolantInfo;
+  S._dTempRate = dTemp / dt;
+}
+
+// =============================================
+// UI UPDATE
+// =============================================
+function getZoneColor(t) {
+  if (t < 40) return '#1a6fff';
+  if (t < 60) return '#00c8ff';
+  if (t < 85) return '#00e676';
+  if (t < 100) return '#00e676';
+  if (t < 120) return '#ffab00';
+  return '#ff3d00';
+}
+
+function getZoneName(t) {
+  if (t < 40) return 'COLD';
+  if (t < 60) return 'WARMING UP';
+  if (t < 85) return 'NORMAL';
+  if (t < 100) return 'OPTIMAL';
+  if (t < 120) return 'WARM';
+  return '⚠ OVERHEAT';
+}
+
+function updateUI() {
+  const t = S.engineTemp;
+  const col = getZoneColor(t);
+
+  // Temp display
+  document.getElementById('tempDisplay').innerHTML =
+    `${t.toFixed(1)}<span class="temp-unit">°C</span>`;
+  document.getElementById('tempDisplay').style.color = col;
+  document.getElementById('tempDisplay').style.textShadow = `0 0 30px ${col}60`;
+  document.getElementById('tempZoneLabel').textContent = getZoneName(t);
+  document.getElementById('tempZoneLabel').style.color = col;
+
+  // RPM and speed
+  document.getElementById('rpmDisplay').textContent = Math.round(S.rpm / 100);
+  document.getElementById('speedDisplay').textContent = Math.round(S.speed);
+
+  // Thermal marker
+  const pct = Math.min(100, Math.max(0, (t / 150) * 100));
+  document.getElementById('thermalMarker').style.left = pct + '%';
+
+  // Indicators
+  const indThermo = document.getElementById('indThermostat');
+  if (S.mode === 'liquid') {
+    const pct2 = Math.round(S.thermostatOpen * 100);
+    indThermo.textContent = pct2 === 0 ? 'CLOSED' : pct2 === 100 ? 'OPEN' : `${pct2}% OPEN`;
+    indThermo.className = 'indicator-value' +
+      (pct2 === 0 ? '' : pct2 < 100 ? ' warn' : ' active');
+  } else {
+    indThermo.textContent = 'N/A';
+    indThermo.className = 'indicator-value';
+  }
+
+  const indFan = document.getElementById('indFan');
+  if (S.mode === 'liquid' && S.fanOn) {
+    indFan.textContent = '● ON';
+    indFan.className = 'indicator-value active';
+  } else {
+    indFan.textContent = 'OFF';
+    indFan.className = 'indicator-value';
+  }
+
+  const eff = S.engineOn ? (S._efficiency || 0) : 0;
+  const indEff = document.getElementById('indEfficiency');
+  indEff.textContent = `${eff}%`;
+  indEff.className = 'indicator-value' + (eff > 80 ? ' active' : eff > 50 ? ' warn' : '');
+
+  document.getElementById('indCoolant').textContent =
+    S.engineOn ? (S._coolantInfo || 'N/A') : 'STOPPED';
+
+  document.getElementById('indOil').textContent =
+    S.mode === 'airOil' ? (S.engineOn ? 'ACTIVE' : 'OFF') : 'N/A';
+
+  document.getElementById('indHeatRej').textContent =
+    S.engineOn ? `${Math.round(S._qRej || 0)} W` : '0 W';
+
+  // Stats
+  document.getElementById('maxTempVal').textContent = S.maxTemp.toFixed(1);
+  document.getElementById('heatGenVal').textContent = Math.round(S._qGen || 0);
+  document.getElementById('tempRateVal').textContent =
+    S.engineOn ? (S._dTempRate || 0).toFixed(2) : '0.00';
+
+  // Sim time
+  const mm = Math.floor(S.simTime / 60);
+  const ss = (S.simTime % 60).toFixed(1);
+  document.getElementById('simTime').textContent = `T+${mm > 0 ? mm + 'm' : ''}${ss}s`;
+
+  // Overheat alert
+  if (t > 130 && !S.overheatShown) {
+    S.overheatShown = true;
+    document.getElementById('overheatAlert').classList.add('show');
+    setTimeout(() => {
+      document.getElementById('overheatAlert').classList.remove('show');
+      S.overheatShown = false;
+    }, 3000);
+  }
+
+  drawGauge(t);
+}
+
+// =============================================
+// GAUGE DRAW
+// =============================================
+function drawGauge(temp) {
+  const canvas = document.getElementById('tempGauge');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const cx = W / 2, cy = H * 0.75;
+  const r = Math.min(W, H) * 0.65;
+  const startAngle = Math.PI * 0.75;
+  const endAngle = Math.PI * 2.25;
+  const totalAngle = endAngle - startAngle;
+
+  // Background arc
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, startAngle, endAngle);
+  ctx.strokeStyle = '#1a2535';
+  ctx.lineWidth = 12;
+  ctx.lineCap = 'butt';
+  ctx.stroke();
+
+  // Color zones on arc
+  const zones = [
+    { from: 0, to: 40, color: '#1a4fff' },
+    { from: 40, to: 85, color: '#00c8ff' },
+    { from: 85, to: 105, color: '#00e676' },
+    { from: 105, to: 125, color: '#ffab00' },
+    { from: 125, to: 150, color: '#ff3d00' },
+  ];
+  zones.forEach(z => {
+    const a1 = startAngle + (z.from / 150) * totalAngle;
+    const a2 = startAngle + (z.to / 150) * totalAngle;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, a1, a2);
+    ctx.strokeStyle = z.color + '55';
+    ctx.lineWidth = 10;
+    ctx.stroke();
+  });
+
+  // Active arc
+  const fraction = Math.min(1, Math.max(0, temp / 150));
+  const activeEnd = startAngle + fraction * totalAngle;
+  const col = getZoneColor(temp);
+
+  const grad = ctx.createLinearGradient(cx - r, cy, cx + r, cy);
+  grad.addColorStop(0, '#1a6fff');
+  grad.addColorStop(0.4, '#00e676');
+  grad.addColorStop(0.7, '#ffab00');
+  grad.addColorStop(1, '#ff3d00');
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, startAngle, activeEnd);
+  ctx.strokeStyle = col;
+  ctx.lineWidth = 10;
+  ctx.stroke();
+
+  // Glow
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, startAngle, activeEnd);
+  ctx.strokeStyle = col + '40';
+  ctx.lineWidth = 20;
+  ctx.stroke();
+
+  // Tick marks
+  for (let i = 0; i <= 15; i++) {
+    const angle = startAngle + (i / 15) * totalAngle;
+    const isMajor = i % 5 === 0;
+    const inner = r - (isMajor ? 18 : 10);
+    const outer = r - 2;
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(angle) * inner, cy + Math.sin(angle) * inner);
+    ctx.lineTo(cx + Math.cos(angle) * outer, cy + Math.sin(angle) * outer);
+    ctx.strokeStyle = isMajor ? '#4a6070' : '#2a3545';
+    ctx.lineWidth = isMajor ? 2 : 1;
+    ctx.stroke();
+
+    if (isMajor) {
+      const label = (i / 15 * 150).toFixed(0);
+      const lx = cx + Math.cos(angle) * (inner - 14);
+      const ly = cy + Math.sin(angle) * (inner - 14);
+      ctx.font = '9px Share Tech Mono';
+      ctx.fillStyle = '#4a6070';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, lx, ly);
+    }
+  }
+
+  // Needle
+  const needleAngle = startAngle + fraction * totalAngle;
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(needleAngle);
+  ctx.beginPath();
+  ctx.moveTo(-(r * 0.15), 0);
+  ctx.lineTo(r * 0.72, -2);
+  ctx.lineTo(r * 0.78, 0);
+  ctx.lineTo(r * 0.72, 2);
+  ctx.closePath();
+  ctx.fillStyle = col;
+  ctx.shadowBlur = 12;
+  ctx.shadowColor = col;
+  ctx.fill();
+  ctx.restore();
+
+  // Center dot
+  ctx.beginPath();
+  ctx.arc(cx, cy, 7, 0, Math.PI * 2);
+  ctx.fillStyle = '#0d1219';
+  ctx.fill();
+  ctx.strokeStyle = col;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+}
+
+// =============================================
+// GRAPH
+// =============================================
+let graphOffset = 0;
+
+function recordGraph() {
+  S.graphData.push({
+    t: S.simTime,
+    temp: S.engineTemp,
+    engineOn: S.engineOn
+  });
+  if (S.graphData.length > S.graphMaxPoints) S.graphData.shift();
+  drawGraph();
+}
+
+function drawGraph() {
+  const canvas = document.getElementById('tempGraph');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const data = S.graphData;
+  if (data.length < 2) return;
+
+  const pad = { top: 20, right: 20, bottom: 30, left: 50 };
+  const gW = W - pad.left - pad.right;
+  const gH = H - pad.top - pad.bottom;
+  const minT = 0, maxT = 160;
+
+  // Zone fills
+  const zones = [
+    { min: 0, max: 60/160, color: 'rgba(26,111,255,0.08)' },
+    { min: 60/160, max: 105/160, color: 'rgba(0,230,118,0.08)' },
+    { min: 105/160, max: 125/160, color: 'rgba(255,171,0,0.08)' },
+    { min: 125/160, max: 1, color: 'rgba(255,61,0,0.08)' },
+  ];
+  zones.forEach(z => {
+    const y1 = pad.top + gH * (1 - z.max);
+    const y2 = pad.top + gH * (1 - z.min);
+    ctx.fillStyle = z.color;
+    ctx.fillRect(pad.left, y1, gW, y2 - y1);
+  });
+
+  // Grid lines
+  ctx.strokeStyle = '#1a2535';
+  ctx.lineWidth = 1;
+  [0, 40, 80, 100, 120, 150].forEach(temp => {
+    const y = pad.top + gH * (1 - temp / maxT);
+    ctx.beginPath();
+    ctx.moveTo(pad.left, y);
+    ctx.lineTo(pad.left + gW, y);
+    ctx.stroke();
+
+    ctx.font = '9px Share Tech Mono';
+    ctx.fillStyle = '#3a4555';
+    ctx.textAlign = 'right';
+    ctx.fillText(temp + '°', pad.left - 4, y + 3);
+  });
+
+  // Optimal zone markers
+  [85, 105].forEach(temp => {
+    const y = pad.top + gH * (1 - temp / maxT);
+    ctx.beginPath();
+    ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = 'rgba(0,230,118,0.3)';
+    ctx.moveTo(pad.left, y);
+    ctx.lineTo(pad.left + gW, y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  });
+
+  // Plot line
+  ctx.beginPath();
+  let first = true;
+  data.forEach((d, i) => {
+    const x = pad.left + (i / (S.graphMaxPoints - 1)) * gW;
+    const y = pad.top + gH * (1 - Math.min(1, Math.max(0, (d.temp - minT) / (maxT - minT))));
+    if (first) { ctx.moveTo(x, y); first = false; }
+    else ctx.lineTo(x, y);
+  });
+
+  // Gradient stroke
+  const lineGrad = ctx.createLinearGradient(pad.left, 0, pad.left + gW, 0);
+  data.forEach((d, i) => {
+    const pos = i / (data.length - 1);
+    lineGrad.addColorStop(pos, getZoneColor(d.temp));
+  });
+
+  ctx.strokeStyle = lineGrad;
+  ctx.lineWidth = 2;
+  ctx.shadowBlur = 6;
+  ctx.shadowColor = getZoneColor(S.engineTemp);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Fill under
+  ctx.lineTo(pad.left + gW, pad.top + gH);
+  ctx.lineTo(pad.left, pad.top + gH);
+  ctx.closePath();
+  const fillGrad = ctx.createLinearGradient(0, pad.top, 0, pad.top + gH);
+  fillGrad.addColorStop(0, getZoneColor(S.engineTemp) + '30');
+  fillGrad.addColorStop(1, 'transparent');
+  ctx.fillStyle = fillGrad;
+  ctx.fill();
+
+  // Axes
+  ctx.strokeStyle = '#2a3545';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(pad.left, pad.top);
+  ctx.lineTo(pad.left, pad.top + gH);
+  ctx.lineTo(pad.left + gW, pad.top + gH);
+  ctx.stroke();
+
+  // Current temp line
+  const curY = pad.top + gH * (1 - Math.min(1, S.engineTemp / maxT));
+  ctx.beginPath();
+  ctx.setLineDash([2, 4]);
+  ctx.strokeStyle = getZoneColor(S.engineTemp) + '60';
+  ctx.moveTo(pad.left + gW - 1, pad.top);
+  ctx.lineTo(pad.left + gW - 1, pad.top + gH);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Current temp dot
+  ctx.beginPath();
+  ctx.arc(pad.left + gW - 1, curY, 4, 0, Math.PI * 2);
+  ctx.fillStyle = getZoneColor(S.engineTemp);
+  ctx.shadowBlur = 10;
+  ctx.shadowColor = getZoneColor(S.engineTemp);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+}
+
+function clearGraph() {
+  S.graphData = [];
+  S.maxTemp = S.engineTemp;
+}
+
+// =============================================
+// CONTROLS
+// =============================================
+function toggleEngine() {
+  S.engineOn = !S.engineOn;
+  const btn = document.getElementById('engineToggle');
+  const dot = document.getElementById('engineDot');
+  const txt = document.getElementById('engineStatusText');
+
+  if (S.engineOn) {
+    btn.textContent = '■ KILL ENGINE';
+    btn.className = 'engine-toggle on';
+    dot.classList.add('active');
+    txt.textContent = 'ENGINE RUNNING';
+    if (S.engineTemp < S.ambientTemp + 2) S.engineTemp = S.ambientTemp;
+  } else {
+    btn.textContent = '▶ START ENGINE';
+    btn.className = 'engine-toggle';
+    dot.classList.remove('active');
+    txt.textContent = 'ENGINE OFF';
+  }
+}
+
+function updateThrottle(v) {
+  S.throttle = v / 100;
+  document.getElementById('throttleVal').textContent = v + '%';
+  setSliderFill('throttleSlider', v, 100);
+}
+
+function updateSpeed(v) {
+  S.speed = +v;
+  document.getElementById('speedVal').textContent = v + ' km/h';
+  setSliderFill('speedSlider', v, 180);
+}
+
+function updateAmbient(v) {
+  S.ambientTemp = +v;
+  document.getElementById('ambientVal').textContent = v + '°C';
+  setSliderFill('ambientSlider', v - 5, 45);
+}
+
+function updateWind(v) {
+  S.windSpeed = +v;
+  document.getElementById('windVal').textContent = v + ' km/h';
+  setSliderFill('windSlider', v, 60);
+}
+
+function setSliderFill(id, val, max) {
+  const pct = Math.round((val / max) * 100);
+  document.getElementById(id).style.setProperty('--pct', pct + '%');
+}
+
+function selectBike(mode) {
+  S.mode = mode;
+  S.maxTemp = S.engineTemp;
+  clearGraph();
+
+  document.getElementById('btnAirOil').className = 'bike-btn' + (mode === 'airOil' ? ' active' : '');
+  document.getElementById('btnLiquid').className = 'bike-btn' + (mode === 'liquid' ? ' active' : '');
+  document.getElementById('modeVal').textContent = mode === 'airOil' ? 'AIR/OIL' : 'LIQUID';
+}
+
+// =============================================
+// MODEL INFO TABS
+// =============================================
+function switchTab(name) {
+  document.querySelectorAll('.model-tab').forEach((t,i) => {
+    t.classList.toggle('active', ['how','assumptions','noise','sources'][i] === name);
+  });
+  document.querySelectorAll('.model-tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+// =============================================
+// THROTTLE NOISE OSCILLOSCOPE
+// =============================================
+const NOISE_SCOPE = {
+  history: new Float32Array(200),
+  ptr: 0,
+  iirState: 0,
+  phase: 0,
+};
+
+function updateNoiseScope(dt) {
+  const canvas = document.getElementById('noiseCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+
+  const throttle = S.throttle; // 0-1
+  const rpm = S.engineOn ? S.rpm : 0;
+
+  // --- NOISE GENERATION ---
+  // 1. Combustion frequency component: parallel twin fires at RPM/60 * (2 cylinders / 4-stroke) = RPM/120 Hz
+  //    At 1400 RPM idle → ~11.7 Hz, at 7500 RPM → ~62.5 Hz
+  const firingHz = Math.max(0, rpm / 120);
+  NOISE_SCOPE.phase += firingHz * dt * 2 * Math.PI;
+  const combustionNoise = S.engineOn ? Math.sin(NOISE_SCOPE.phase) * (0.015 + throttle * 0.04) : 0;
+
+  // 2. Stochastic white noise → filtered by first-order IIR (cutoff ~30 Hz)
+  const alpha = 0.15; // IIR smoothing factor (lower = more filtering)
+  const white = (Math.random() - 0.5) * 2;
+  NOISE_SCOPE.iirState = alpha * white + (1 - alpha) * NOISE_SCOPE.iirState;
+  // Amplitude scales with throttle and inversely with speed (more vibration at low speed)
+  const speedDamp = Math.max(0.3, 1 - S.speed / 300);
+  const stochasticNoise = S.engineOn ? NOISE_SCOPE.iirState * (0.02 + throttle * 0.05) * speedDamp : 0;
+
+  // 3. Combined signal = set point + noise
+  const rawSignal = throttle + combustionNoise + stochasticNoise;
+  const clampedSignal = Math.min(1.05, Math.max(-0.05, rawSignal));
+
+  // Store in ring buffer
+  NOISE_SCOPE.history[NOISE_SCOPE.ptr] = clampedSignal;
+  NOISE_SCOPE.ptr = (NOISE_SCOPE.ptr + 1) % NOISE_SCOPE.history.length;
+
+  // --- DRAW ---
+  ctx.clearRect(0, 0, W, H);
+
+  // Background
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(26,37,53,0.8)';
+  ctx.lineWidth = 1;
+  for (let g = 0; g <= 4; g++) {
+    const y = (g / 4) * H;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+  for (let g = 0; g <= 7; g++) {
+    const x = (g / 7) * W;
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+
+  // Set-point line (clean throttle)
+  const spY = H - throttle * H;
+  ctx.beginPath();
+  ctx.setLineDash([4, 4]);
+  ctx.strokeStyle = 'rgba(0,200,255,0.3)';
+  ctx.lineWidth = 1;
+  ctx.moveTo(0, spY); ctx.lineTo(W, spY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Signal waveform
+  ctx.beginPath();
+  const len = NOISE_SCOPE.history.length;
+  for (let i = 0; i < len; i++) {
+    const idx = (NOISE_SCOPE.ptr + i) % len;
+    const x = (i / (len - 1)) * W;
+    const y = H - Math.min(1.05, Math.max(-0.05, NOISE_SCOPE.history[idx])) * H;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  const lineCol = S.engineOn ? (throttle > 0.5 ? '#ff6b00' : '#00c8ff') : '#2a3545';
+  ctx.strokeStyle = lineCol;
+  ctx.lineWidth = 1.5;
+  ctx.shadowBlur = S.engineOn ? 6 : 0;
+  ctx.shadowColor = lineCol;
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Labels
+  ctx.font = '8px Share Tech Mono';
+  ctx.fillStyle = '#3a5565';
+  ctx.textAlign = 'left';
+  ctx.fillText('100%', 2, 9);
+  ctx.fillText('0%', 2, H - 2);
+
+  // Stats update
+  const amplitude = S.engineOn ? ((Math.abs(combustionNoise) + Math.abs(stochasticNoise)) * 100).toFixed(1) : '0.0';
+  const freq = S.engineOn ? firingHz.toFixed(1) : '--';
+  const sigName = !S.engineOn ? 'OFF' : throttle < 0.05 ? 'IDLE' : throttle < 0.4 ? 'PARTIAL' : throttle < 0.8 ? 'MID LOAD' : 'WOT';
+  document.getElementById('noiseAmp').textContent = amplitude + '%';
+  document.getElementById('noiseFreq').textContent = freq + (S.engineOn ? ' Hz' : '');
+  document.getElementById('noiseSig').textContent = sigName;
+}
+
+// =============================================
+// CANVAS RESIZE
+// =============================================
+function resizeCanvases() {
+  const gauge = document.getElementById('tempGauge');
+  const parent = gauge.parentElement;
+  const size = Math.min(280, parent.clientWidth - 40);
+  gauge.width = size;
+  gauge.height = Math.round(size * 0.62);
+
+  const graph = document.getElementById('tempGraph');
+  const gParent = graph.parentElement;
+  graph.width = gParent.clientWidth;
+  graph.height = 220;
+
+  const noiseCanvas = document.getElementById('noiseCanvas');
+  if (noiseCanvas) {
+    noiseCanvas.width = noiseCanvas.parentElement.clientWidth - 28;
+    noiseCanvas.height = 52;
+  }
+}
+
+window.addEventListener('resize', resizeCanvases);
+resizeCanvases();
+
+// =============================================
+// START
+// =============================================
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

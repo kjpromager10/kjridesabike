@@ -1,0 +1,1767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Engine Dynamics v3 — Combustion & Scavenging Visualization</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Space+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0c0f;--bg2:#0f1318;--bg3:#141920;--bg4:#1a2028;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --text:#e8eaed;--text2:#8b9299;--text3:#4a5260;
+  --accent:#00d4ff;--hot:#ff6b35;--hot2:#ff9d1a;
+  --cool:#3b82f6;--green:#22c55e;--amber:#f59e0b;--red:#ef4444;
+  --mono:'JetBrains Mono',monospace;--sans:'Space Grotesk',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;min-height:100vh;overflow-x:hidden;}
+
+/* HEADER */
+.hdr{border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;background:var(--bg2);flex-shrink:0;}
+.hdr-logo{display:flex;align-items:center;gap:10px;}
+.logo-mark{width:26px;height:26px;border:1.5px solid var(--accent);border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;color:var(--accent);}
+.hdr-title{font-size:13px;font-weight:500;letter-spacing:.4px;}
+.hdr-sub{font-size:11px;color:var(--text3);font-family:var(--mono);letter-spacing:.4px;}
+.hdr-badges{display:flex;gap:6px;flex-wrap:wrap;}
+.badge{padding:3px 8px;border-radius:3px;font-family:var(--mono);font-size:11px;letter-spacing:.3px;border:1px solid;cursor:default;}
+.badge-live{border-color:var(--green);color:var(--green);}
+.badge-info{border-color:var(--border2);color:var(--text2);}
+.badge-link{border-color:var(--border2);color:var(--accent);cursor:pointer;}
+.badge-link:hover{border-color:var(--accent);background:rgba(0,212,255,.06);}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:210px 1fr 210px;height:calc(100vh - 47px);overflow:hidden;}
+
+/* PANELS */
+.panel{background:var(--bg2);display:flex;flex-direction:column;overflow-y:auto;}
+.panel-left{border-right:1px solid var(--border);}
+.panel-right{border-left:1px solid var(--border);}
+.psec{border-bottom:1px solid var(--border);padding:12px;}
+.plabel{font-family:var(--mono);font-size:11px;letter-spacing:1px;color:var(--text3);text-transform:uppercase;margin-bottom:8px;}
+
+/* INPUTS */
+input[type=range]{width:100%;-webkit-appearance:none;height:2px;background:var(--bg4);border-radius:1px;outline:none;margin:5px 0;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:10px;height:10px;border-radius:50%;background:var(--accent);cursor:pointer;border:1.5px solid var(--bg);}
+.ctrl-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.ctrl-name{font-size:11px;color:var(--text2);}
+.ctrl-val{font-family:var(--mono);font-size:11px;color:var(--accent);}
+
+/* BUTTONS */
+.btn-grp{display:flex;gap:5px;flex-wrap:wrap;}
+.btn{padding:4px 9px;border-radius:3px;font-family:var(--mono);font-size:10px;letter-spacing:.4px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;transition:all .15s;}
+.btn:hover{border-color:var(--accent);color:var(--accent);}
+.btn.on{border-color:var(--accent);color:var(--accent);background:rgba(0,212,255,.07);}
+.btn.hot-on{border-color:var(--hot);color:var(--hot);background:rgba(255,107,53,.07);}
+.btn.red-on{border-color:var(--red);color:var(--red);background:rgba(239,68,68,.07);}
+
+/* LAYER TOGGLES */
+.tog-list{display:flex;flex-direction:column;gap:4px;}
+.tog{display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 7px;border-radius:4px;border:1px solid transparent;transition:all .12s;user-select:none;}
+.tog:hover{background:var(--bg4);}
+.tog.on{border-color:currentColor;background:rgba(255,255,255,0.03);}
+.tog-pip{width:9px;height:9px;border-radius:50%;border:1.5px solid currentColor;flex-shrink:0;transition:all .15s;}
+.tog.on .tog-pip{background:currentColor;}
+.tog-name{font-size:11px;color:var(--text3);transition:color .12s;}
+.tog.on .tog-name{color:inherit;}
+
+/* MAIN CANVAS AREA */
+.main{display:flex;flex-direction:column;overflow:hidden;}
+.tab-bar{border-bottom:1px solid var(--border);padding:6px 14px;display:flex;align-items:center;gap:8px;background:var(--bg2);flex-shrink:0;}
+.tab{padding:4px 11px;border-radius:3px;font-size:11px;font-family:var(--mono);cursor:pointer;border:1px solid transparent;color:var(--text3);transition:all .15s;white-space:nowrap;}
+.tab.on{border-color:var(--border2);color:var(--text);background:var(--bg3);}
+.crank-hud{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:auto;white-space:nowrap;}
+.crank-hud span{color:var(--accent);}
+
+/* TAB VIEWS */
+.tab-views{flex:1;position:relative;overflow:hidden;}
+.tab-view{position:absolute;inset:0;display:none;flex-direction:column;}
+.tab-view.on{display:flex;}
+
+/* ENGINES WRAP */
+.engines-wrap{flex:1;display:flex;overflow:hidden;}
+.eng-half{flex:1;display:flex;flex-direction:column;border-right:1px solid var(--border);overflow:hidden;}
+.eng-half:last-child{border-right:none;}
+.eng-topbar{padding:5px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:var(--bg2);flex-shrink:0;}
+.eng-badge{font-family:var(--mono);font-size:10px;padding:2px 6px;border-radius:2px;border:1px solid;}
+.eng-canvas-wrap{flex:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.phase-strip{height:18px;display:flex;flex-shrink:0;border-top:1px solid var(--border);}
+.phase-seg{flex:1;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;letter-spacing:.3px;text-transform:uppercase;opacity:.35;transition:opacity .15s;}
+.phase-seg.on{opacity:1;}
+
+/* EXPANSION CHAMBER TAB */
+.exp-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.exp-top{padding:8px 14px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px;color:var(--text3);line-height:1.6;}
+.exp-canvas-wrap{flex:1;display:flex;align-items:center;justify-content:center;}
+
+/* PV DIAGRAM TAB */
+.pv-wrap{flex:1;display:flex;gap:0;overflow:hidden;}
+.pv-half{flex:1;display:flex;flex-direction:column;border-right:1px solid var(--border);overflow:hidden;}
+.pv-half:last-child{border-right:none;}
+.pv-label{padding:6px 12px;font-family:var(--mono);font-size:11px;color:var(--text2);border-bottom:1px solid var(--border);flex-shrink:0;}
+.pv-canvas-wrap{flex:1;display:flex;align-items:center;justify-content:center;}
+
+/* TIMELINE STRIP */
+.timeline-strip{border-top:1px solid var(--border);background:var(--bg2);padding:8px 14px;flex-shrink:0;}
+.tl-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;}
+.tl-label{font-family:var(--mono);font-size:10px;letter-spacing:.8px;color:var(--text3);text-transform:uppercase;}
+
+/* TELEMETRY */
+.telem-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);}
+.telem-cell{background:var(--bg2);padding:8px 10px;}
+.telem-key{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:2px;}
+.telem-val{font-family:var(--mono);font-size:14px;font-weight:500;}
+.tv-hot{color:var(--hot);}
+.tv-cool{color:var(--cool);}
+.tv-acc{color:var(--accent);}
+.tv-grn{color:var(--green);}
+.tv-amb{color:var(--amber);}
+.tv-dim{color:var(--text2);}
+
+/* INFO BLOCKS */
+.info-block{padding:10px 12px;border-bottom:1px solid var(--border);}
+.info-title{font-size:11px;font-weight:500;margin-bottom:4px;}
+.info-body{font-size:11px;color:var(--text2);line-height:1.6;}
+.formula-box{font-family:var(--mono);font-size:11px;color:var(--accent);background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:6px 8px;margin-top:5px;line-height:1.9;}
+.formula-box .f-dim{color:var(--text3);}
+
+/* LINKS SECTION */
+.links-section{padding:10px 12px;}
+.link-item{display:flex;align-items:flex-start;gap:7px;padding:6px 0;border-bottom:1px solid var(--border);text-decoration:none;transition:all .15s;border-radius:3px;padding:6px 4px;}
+.link-item:last-child{border-bottom:none;}
+.link-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.link-text{font-size:11px;color:var(--text2);line-height:1.5;}
+.link-text strong{color:var(--text);font-weight:500;display:block;font-size:11px;}
+.link-item:hover{background:var(--bg3);padding-left:8px;}
+.link-item:hover .link-text{color:var(--accent);}
+.link-item:hover .link-text strong{color:var(--accent);}
+.link-arrow{margin-left:auto;font-size:12px;color:var(--text3);flex-shrink:0;margin-top:2px;transition:all .15s;}
+.link-item:hover .link-arrow{color:var(--accent);}
+
+/* OVERLAY MODALS */
+.overlay{display:none;position:fixed;inset:0;background:rgba(10,12,15,.95);z-index:200;overflow-y:auto;padding:30px 20px;}
+.overlay.on{display:block;}
+.overlay-inner{max-width:680px;margin:0 auto;}
+.overlay-inner h2{font-family:var(--mono);font-size:13px;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid var(--border2);}
+.overlay-inner h3{font-family:var(--mono);font-size:11px;color:var(--text2);letter-spacing:.5px;text-transform:uppercase;margin:14px 0 5px;}
+.overlay-inner p,.overlay-inner li{font-size:12px;color:var(--text2);line-height:1.7;}
+.overlay-inner ul{padding-left:14px;margin-bottom:6px;}
+.overlay-inner li{margin-bottom:3px;}
+.overlay-inner a{color:var(--accent);text-decoration:none;}
+.overlay-inner a:hover{text-decoration:underline;}
+.close-btn{position:fixed;top:16px;right:16px;padding:5px 14px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);cursor:pointer;border-radius:3px;font-family:var(--mono);font-size:10px;}
+.close-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hdr-logo">
+    <div class="logo-mark">EV</div>
+    <div>
+      <div class="hdr-title">Engine Dynamics v3 — Combustion &amp; Scavenging</div>
+      <div class="hdr-sub">2T &amp; 4T · PRESSURE WAVE · SCAVENGING · P-V ANALYSIS</div>
+    </div>
+  </div>
+  <div class="hdr-badges">
+    <span class="badge badge-live" id="liveBadge">● LIVE</span>
+    <span class="badge badge-info" id="modeBadge">COMPARE MODE</span>
+    <span class="badge badge-link" onclick="openOverlay('refOverlay')">REFERENCES</span>
+    <span class="badge badge-link" onclick="openOverlay('disclaimerOverlay')">DISCLAIMER</span>
+  </div>
+</header>
+
+<!-- MAIN LAYOUT -->
+<div class="layout">
+
+<!-- ════ LEFT PANEL ════ -->
+<div class="panel panel-left">
+
+  <div class="psec">
+    <div class="plabel">Engine Speed</div>
+    <div class="ctrl-row">
+      <span class="ctrl-name">RPM</span>
+      <span class="ctrl-val" id="rpmDisplay">1500</span>
+    </div>
+    <input type="range" id="rpmSlider" min="500" max="10000" step="50" value="1500" oninput="setRPM(+this.value)">
+    <div class="btn-grp" style="margin-top:7px">
+      <button class="btn" onclick="setRPM(800)">IDLE</button>
+      <button class="btn" onclick="setRPM(3000)">MID</button>
+      <button class="btn" onclick="setRPM(6500)">POWER</button>
+      <button class="btn" onclick="setRPM(9000)">PEAK</button>
+    </div>
+  </div>
+
+  <div class="psec">
+    <div class="plabel">Playback</div>
+    <div class="btn-grp" style="margin-bottom:7px">
+      <button class="btn on" id="btnPlay" onclick="togglePlay()">⏸ PAUSE</button>
+      <button class="btn on" onclick="setSpeed(0.05)" id="sp005">0.05×</button>
+      <button class="btn" onclick="setSpeed(0.1)" id="sp01">0.1×</button>
+      <button class="btn" onclick="setSpeed(0.25)" id="sp025">0.25×</button>
+      <button class="btn" onclick="setSpeed(0.5)" id="sp05">0.5×</button>
+      <button class="btn" onclick="setSpeed(1)" id="sp1">1×</button>
+    </div>
+    <div class="plabel" style="margin-top:4px">Step Crank (pauses)</div>
+    <div class="btn-grp">
+      <button class="btn" onclick="step(-5)">−5°</button>
+      <button class="btn" onclick="step(5)">+5°</button>
+      <button class="btn" onclick="step(-90)">−90°</button>
+      <button class="btn" onclick="step(90)">+90°</button>
+    </div>
+  </div>
+
+  <div class="psec">
+    <div class="plabel">View Layers</div>
+    <div class="tog-list">
+      <div class="tog on" style="color:var(--cool)" onclick="togLayer(this,'airflow')" data-layer="airflow">
+        <div class="tog-pip"></div><span class="tog-name">Airflow &amp; Scavenging</span>
+      </div>
+      <div class="tog on" style="color:var(--hot)" onclick="togLayer(this,'flame')" data-layer="flame">
+        <div class="tog-pip"></div><span class="tog-name">Combustion Flame</span>
+      </div>
+      <div class="tog on" style="color:var(--accent)" onclick="togLayer(this,'pressure')" data-layer="pressure">
+        <div class="tog-pip"></div><span class="tog-name">Pressure Waves</span>
+      </div>
+      <div class="tog on" style="color:var(--hot2)" onclick="togLayer(this,'exhaust')" data-layer="exhaust">
+        <div class="tog-pip"></div><span class="tog-name">Exhaust Flow</span>
+      </div>
+      <div class="tog on" style="color:var(--green)" onclick="togLayer(this,'ports')" data-layer="ports">
+        <div class="tog-pip"></div><span class="tog-name">Port / Valve State</span>
+      </div>
+      <div class="tog on" style="color:var(--amber)" onclick="togLayer(this,'thermal')" data-layer="thermal">
+        <div class="tog-pip"></div><span class="tog-name">Thermal Load</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="psec">
+    <div class="plabel">Display Mode</div>
+    <div class="btn-grp">
+      <button class="btn on" id="btnCompare" onclick="setMode('compare')">COMPARE</button>
+      <button class="btn" id="btn2T" onclick="setMode('2T')">2-STROKE</button>
+      <button class="btn" id="btn4T" onclick="setMode('4T')">4-STROKE</button>
+    </div>
+    <div style="margin-top:8px;font-size:11px;color:var(--text2);line-height:1.6;" id="modeDesc">
+      Both engines at same RPM. Note how 2T fires every revolution vs 4T every other. Watch power stroke frequency difference.
+    </div>
+  </div>
+
+  <div class="psec">
+    <div class="plabel">Scenario Mode</div>
+    <div class="btn-grp">
+      <button class="btn on" id="scNormal" onclick="setScenario('normal',this)">NORMAL</button>
+      <button class="btn" id="scPower" onclick="setScenario('powerband',this)">POWERBAND</button>
+      <button class="btn" id="scSz" onclick="setScenario('seizure',this)">SEIZURE</button>
+      <button class="btn" id="scLean" onclick="setScenario('lean',this)">LEAN MIX</button>
+    </div>
+    <div style="margin-top:8px;font-size:11px;color:var(--text2);line-height:1.6;" id="scenarioDesc">
+      Normal running. Toggle layers to isolate phenomena.
+    </div>
+  </div>
+
+</div><!-- end left panel -->
+
+<!-- ════ MAIN ════ -->
+<div class="main">
+  <div class="tab-bar">
+    <div class="tab on" id="tabCross" onclick="switchTab('cross')">CROSS-SECTION</div>
+    <div class="tab" id="tabExp" onclick="switchTab('exp')">EXHAUST SCAVENGING &amp; WAVE</div>
+    <div class="tab" id="tabPV" onclick="switchTab('pv')">P-V DIAGRAM</div>
+    <div class="crank-hud">
+      2T: <span id="ca2Tdisp">0°</span> &nbsp;|&nbsp;
+      4T: <span id="ca4Tdisp">0°</span> &nbsp;|&nbsp;
+      Phase: <span id="phaseDisp">—</span>
+    </div>
+  </div>
+
+  <div class="tab-views">
+
+    <!-- TAB 1: CROSS SECTION -->
+    <div class="tab-view on" id="viewCross">
+      <div class="engines-wrap" id="enginesWrap">
+
+        <!-- 2-STROKE -->
+        <div class="eng-half" id="half2T">
+          <div class="eng-topbar">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--text2)">2-STROKE · 150cc</span>
+            <span class="eng-badge" style="border-color:var(--hot);color:var(--hot)">FIRES EVERY REV</span>
+          </div>
+          <div class="eng-canvas-wrap">
+            <canvas id="c2T"></canvas>
+          </div>
+          <div class="phase-strip" id="strip2T">
+            <div class="phase-seg" style="color:var(--cool)" data-ph="0">TRANSFER</div>
+            <div class="phase-seg" style="color:var(--amber)" data-ph="1">COMPRESS</div>
+            <div class="phase-seg on" style="color:var(--hot)" data-ph="2">POWER</div>
+            <div class="phase-seg" style="color:var(--hot2)" data-ph="3">EX+SCAV</div>
+          </div>
+        </div>
+
+        <!-- 4-STROKE -->
+        <div class="eng-half" id="half4T">
+          <div class="eng-topbar">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--text2)">4-STROKE · 250cc</span>
+            <span class="eng-badge" style="border-color:var(--cool);color:var(--cool)">FIRES EVERY 2 REV</span>
+          </div>
+          <div class="eng-canvas-wrap">
+            <canvas id="c4T"></canvas>
+          </div>
+          <div class="phase-strip" id="strip4T">
+            <div class="phase-seg on" style="color:var(--cool)" data-ph="0">INTAKE</div>
+            <div class="phase-seg" style="color:var(--amber)" data-ph="1">COMPRESS</div>
+            <div class="phase-seg" style="color:var(--hot)" data-ph="2">POWER</div>
+            <div class="phase-seg" style="color:var(--hot2)" data-ph="3">EXHAUST</div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- end cross section tab -->
+
+    <!-- TAB 2: EXPANSION CHAMBER -->
+    <div class="tab-view" id="viewExp">
+      <div class="exp-top">
+        Exhaust Scavenging &amp; Tuned Expansion Chamber — Pressure Wave Propagation, Reflection &amp; Powerband Mismatch &nbsp;·&nbsp; <span style="color:var(--text2)">Scavenging occurs in both 2T (mandatory, every cycle) and 4T (cam overlap, tunable)</span>
+      </div>
+      <div class="exp-canvas-wrap">
+        <canvas id="cExp"></canvas>
+      </div>
+      <div style="padding:8px 14px;border-top:1px solid var(--border);background:var(--bg2);font-size:11px;color:var(--text2);font-family:var(--mono);line-height:1.7;">
+        L = v<sub>sound</sub> / (2×f) &nbsp;·&nbsp; f = RPM/60 &nbsp;·&nbsp;
+        Wave peaks in powerband; weakens above tuned RPM (port closes before wave returns) &nbsp;·&nbsp;
+        <span style="color:var(--hot)">━</span> Forward exhaust wave &nbsp;
+        <span style="color:var(--accent)">╌</span> Reflected compression wave (cyan = in-tune · <span style="color:rgba(255,200,0,0.9)">gold</span> = over-rev mismatch) &nbsp;·&nbsp;
+        <span style="color:rgba(255,255,255,0.5)">4T engines also use exhaust scavenging via valve overlap (cam timing), though less dramatically than 2T</span>
+      </div>
+    </div>
+
+    <!-- TAB 3: P-V DIAGRAM -->
+    <div class="tab-view" id="viewPV">
+      <div class="pv-wrap">
+        <div class="pv-half">
+          <div class="pv-label">2-STROKE P-V DIAGRAM — Ideal (dashed) vs Realistic (solid)</div>
+          <div class="pv-canvas-wrap"><canvas id="cPV2"></canvas></div>
+        </div>
+        <div class="pv-half">
+          <div class="pv-label">4-STROKE P-V DIAGRAM — Ideal (dashed) vs Realistic (solid)</div>
+          <div class="pv-canvas-wrap"><canvas id="cPV4"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end tab-views -->
+
+  <!-- TIMELINE -->
+  <div class="timeline-strip">
+    <div class="tl-header">
+      <span class="tl-label">Crank Angle Timeline</span>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--text2)">
+        <span style="color:var(--hot)">━</span> 2T (0–360°) &nbsp;
+        <span style="color:var(--cool)">━</span> 4T (0–720°)
+      </span>
+    </div>
+    <canvas id="cTL" style="width:100%;height:54px;display:block;"></canvas>
+  </div>
+
+</div><!-- end main -->
+
+<!-- ════ RIGHT PANEL ════ -->
+<div class="panel panel-right">
+
+  <div class="psec"><div class="plabel">Live Telemetry</div></div>
+
+  <div class="telem-grid">
+    <div class="telem-cell"><div class="telem-key">2T Power</div><div class="telem-val tv-hot" id="tv2tP">—</div></div>
+    <div class="telem-cell"><div class="telem-key">4T Power</div><div class="telem-val tv-cool" id="tv4tP">—</div></div>
+    <div class="telem-cell"><div class="telem-key">Spec 2T</div><div class="telem-val tv-acc" id="tv2tSp">—</div></div>
+    <div class="telem-cell"><div class="telem-key">Spec 4T</div><div class="telem-val tv-dim" id="tv4tSp">—</div></div>
+    <div class="telem-cell"><div class="telem-key">Heat 2T ≈</div><div class="telem-val tv-amb" id="tv2tQ">—</div></div>
+    <div class="telem-cell"><div class="telem-key">Heat 4T ≈</div><div class="telem-val tv-dim" id="tv4tQ">—</div></div>
+    <div class="telem-cell"><div class="telem-key">ηv 2T</div><div class="telem-val tv-grn" id="tv2tEv">—</div></div>
+    <div class="telem-cell"><div class="telem-key">ηv 4T</div><div class="telem-val tv-dim" id="tv4tEv">—</div></div>
+  </div>
+
+  <!-- Power density curve -->
+  <div class="psec">
+    <div class="plabel">Specific Power — kW/cc vs RPM</div>
+    <canvas id="cPC" style="width:100%;height:80px;display:block;"></canvas>
+    <div style="display:flex;gap:10px;margin-top:5px;">
+      <span style="font-size:11px;color:var(--hot);font-family:var(--mono)">━ 2T 150cc</span>
+      <span style="font-size:11px;color:var(--cool);font-family:var(--mono)">━ 4T 250cc</span>
+      <span style="font-size:11px;color:rgba(255,255,255,.4);font-family:var(--mono)">┃ RPM</span>
+    </div>
+  </div>
+
+  <!-- Context info -->
+  <div class="info-block">
+    <div class="info-title" id="infoTitle">Below Powerband</div>
+    <div class="info-body" id="infoBody">Pipe reflection timing mismatched at low RPM. Pressure wave arrives early, disrupting charge. Engine feels flat — this is the "dead zone" below the hit.</div>
+  </div>
+
+  <!-- Formulas -->
+  <div class="info-block">
+    <div class="info-title">Active Formulas</div>
+    <div class="formula-box">
+      P = W<sub>cyc</sub>×N <span class="f-dim">(2T)</span><br>
+      P = W<sub>cyc</sub>×N/2 <span class="f-dim">(4T)</span><br>
+      ηv = m<sub>actual</sub>/m<sub>ambient</sub><br>
+      L = v<sub>s</sub>/(2f) <span class="f-dim">f=RPM/60</span><br>
+      Q̇ = ṁ·Q<sub>LHV</sub>·(1−η<sub>th</sub>)
+    </div>
+  </div>
+
+  <!-- Reference Links -->
+  <div class="psec"><div class="plabel">Technical References</div></div>
+  <div class="links-section">
+    <a class="link-item" href="https://www.amazon.com/Design-Simulation-Two-Stroke-Engines-Gordon/dp/1560916850" target="_blank">
+      <div class="link-dot" style="background:var(--accent)"></div>
+      <div class="link-text"><strong>Blair — Design &amp; Simulation of Two-Stroke Engines</strong>SAE R-161 · ISBN 1-56091-685-0 · 1996. Expansion chamber theory, port timing, pressure waves.</div>
+      <span class="link-arrow">↗</span>
+    </a>
+    <a class="link-item" href="https://www.amazon.com/Basic-Design-Two-Stroke-Engines/dp/1560910089" target="_blank">
+      <div class="link-dot" style="background:var(--hot)"></div>
+      <div class="link-text"><strong>Blair — The Basic Design of Two-Stroke Engines</strong>SAE R-104 · ISBN 1-56091-008-9 · 1990. Gas dynamics, scavenging, powerband fundamentals.</div>
+      <span class="link-arrow">↗</span>
+    </a>
+    <a class="link-item" href="https://www.amazon.com/Internal-Combustion-Engine-Fundamentals-Heywood/dp/007028637X" target="_blank">
+      <div class="link-dot" style="background:var(--cool)"></div>
+      <div class="link-text"><strong>Heywood — IC Engine Fundamentals</strong>McGraw-Hill · ISBN 0-07-028637-X · 1988. Combustion thermodynamics, volumetric efficiency, heat transfer.</div>
+      <span class="link-arrow">↗</span>
+    </a>
+    <a class="link-item" href="https://saemobilus.sae.org/papers/acceleration-test-method-a-high-performance-two-stroke-racing-engine-942478" target="_blank">
+      <div class="link-dot" style="background:var(--amber)"></div>
+      <div class="link-text"><strong>SAE 942478 — Kee &amp; Blair (1994)</strong>Inertial dyno method for 2-stroke kart engines. Paywall — abstract free.</div>
+      <span class="link-arrow">↗</span>
+    </a>
+    <a class="link-item" href="https://www.sciencedirect.com/science/article/pii/0360128590900455" target="_blank">
+      <div class="link-dot" style="background:var(--text3)"></div>
+      <div class="link-text"><strong>Annand et al. — Scavenging the Two-Stroke Engine</strong>Prog. in Energy &amp; Combustion Science, 16(3):177–202, 1990. Paywall.</div>
+      <span class="link-arrow">↗</span>
+    </a>
+    <a class="link-item" href="https://global.yamaha-motor.com/design_technology/technical_review/" target="_blank">
+      <div class="link-dot" style="background:var(--green)"></div>
+      <div class="link-text"><strong>Yamaha Motor Technical Review</strong>Annual R&amp;D journal. Free PDFs. Engine, chassis, emissions research.</div>
+      <span class="link-arrow">↗</span>
+    </a>
+  </div>
+
+</div><!-- end right panel -->
+
+</div><!-- end layout -->
+
+<!-- ══════════ REFERENCES OVERLAY ══════════ -->
+<div class="overlay" id="refOverlay">
+  <div class="overlay-inner">
+    <h2>Technical References &amp; Further Reading</h2>
+    <h3>Exhaust Scavenging — 2-Stroke vs 4-Stroke</h3>
+    <p>Exhaust scavenging is the process of using pressure wave dynamics to remove residual exhaust gases and draw in fresh charge. It is <strong>mandatory every cycle in 2-stroke engines</strong> (achieved via transfer port overlap with the open exhaust port and a tuned expansion chamber). In <strong>4-stroke engines</strong>, scavenging occurs via intake/exhaust valve overlap — the period near TDC on the exhaust stroke where both valves are open. High-performance 4T engines (race bikes, sports cars) tune cam profiles specifically to exploit exhaust scavenging at peak RPM. The expansion chamber tab visualises the 2T case; the same wave-return principle applies to 4T headers and equal-length exhaust manifolds.</p>
+    <h3>Primary Textbooks</h3>
+    <ul>
+      <li><strong>Blair, G.P.</strong> (1996). <em>Design and Simulation of Two-Stroke Engines.</em> SAE International. SAE Order No. R-161, ISBN 1-56091-685-0. — The definitive engineering reference for expansion chamber theory, tuned pipe length derivation (L = v/2f), scavenging efficiency, and port timing. <a href="https://www.amazon.com/Design-Simulation-Two-Stroke-Engines-Gordon/dp/1560916850" target="_blank">Amazon →</a> · <a href="https://saemobilus.sae.org/books/design-simulation-two-stroke-engines-r-161" target="_blank">SAE Mobilus (paywall) →</a></li>
+      <li><strong>Blair, G.P.</strong> (1990). <em>The Basic Design of Two-Stroke Engines.</em> SAE International. SAE Order No. R-104, ISBN 1-56091-008-9. — Foundational treatment: gas dynamics, scavenging, powerband mechanics. Predecessor to the 1996 book. <a href="https://www.amazon.com/Basic-Design-Two-Stroke-Engines/dp/1560910089" target="_blank">Amazon →</a> · <a href="https://saemobilus.sae.org/books/basic-design-two-stroke-engines-r-104" target="_blank">SAE Mobilus (paywall) →</a></li>
+      <li><strong>Heywood, J.B.</strong> (1988). <em>Internal Combustion Engine Fundamentals.</em> McGraw-Hill. ISBN 0-07-028637-X. — Combustion thermodynamics, volumetric efficiency theory, heat transfer models, friction analysis. The standard 4T reference. <a href="https://www.amazon.com/Internal-Combustion-Engine-Fundamentals-Heywood/dp/007028637X" target="_blank">Amazon →</a></li>
+      <li><strong>Taylor, C.F.</strong> (1985). <em>The Internal-Combustion Engine in Theory and Practice.</em> 2 vols. MIT Press. — Classic derivation of P-V cycle work and thermal efficiency bounds.</li>
+      <li><strong>Stone, R.</strong> (2012). <em>Introduction to Internal Combustion Engines.</em> 4th ed. Palgrave Macmillan. — Modern treatment including emissions, fuel injection, and ECU calibration.</li>
+      <li><strong>Jennings, G.</strong> (1973). <em>Two-Stroke Tuner's Handbook.</em> HP Books. — Practitioner-level guide to expansion chamber design, porting, and powerband tuning. Print only; no official website.</li>
+    </ul>
+    <h3>SAE Technical Paper</h3>
+    <p style="font-size:11px;color:var(--text3);margin-bottom:6px;">SAE Mobilus papers are behind a paywall. The links below open the abstract page; full text requires institutional or individual subscription.</p>
+    <ul>
+      <li>SAE 942478 — <em>Acceleration Test Method for a High Performance Two-Stroke Racing Engine.</em> Kee, R.J. &amp; Blair, G.P. (1994). Inertial dynamometer method for 2-stroke kart engines; validates simulation against measured exhaust pressure traces. <a href="https://saemobilus.sae.org/papers/acceleration-test-method-a-high-performance-two-stroke-racing-engine-942478" target="_blank">SAE Mobilus (abstract) →</a></li>
+    </ul>
+    <h3>Journal Paper</h3>
+    <ul>
+      <li>Annand, W.J.D., Roe, G.E. et al. — "Scavenging the Two-Stroke Engine." <em>Progress in Energy and Combustion Science</em>, 16(3):177–202, 1990. Scavenging flow models and short-circuit loss characterisation. <a href="https://www.sciencedirect.com/science/article/pii/0360128590900455" target="_blank">ScienceDirect (paywall) →</a></li>
+    </ul>
+    <h3>Manufacturer Technical Publications</h3>
+    <ul>
+      <li>Yamaha Motor Co. <em>Technical Review</em> — Annual R&amp;D journal published since the 1980s, with free PDFs covering engine, chassis, emissions, and materials research. Includes papers on small-displacement 2T and 4T development. <a href="https://global.yamaha-motor.com/design_technology/technical_review/" target="_blank">Yamaha Technical Review (free PDFs) →</a></li>
+      <li>Honda NSR250R (MC21) Factory Service Manual — Engine chapter covering reed valve geometry, ATAC power valve operation, and CDI ignition maps. Dealer/workshop document; not publicly hosted.</li>
+    </ul>
+    <h3>Emissions Regulation</h3>
+    <ul>
+      <li>Directive 97/24/EC (Euro 2, 1997) — EU framework introducing HC+NOx limits that were incompatible with conventional 2T combustion overlap. The primary legislative driver of 2T's decline in road use. <a href="https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:31997L0024" target="_blank">EUR-Lex →</a></li>
+    </ul>
+  </div>
+  <button class="close-btn" onclick="closeOverlay('refOverlay')">✕ CLOSE</button>
+</div>
+
+<!-- ══════════ DISCLAIMER OVERLAY ══════════ -->
+<div class="overlay" id="disclaimerOverlay">
+  <div class="overlay-inner">
+    <h2>Technical Disclaimer — Simplified Educational Model</h2>
+    <p>This visualization is intentionally simplified for conceptual understanding. The following phenomena are either omitted or schematically approximated:</p>
+    <h3>Fluid Dynamics Simplifications</h3>
+    <ul>
+      <li>Gas flow is visualized as particle streams; real flow is turbulent, compressible, and three-dimensional.</li>
+      <li>Pressure wave propagation is shown as a 1D sinusoidal wave. Real exhaust systems involve complex superposition, temperature-dependent wave speed, and attenuation through bends and junctions.</li>
+      <li>Scavenging is shown as idealized cross/loop flow. Real short-circuit loss ratios require CFD analysis (e.g., ported Navier-Stokes solutions).</li>
+    </ul>
+    <h3>Thermodynamic Simplifications</h3>
+    <ul>
+      <li>The P-V diagrams use ideal Otto cycle approximations. Real cycles show rounded corners from finite combustion duration, blow-down losses, and gas exchange.</li>
+      <li>Thermal gradients are relative indicators only. Calibrated values require known fuel mass flow, brake thermal efficiency measurements, and wall heat transfer coefficients.</li>
+      <li>Piston kinematics use the two-term slider-crank approximation: x = 0.5(1−cosθ) + (1/12)(1−cos2θ), assuming a con-rod-to-stroke ratio of ~3. This is standard for educational simulation; a full slider-crank solution would require a specified rod length for exact BDC dwell asymmetry.</li>
+    </ul>
+    <h3>Lubrication & Mechanical Simplifications</h3>
+    <ul>
+      <li>Oil film dynamics are not modeled. Seizure risk is indicated qualitatively from heat flux proxy — real seizure prediction requires Stribeck curve analysis and oil viscosity-temperature profiles.</li>
+      <li>Mechanical friction, bearing losses, and pumping work are omitted from power calculations.</li>
+    </ul>
+    <h3>Power & Performance Values</h3>
+    <ul>
+      <li>Power curves are illustrative of class-typical behavior. Actual values depend on compression ratio, port timing, pipe design, carburetion, ignition advance, and ambient conditions.</li>
+      <li>Volumetric efficiency values above 100% reflect the tuned resonance effect qualitatively — real measurement requires dynamic pressure sensors at the port face.</li>
+    </ul>
+    <p style="margin-top:14px;color:var(--text3);">For engineering design work, refer to the referenced primary literature, particularly Blair (1996) for two-stroke simulation and Heywood (1988) for fundamental thermodynamic modeling.</p>
+  </div>
+  <button class="close-btn" onclick="closeOverlay('disclaimerOverlay')">✕ CLOSE</button>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let rpm = 1500, speedMult = 0.05, playing = true;
+let ca2T = 0, ca4T = 0, lastT = null;
+let scenario = 'normal', viewMode = 'compare';
+let activeTab = 'cross';
+
+const layers = { airflow:true, flame:true, pressure:true, exhaust:true, ports:true, thermal:true };
+
+// Canvas refs — resolved after DOM is ready
+let c2T, c4T, cExp, cPV2, cPV4, cTL, cPC;
+let x2T, x4T, xExp, xPV2, xPV4, xTL, xPC;
+
+function initCanvases() {
+  c2T  = document.getElementById('c2T');
+  c4T  = document.getElementById('c4T');
+  cExp = document.getElementById('cExp');
+  cPV2 = document.getElementById('cPV2');   // fixed: was cPV2T
+  cPV4 = document.getElementById('cPV4');   // fixed: was cPV4T
+  cTL  = document.getElementById('cTL');
+  cPC  = document.getElementById('cPC');
+
+  const missing = [['c2T',c2T],['c4T',c4T],['cExp',cExp],['cPV2',cPV2],['cPV4',cPV4],['cTL',cTL],['cPC',cPC]]
+    .filter(([,el])=>!el).map(([id])=>id);
+  if(missing.length) {
+    console.error('Missing canvas elements:', missing);
+    return false;
+  }
+
+  x2T  = c2T.getContext('2d');
+  x4T  = c4T.getContext('2d');
+  xExp = cExp.getContext('2d');
+  xPV2 = cPV2.getContext('2d');
+  xPV4 = cPV4.getContext('2d');
+  xTL  = cTL.getContext('2d');
+  xPC  = cPC.getContext('2d');
+  return true;
+}
+
+// ═══════════════════════════════════════════════
+// CANVAS SIZING — fit parent each frame
+// ═══════════════════════════════════════════════
+function fitCanvas(canvas, ctx) {
+  const w = canvas.parentElement.clientWidth  || 320;
+  const h = canvas.parentElement.clientHeight || 360;
+  if (canvas.width !== w || canvas.height !== h) {
+    canvas.width = w; canvas.height = h;
+  }
+  return { W:w, H:h };
+}
+
+// ═══════════════════════════════════════════════
+// KINEMATICS
+// ═══════════════════════════════════════════════
+function pistonFrac(crank) {
+  // crank: 0=TDC, 180=BDC; returns 0(TDC)..1(BDC)
+  const r = crank * Math.PI / 180;
+  return 0.5*(1 - Math.cos(r)) + (1/12)*(1 - Math.cos(2*r));
+}
+
+// ═══════════════════════════════════════════════
+// DRAW 2-STROKE ENGINE
+// ═══════════════════════════════════════════════
+function draw2T(ca) {
+  const {W,H} = fitCanvas(c2T, x2T);
+  const ctx = x2T;
+  ctx.clearRect(0,0,W,H);
+
+  const cx = W/2;
+  const boreW = Math.min(W*0.46, 110);
+  const boreTop = Math.round(H*0.1);
+  const boreH = Math.round(H*0.48);
+  const boreX = Math.round(cx - boreW/2);
+
+  const pFrac = pistonFrac(ca);
+  const pistonY = boreTop + pFrac * boreH;
+  const pH = 32;
+  const chamH = pistonY - boreTop;
+
+  // Port positions (relative to bore)
+  const exPortY = boreTop + boreH * 0.65;   // exhaust port centre
+  const trPortY = boreTop + boreH * 0.76;   // transfer port centre
+  const exOpen  = pistonY > exPortY - 6;    // piston crown has uncovered port
+  const trOpen  = pistonY > trPortY - 6 && pistonY < boreTop + boreH - 4;
+
+  // ─── THERMAL GRADIENT (chamber) ───
+  if (layers.thermal && chamH > 2) {
+    const heat = ca < 40 ? (1 - ca/40) : ca > 330 ? (ca-330)/30 : 0.05;
+    const g = ctx.createLinearGradient(boreX, boreTop, boreX, boreTop+chamH);
+    g.addColorStop(0, `rgba(255,107,53,${Math.min(0.55, heat*0.7)})`);
+    g.addColorStop(1, `rgba(255,107,53,0.02)`);
+    ctx.fillStyle = g;
+    ctx.fillRect(boreX+2, boreTop, boreW-4, chamH);
+  }
+
+  // ─── FRESH CHARGE IN CYLINDER ───
+  if (layers.airflow && trOpen && ca > 150 && ca < 330) {
+    const alpha = 0.12 + 0.1*Math.sin((ca-150)/(180)*Math.PI);
+    ctx.fillStyle = `rgba(59,130,246,${alpha})`;
+    ctx.fillRect(boreX+2, boreTop, boreW-4, chamH);
+
+    // Scavenging particles
+    const t = performance.now()/500;
+    for(let i=0;i<10;i++){
+      const px = boreX+8 + (((i*17 + t*40)%(boreW-16)+boreW-16)%(boreW-16));
+      const maxRise = Math.max(4, chamH - 6);
+      const py = pistonY - 4 - ((((i*11+t*28)%maxRise)+maxRise)%maxRise);
+      ctx.beginPath(); ctx.arc(px,py,2.5,0,Math.PI*2);
+      ctx.fillStyle = `rgba(100,170,255,${0.5+0.4*Math.sin(t+i)})`;
+      ctx.fill();
+    }
+  }
+
+  // ─── COMBUSTION FLAME ───
+  if (layers.flame && chamH > 4) {
+    const intensity = ca < 25 ? (1 - ca/25) : ca > 340 ? (ca-340)/20 : 0;
+    if (intensity > 0.02) {
+      const g2 = ctx.createRadialGradient(cx, boreTop+Math.min(chamH,20)/2, 0, cx, boreTop+chamH/2, boreW*0.7);
+      g2.addColorStop(0, `rgba(255,220,120,${intensity*0.95})`);
+      g2.addColorStop(0.4, `rgba(255,107,53,${intensity*0.7})`);
+      g2.addColorStop(1, 'rgba(255,80,20,0)');
+      ctx.fillStyle = g2; ctx.fillRect(boreX+2,boreTop,boreW-4,chamH);
+    }
+  }
+
+  // ─── EXHAUST FLOW ───
+  if (layers.exhaust && exOpen) {
+    const t = performance.now()/250;
+    const offset = (t%1)*28;
+    ctx.strokeStyle = `rgba(255,157,26,${0.55+0.3*Math.sin(t*4)})`;
+    ctx.lineWidth = 2; ctx.lineCap = 'round';
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(boreX+boreW+2, exPortY);
+    ctx.lineTo(boreX+boreW+8+offset, exPortY);
+    ctx.stroke();
+    // arrowhead
+    const ax = boreX+boreW+8+offset;
+    ctx.fillStyle = '#ff9d1a';
+    ctx.beginPath();
+    ctx.moveTo(ax+7, exPortY);
+    ctx.lineTo(ax, exPortY-4);
+    ctx.lineTo(ax, exPortY+4);
+    ctx.closePath(); ctx.fill();
+  }
+
+  // ─── PRESSURE WAVE (right side of engine) ───
+  if (layers.pressure) {
+    const waveX = boreX + boreW + 14;
+    const t = performance.now()/200;
+    const rpm_n = Math.min(1,(rpm-2000)/5000);
+
+    // Forward wave (always when exhaust open)
+    if (exOpen) {
+      ctx.strokeStyle = `rgba(255,107,53,0.7)`;
+      ctx.lineWidth = 2; ctx.setLineDash([]);
+      ctx.beginPath();
+      for(let x=0;x<50;x++){
+        const y = exPortY + Math.sin((x/50)*Math.PI*2 - t*3)*7;
+        x===0?ctx.moveTo(waveX+x,y):ctx.lineTo(waveX+x,y);
+      }
+      ctx.stroke();
+    }
+
+    // Reflected compression wave — only above powerband RPM
+    if (rpm > 4500 && exOpen) {
+      const refAlpha = Math.min(0.85, (rpm-4500)/3000);
+      ctx.strokeStyle = `rgba(0,212,255,${refAlpha})`;
+      ctx.lineWidth = 1.5; ctx.setLineDash([4,3]);
+      ctx.beginPath();
+      for(let x=0;x<40;x++){
+        const y = exPortY + Math.sin((x/40)*Math.PI*2 + t*3)*6;
+        x===0?ctx.moveTo(waveX+10+x,y):ctx.lineTo(waveX+10+x,y);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // label
+      ctx.font = '10px monospace'; ctx.fillStyle = 'rgba(0,212,255,0.8)';
+      ctx.fillText('REFLECTED', waveX, exPortY - 14);
+    }
+  }
+
+  // ─── PORT INDICATORS ───
+  if (layers.ports) {
+    // Exhaust port (right)
+    ctx.fillStyle = exOpen ? '#22c55e' : '#1e3a2a';
+    ctx.fillRect(boreX+boreW+1, exPortY-7, 11, 14);
+    ctx.font = '10px monospace';
+    ctx.fillStyle = exOpen ? '#22c55e' : '#4a5260';
+    ctx.fillText('EX', boreX+boreW+14, exPortY+4);
+
+    // Transfer port (left)
+    ctx.fillStyle = trOpen ? '#3b82f6' : '#1e2a3a';
+    ctx.fillRect(boreX-12, trPortY-7, 11, 14);
+    ctx.font = '10px monospace';
+    ctx.fillStyle = trOpen ? '#3b82f6' : '#4a5260';
+    ctx.fillText('TR', boreX-28, trPortY+4);
+  }
+
+  // ─── CYLINDER WALLS ───
+  ctx.strokeStyle = '#2a3a4a'; ctx.lineWidth = 10; ctx.lineCap = 'butt';
+  ctx.beginPath();
+  ctx.moveTo(boreX, boreTop); ctx.lineTo(boreX, boreTop+boreH+50);
+  ctx.moveTo(boreX+boreW, boreTop); ctx.lineTo(boreX+boreW, boreTop+boreH+50);
+  ctx.stroke();
+  ctx.strokeStyle = '#4a5a6a'; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(boreX, boreTop); ctx.lineTo(boreX, boreTop+boreH+50);
+  ctx.moveTo(boreX+boreW, boreTop); ctx.lineTo(boreX+boreW, boreTop+boreH+50);
+  ctx.stroke();
+
+  // ─── HEAD ───
+  ctx.fillStyle = '#1a2530';
+  ctx.strokeStyle = '#3a4a5a'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.rect(boreX-14, boreTop-26, boreW+28, 26);
+  ctx.fill(); ctx.stroke();
+
+  // ─── SEIZURE OVERLAY ───
+  if (scenario === 'seizure') {
+    ctx.fillStyle = `rgba(239,68,68,${0.15+0.1*Math.sin(performance.now()/300)})`;
+    ctx.fillRect(boreX, boreTop, boreW, boreH);
+    ctx.font = 'bold 11px monospace'; ctx.fillStyle = '#ef4444';
+    ctx.fillText('⚠ SEIZURE', boreX+8, boreTop+boreH/2);
+  }
+  if (scenario === 'lean' && (ca < 15 || ca > 348)) {
+    ctx.fillStyle = 'rgba(239,68,68,0.35)';
+    ctx.fillRect(boreX, boreTop, boreW, chamH);
+  }
+
+  // ─── PISTON ───
+  const pgr = ctx.createLinearGradient(boreX,pistonY,boreX+boreW,pistonY);
+  pgr.addColorStop(0,'#253040'); pgr.addColorStop(0.4,'#3a5060'); pgr.addColorStop(1,'#1e2c3a');
+  ctx.fillStyle = pgr;
+  ctx.beginPath(); ctx.rect(boreX+3, pistonY, boreW-6, pH);
+  ctx.fill();
+  ctx.strokeStyle='#5a7080'; ctx.lineWidth=1; ctx.strokeRect(boreX+3,pistonY,boreW-6,pH);
+  [7,14].forEach(ry=>{
+    ctx.strokeStyle='#9aabb8'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(boreX+2,pistonY+ry); ctx.lineTo(boreX+boreW-2,pistonY+ry); ctx.stroke();
+  });
+
+  // ─── CRANK + CON ROD ───
+  const crankCY = boreTop + boreH + 55;
+  const crR = 22;
+  const crRad = (ca - 90)*Math.PI/180;
+  const cpX = cx + crR*Math.cos(crRad);
+  const cpY = crankCY + crR*Math.sin(crRad);
+
+  ctx.strokeStyle='#3a5060'; ctx.lineWidth=5; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(cx, pistonY+pH); ctx.lineTo(cpX,cpY); ctx.stroke();
+  ctx.strokeStyle='#3a5060'; ctx.lineWidth=2; ctx.lineCap='butt';
+  ctx.beginPath(); ctx.arc(cx,crankCY,crR,0,Math.PI*2); ctx.stroke();
+  ctx.fillStyle='#4a7888';
+  ctx.beginPath(); ctx.arc(cpX,cpY,5,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#2a4050';
+  ctx.beginPath(); ctx.arc(cx,crankCY,5,0,Math.PI*2); ctx.fill();
+
+  // ─── SPARK ───
+  if (layers.flame && (ca<12 || ca>352)) {
+    const sx=cx+14, sy=boreTop+7;
+    ctx.strokeStyle='#ffffff'; ctx.lineWidth=1.5;
+    ctx.beginPath();
+    ctx.moveTo(sx-4,sy); ctx.lineTo(sx,sy+5);
+    ctx.lineTo(sx-2,sy+5); ctx.lineTo(sx+4,sy+12);
+    ctx.stroke();
+  }
+
+  // ─── MODE ANNOTATIONS ───
+  if(viewMode === '2T' || viewMode === 'compare') {
+    // Show power stroke frequency callout when in compare or 2T mode
+    ctx.font = 'bold 9px monospace';
+    const strokeLabel = ca < 180 ? 'POWER ↓' : 'COMPRESS ↑';
+    const strokeCol   = ca < 180 ? '#ff6b35' : '#f59e0b';
+    ctx.fillStyle = strokeCol + 'aa';
+    ctx.textAlign = 'left';
+    ctx.fillText(strokeLabel, boreX + boreW + 5, boreTop + 14);
+  }
+  if(viewMode === '2T') {
+    // In solo 2T mode: show port timing annotations prominently
+    ctx.font = '9px monospace'; ctx.fillStyle = 'rgba(0,212,255,0.6)';
+    ctx.textAlign = 'left';
+    ctx.fillText('2T: 1 power stroke', boreX, H - 24);
+    ctx.fillText('    per revolution', boreX, H - 13);
+  }
+  ctx.textAlign = 'left';
+
+  // Crank angle arc indicator
+  ctx.strokeStyle='rgba(0,212,255,0.25)'; ctx.lineWidth=1;
+  ctx.beginPath();
+  ctx.arc(cx,crankCY,crR+10,-Math.PI/2,(ca-90)*Math.PI/180,false);
+  ctx.stroke();
+}
+
+// ═══════════════════════════════════════════════
+// DRAW 4-STROKE ENGINE
+// ═══════════════════════════════════════════════
+function draw4T(ca720) {
+  const {W,H} = fitCanvas(c4T, x4T);
+  const ctx = x4T;
+  ctx.clearRect(0,0,W,H);
+
+  const ca360 = ca720 % 360;
+  const stroke = Math.floor(ca720 / 180) % 4; // 0=intake 1=compress 2=power 3=exhaust
+  const cx = W/2;
+  const boreW = Math.min(W*0.46, 110);
+  const boreTop = Math.round(H*0.11);
+  const boreH   = Math.round(H*0.47);
+  const boreX   = Math.round(cx - boreW/2);
+
+  // For strokes: intake+compress = piston down then up (first rev), power+exhaust = piston down then up (second rev)
+  let kinAngle;
+  if (stroke === 0) kinAngle = ca720 % 180;           // intake: 0→180 = TDC→BDC
+  else if (stroke === 1) kinAngle = (ca720 % 180);    // compress: continues 180→360
+  else if (stroke === 2) kinAngle = ca720 % 180;      // power: 0→180
+  else kinAngle = ca720 % 180;                        // exhaust: 180→360
+  kinAngle = (ca720 % 360); // just use mod360 for kinematics
+
+  const pFrac = pistonFrac(kinAngle);
+  const pistonY = boreTop + pFrac * boreH;
+  const pH = 32;
+  const chamH = pistonY - boreTop;
+
+  const intOpen = stroke === 0;
+  const exOpen  = stroke === 3;
+  // Valve overlap: both valves open briefly around TDC between exhaust and intake strokes
+  // (ca720 ≈ 0°/720° and ≈ 360° are the TDC transitions; overlap is ~20° either side)
+  const overlapTDC_exhaust_to_intake = (ca720 % 720) < 20 || (ca720 % 720) > 700; // TDC at 0/720
+  const iLift = (intOpen || overlapTDC_exhaust_to_intake) ? 9 : 0;
+  const eLift = (exOpen  || overlapTDC_exhaust_to_intake) ? 9 : 0;
+  const ivX = cx - 22, evX = cx + 22, vY = boreTop - 5;
+
+  // ─── THERMAL ───
+  if (layers.thermal && chamH > 2) {
+    const heat = stroke === 2 ? Math.max(0, 1 - (ca720%180)/150) : 0.05;
+    const g = ctx.createLinearGradient(boreX,boreTop,boreX,boreTop+chamH);
+    g.addColorStop(0, `rgba(255,107,53,${heat*0.5})`);
+    g.addColorStop(1, 'rgba(255,107,53,0.02)');
+    ctx.fillStyle=g; ctx.fillRect(boreX+2,boreTop,boreW-4,chamH);
+  }
+
+  // ─── CHARGE FILL ───
+  if (layers.airflow && intOpen && chamH > 2) {
+    ctx.fillStyle='rgba(59,130,246,0.13)'; ctx.fillRect(boreX+2,boreTop,boreW-4,chamH);
+    // intake particles
+    const t=performance.now()/450;
+    for(let i=0;i<7;i++){
+      const px = ivX-5+(((i*9+t*30)%(boreW*0.4)+boreW*0.4)%(boreW*0.4));
+      const maxD=Math.max(4,chamH-6);
+      const py = boreTop+4+(((i*11+t*25)%maxD)+maxD)%maxD;
+      ctx.beginPath(); ctx.arc(px,py,2.5,0,Math.PI*2);
+      ctx.fillStyle=`rgba(100,170,255,${0.55+0.35*Math.sin(t+i)})`;
+      ctx.fill();
+    }
+  }
+
+  // ─── COMBUSTION ───
+  if (layers.flame && stroke===2 && chamH>4) {
+    const intens = Math.max(0, 1 - (ca720%180)/25);
+    if (intens > 0.02) {
+      const g2=ctx.createRadialGradient(cx,boreTop+Math.min(chamH,18)/2,0,cx,boreTop+chamH/2,boreW*0.7);
+      g2.addColorStop(0,`rgba(255,220,120,${intens*0.95})`);
+      g2.addColorStop(0.4,`rgba(255,107,53,${intens*0.7})`);
+      g2.addColorStop(1,'rgba(255,80,20,0)');
+      ctx.fillStyle=g2; ctx.fillRect(boreX+2,boreTop,boreW-4,chamH);
+    }
+  }
+
+  // ─── EXHAUST FLOW ───
+  if (layers.exhaust && exOpen) {
+    const t=performance.now()/250;
+    const offset=(t%1)*26;
+    ctx.strokeStyle=`rgba(255,157,26,${0.55+0.3*Math.sin(t*4)})`;
+    ctx.lineWidth=2; ctx.lineCap='round'; ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(boreX+boreW+2, evX<boreX+boreW?boreTop+20:boreTop+10);
+    ctx.lineTo(boreX+boreW+8+offset, boreTop+20);
+    ctx.stroke();
+    const ax=boreX+boreW+8+offset;
+    ctx.fillStyle='#ff9d1a';
+    ctx.beginPath();
+    ctx.moveTo(ax+7,boreTop+20);ctx.lineTo(ax,boreTop+16);ctx.lineTo(ax,boreTop+24);
+    ctx.closePath(); ctx.fill();
+  }
+
+  // ─── WALLS ───
+  ctx.strokeStyle='#2a3a4a'; ctx.lineWidth=10; ctx.lineCap='butt';
+  ctx.beginPath();
+  ctx.moveTo(boreX,boreTop);ctx.lineTo(boreX,boreTop+boreH+50);
+  ctx.moveTo(boreX+boreW,boreTop);ctx.lineTo(boreX+boreW,boreTop+boreH+50);
+  ctx.stroke();
+  ctx.strokeStyle='#4a5a6a'; ctx.lineWidth=1.5;
+  ctx.beginPath();
+  ctx.moveTo(boreX,boreTop);ctx.lineTo(boreX,boreTop+boreH+50);
+  ctx.moveTo(boreX+boreW,boreTop);ctx.lineTo(boreX+boreW,boreTop+boreH+50);
+  ctx.stroke();
+
+  // ─── HEAD ───
+  ctx.fillStyle='#1a2530'; ctx.strokeStyle='#3a4a5a'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.rect(boreX-14,boreTop-32,boreW+28,32);
+  ctx.fill(); ctx.stroke();
+
+  // ─── VALVES ───
+  if (layers.ports) {
+    const iOv = intOpen || overlapTDC_exhaust_to_intake;
+    const eOv = exOpen  || overlapTDC_exhaust_to_intake;
+    [
+      {x:ivX, lift:iLift, open:iOv, col:iOv?'#3b82f6':'#2a3850', label:'IN'},
+      {x:evX, lift:eLift, open:eOv, col:eOv?'#ff6b35':'#382820', label:'EX'}
+    ].forEach(v=>{
+      ctx.fillStyle=v.col;
+      ctx.beginPath(); ctx.arc(v.x, vY+v.lift, 8, 0, Math.PI); ctx.fill();
+      ctx.strokeStyle=v.col; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.moveTo(v.x,vY+v.lift); ctx.lineTo(v.x,vY-18); ctx.stroke();
+      ctx.font='10px monospace';
+      ctx.fillStyle=v.open?v.col:'#4a5260';
+      ctx.fillText(v.label, v.x-6, vY-22);
+    });
+    // Overlap annotation
+    if (overlapTDC_exhaust_to_intake) {
+      ctx.font = 'bold 9px monospace';
+      ctx.fillStyle = 'rgba(0,212,255,0.85)';
+      ctx.textAlign = 'center';
+      ctx.fillText('↕ VALVE OVERLAP · SCAVENGING', cx, boreTop - 36);
+      ctx.textAlign = 'left';
+    }
+  }
+
+  // ─── PISTON ───
+  const pgr=ctx.createLinearGradient(boreX,pistonY,boreX+boreW,pistonY);
+  pgr.addColorStop(0,'#253040'); pgr.addColorStop(0.4,'#3a5060'); pgr.addColorStop(1,'#1e2c3a');
+  ctx.fillStyle=pgr;
+  ctx.beginPath(); ctx.rect(boreX+3,pistonY,boreW-6,pH);
+  ctx.fill();
+  ctx.strokeStyle='#5a7080'; ctx.lineWidth=1; ctx.strokeRect(boreX+3,pistonY,boreW-6,pH);
+  [7,14].forEach(ry=>{
+    ctx.strokeStyle='#9aabb8'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(boreX+2,pistonY+ry); ctx.lineTo(boreX+boreW-2,pistonY+ry); ctx.stroke();
+  });
+
+  // ─── CRANK + ROD ───
+  const crankCY=boreTop+boreH+55, crR=22;
+  const crRad=(kinAngle-90)*Math.PI/180;
+  const cpX=cx+crR*Math.cos(crRad), cpY=crankCY+crR*Math.sin(crRad);
+  ctx.strokeStyle='#3a5060'; ctx.lineWidth=5; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(cx,pistonY+pH); ctx.lineTo(cpX,cpY); ctx.stroke();
+  ctx.strokeStyle='#3a5060'; ctx.lineWidth=2; ctx.lineCap='butt';
+  ctx.beginPath(); ctx.arc(cx,crankCY,crR,0,Math.PI*2); ctx.stroke();
+  ctx.fillStyle='#4a7888';
+  ctx.beginPath(); ctx.arc(cpX,cpY,5,0,Math.PI*2); ctx.fill();
+
+  // ─── SPARK ───
+  if (layers.flame && stroke===2 && (ca720%180)<12) {
+    const sx=cx+14, sy=boreTop+8;
+    ctx.strokeStyle='#ffffff'; ctx.lineWidth=1.5;
+    ctx.beginPath();
+    ctx.moveTo(sx-4,sy); ctx.lineTo(sx,sy+5); ctx.lineTo(sx-2,sy+5); ctx.lineTo(sx+4,sy+12);
+    ctx.stroke();
+  }
+
+  // ─── LABELS ───
+  ctx.font='9px monospace'; ctx.fillStyle='#4a5260';
+  ctx.fillText('TDC',boreX-32,boreTop+5); ctx.fillText('BDC',boreX-32,boreTop+boreH+5);
+
+  if(viewMode === '4T') {
+    ctx.font = '9px monospace'; ctx.fillStyle = 'rgba(59,130,246,0.6)';
+    ctx.textAlign = 'left';
+    ctx.fillText('4T: 1 power stroke', boreX, H - 24);
+    ctx.fillText('    per 2 revolutions', boreX, H - 13);
+  }
+  // stroke number label
+  const strokeNames=['INTAKE','COMPRESS','POWER','EXHAUST'];
+  const strokeCols=['#3b82f6','#f59e0b','#ff6b35','#ff9d1a'];
+  ctx.font='bold 9px monospace'; ctx.fillStyle=strokeCols[stroke];
+  ctx.fillText(strokeNames[stroke], boreX, boreTop+boreH+70);
+}
+
+// ═══════════════════════════════════════════════
+// EXPANSION CHAMBER TAB
+// ═══════════════════════════════════════════════
+function drawExpansionChamber() {
+  const {W,H} = fitCanvas(cExp, xExp);
+  const ctx = xExp;
+  ctx.clearRect(0,0,W,H);
+
+  const midY = H/2;
+  const t = performance.now()/200;
+  const rpm_n = Math.min(1, Math.max(0,(rpm-2000)/6000));
+  const inPowerband = rpm > 4500;
+
+  // ── PIPE GEOMETRY ──
+  // Sections: header | expansion cone | belly | convergent cone | stinger
+  const pipeY = midY;
+  const segments = [
+    {x:40,  w:60,  h1:22, h2:22,  col:'#2a4050', label:'HEADER'},
+    {x:100, w:80,  h1:22, h2:55,  col:'#223040', label:'EXPAND'},
+    {x:180, w:120, h1:55, h2:55,  col:'#1e2c3a', label:'BELLY'},
+    {x:300, w:70,  h1:55, h2:20,  col:'#223040', label:'CONVERGE'},
+    {x:370, w:50,  h1:20, h2:14,  col:'#2a4050', label:'STINGER'},
+  ];
+
+  // Draw pipe cross-section
+  segments.forEach(s => {
+    ctx.beginPath();
+    ctx.moveTo(s.x, pipeY - s.h1);
+    ctx.lineTo(s.x+s.w, pipeY - s.h2);
+    ctx.lineTo(s.x+s.w, pipeY + s.h2);
+    ctx.lineTo(s.x, pipeY + s.h1);
+    ctx.closePath();
+    ctx.fillStyle = s.col;
+    ctx.fill();
+    ctx.strokeStyle = '#3a5060'; ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.font = '11px monospace'; ctx.fillStyle = '#6a7280'; ctx.textAlign='center';
+    ctx.fillText(s.label, s.x + s.w/2, pipeY + s.h2 + 16);
+  });
+
+  // ── CYLINDER HEAD (left) ──
+  ctx.fillStyle='#1a2530'; ctx.strokeStyle='#3a5060'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.rect(8, pipeY-40, 32, 80); ctx.fill(); ctx.stroke();
+  ctx.font='11px monospace'; ctx.fillStyle='#6a7280'; ctx.textAlign='center';
+  ctx.fillText('CYL',24,pipeY+52);
+
+  // Exhaust port opening
+  const exOpen2T = ca2T > 100 && ca2T < 340;
+  ctx.fillStyle = exOpen2T ? '#22c55e' : '#1e3a2a';
+  ctx.beginPath(); ctx.rect(38, pipeY-12, 6, 24); ctx.fill();
+
+  // ── FORWARD EXHAUST WAVE ──
+  if (layers.pressure && exOpen2T) {
+    const wavePhase = (t % 3) / 3; // 0..1 = position along pipe
+    const waveX = 44 + wavePhase * 380;
+    if (waveX < 420) {
+      ctx.strokeStyle = 'rgba(255,107,53,0.9)';
+      ctx.lineWidth = 3; ctx.setLineDash([]);
+      ctx.beginPath();
+      for(let i=0;i<60;i++){
+        const wx = waveX + i*1.2;
+        const hy = getPipeHalfHeight(wx, segments, pipeY);
+        // Amplitude scales with pipe height — much more visible
+        const amp = Math.min(hy * 0.65, hy - 4);
+        const y = pipeY + Math.sin(i/60*Math.PI*4 - t*2)*amp;
+        i===0?ctx.moveTo(wx,y):ctx.lineTo(wx,y);
+      }
+      ctx.stroke();
+      // glow dot at wave front
+      ctx.fillStyle='rgba(255,107,53,0.8)';
+      ctx.beginPath(); ctx.arc(waveX, pipeY, 7, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle='rgba(255,180,100,0.9)';
+      ctx.beginPath(); ctx.arc(waveX, pipeY, 3, 0, Math.PI*2); ctx.fill();
+    }
+  }
+
+  // ── REFLECTED COMPRESSION WAVE ──
+  // Pipe is tuned to a specific RPM (here ~6500). In powerband: wave returns perfectly
+  // and supercharges cylinder. Below powerband: no wave. Above powerband / over-rev:
+  // wave returns LATE (arrives after port closure) — loses benefit and can cause blow-back.
+  const tunedRPM = 6500;
+  const rpmDeviation = Math.abs(rpm - tunedRPM) / tunedRPM; // 0 = perfect tune
+  const refStrength = inPowerband
+    ? Math.max(0, 1 - rpmDeviation * 2.5)  // fades away sharply when over/under-tuned RPM
+    : 0;
+  const isOverRev = rpm > tunedRPM + 1200;
+
+  if (layers.pressure && inPowerband) {
+    // Phase offset changes with RPM: at tuned RPM the wave arrives in sync,
+    // at over-rev it arrives late (larger offset = desync'd return)
+    const syncOffset = isOverRev ? 2.4 : 1.5;
+    const refPhase = ((t + syncOffset) % 3) / 3;
+    const refX = 420 - refPhase * 380;
+    if (refX > 44) {
+      const alpha = 0.3 + 0.6 * refStrength;
+      ctx.strokeStyle = isOverRev
+        ? `rgba(255,200,0,${alpha})`      // golden/yellow = late return (mismatch)
+        : `rgba(0,212,255,${alpha})`;     // cyan = correct return (supercharge)
+      ctx.lineWidth = 2.5; ctx.setLineDash([5,4]);
+      ctx.beginPath();
+      for(let i=0;i<60;i++){
+        const wx = refX - i*1.2;
+        const hy = getPipeHalfHeight(wx, segments, pipeY);
+        const amp = Math.min(hy * 0.55, hy - 4) * (0.4 + 0.6*refStrength);
+        const y = pipeY + Math.sin(i/60*Math.PI*4 + t*2)*amp;
+        i===0?ctx.moveTo(wx,y):ctx.lineTo(wx,y);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+      const dotCol = isOverRev ? `rgba(255,200,0,${alpha+0.1})` : `rgba(0,212,255,${alpha+0.1})`;
+      ctx.fillStyle = dotCol;
+      ctx.beginPath(); ctx.arc(refX, pipeY, 5, 0, Math.PI*2); ctx.fill();
+    }
+
+    // Label
+    ctx.font='11px monospace'; ctx.textAlign='left';
+    if(isOverRev) {
+      ctx.fillStyle='rgba(255,200,0,0.9)';
+      ctx.fillText('↩ REFLECTED WAVE LATE — PORT ALREADY CLOSED (OVER-REV MISMATCH)', 44, pipeY-65);
+      ctx.font='10px monospace'; ctx.fillStyle='rgba(255,200,0,0.7)';
+      ctx.fillText(`Tuned peak ~${tunedRPM} RPM · At ${rpm} RPM wave arrives after port closure → no gain`, 44, pipeY-50);
+    } else {
+      ctx.fillStyle='rgba(0,212,255,0.9)';
+      ctx.fillText(`↩ REFLECTED COMPRESSION WAVE — SUPERCHARGES CYLINDER  [strength: ${(refStrength*100).toFixed(0)}%]`, 44, pipeY-65);
+      ctx.font='10px monospace'; ctx.fillStyle='rgba(0,212,255,0.7)';
+      ctx.fillText(`RPM ${rpm} → L = ${(340/(rpm/60*2)).toFixed(0)}mm tuned pipe · Tuned peak: ~${tunedRPM} RPM`, 44, pipeY-50);
+    }
+
+    // Scavenging note (4S also uses exhaust scavenging)
+    ctx.font='11px monospace'; ctx.fillStyle='rgba(255,255,255,0.5)';
+    ctx.fillText('Note: 4-stroke engines also use exhaust scavenging (cam overlap) — critical in race/high-revving 4T engines.', 44, pipeY + (H*0.38));
+
+  } else {
+    ctx.font='11px monospace'; ctx.fillStyle='rgba(255,107,53,0.75)'; ctx.textAlign='left';
+    ctx.fillText('↑ RPM > 4500 TO SEE REFLECTED WAVE  (tuned peak: ~6500 RPM)', 44, pipeY-60);
+    ctx.font='11px monospace'; ctx.fillStyle='rgba(255,255,255,0.45)';
+    ctx.fillText('Note: 4-stroke engines also utilise exhaust scavenging via intake/exhaust valve overlap.', 44, pipeY + (H*0.38));
+  }
+
+  // ── DIMENSION ARROW ──
+  ctx.strokeStyle='#3a5060'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.moveTo(44,pipeY+70); ctx.lineTo(420,pipeY+70); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='#6a7280'; ctx.font='10px monospace'; ctx.textAlign='center';
+  ctx.fillText(`L = ${(340/(Math.max(500,rpm)/60*2)).toFixed(0)}mm @ ${rpm} RPM`, 230, pipeY+86);
+
+  ctx.textAlign='left';
+}
+
+function getPipeHalfHeight(wx, segs, midY) {
+  for(const s of segs) {
+    if(wx >= s.x && wx <= s.x+s.w) {
+      const frac = (wx-s.x)/s.w;
+      return s.h1 + (s.h2-s.h1)*frac;
+    }
+  }
+  return 10;
+}
+
+// ═══════════════════════════════════════════════
+// P-V DIAGRAMS — Theoretical + Realistic
+// ═══════════════════════════════════════════════
+function drawPV(canvas, ctx, ca_input, is2T, pvHistory) {
+  const {W,H} = fitCanvas(canvas, ctx);
+  ctx.clearRect(0,0,W,H);
+  if(W < 10 || H < 10) return;
+
+  const pad = {l:46, r:18, t:28, b:36};
+  const pw = W - pad.l - pad.r;
+  const ph = H - pad.t - pad.b;
+  const cr = is2T ? 7 : 10.5;
+  const Pmax = is2T ? 52 : 65;
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 0.5;
+  for(let i=0; i<=4; i++){
+    const y = pad.t + (i/4)*ph;
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(pad.l+pw,y); ctx.stroke();
+  }
+  for(let i=0; i<=4; i++){
+    const x = pad.l + (i/4)*pw;
+    ctx.beginPath(); ctx.moveTo(x,pad.t); ctx.lineTo(x,pad.t+ph); ctx.stroke();
+  }
+
+  // Axes
+  ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, pad.t+ph);
+  ctx.lineTo(pad.l+pw, pad.t+ph);
+  ctx.stroke();
+
+  // Axis labels
+  ctx.font = '10px monospace'; ctx.fillStyle = '#6a7280'; ctx.textAlign = 'center';
+  ctx.fillText('Volume →', pad.l + pw/2, H - 4);
+  ctx.save(); ctx.translate(11, pad.t + ph/2); ctx.rotate(-Math.PI/2);
+  ctx.fillText('Pressure (bar)', 0, 0); ctx.restore();
+
+  // Tick labels
+  ctx.fillStyle = '#5a6270'; ctx.font = '9px monospace';
+  ctx.textAlign = 'right';
+  [0, 0.25, 0.5, 0.75, 1].forEach(f => {
+    const p = (f * Pmax).toFixed(0);
+    ctx.fillText(p, pad.l - 4, pad.t + ph - f*ph + 3);
+  });
+  ctx.textAlign = 'center';
+  [1, 0.5].forEach(f => {
+    const v = (1 + f*(cr-1)).toFixed(1);
+    const x = pad.l + (1-f)*pw;
+    ctx.fillText(v+'×', x, pad.t + ph + 13);
+  });
+
+  // Map vol/pres to canvas coords
+  const vx = vol => pad.l + ((vol-1)/(cr-1)) * pw;
+  const py_fn = pres => pad.t + ph - Math.min(1, pres/Pmax) * ph;
+
+  // ── THEORETICAL (ideal Otto/2T) cycle ──
+  function idealCyclePoints(is2T) {
+    const pts = [];
+    if(is2T) {
+      // 2-stroke ideal: simplified 2-event cycle
+      // Compression: BDC→TDC
+      for(let v=cr; v>=1; v-=0.05) {
+        pts.push({v, p: 1.0 * Math.pow(cr/v, 1.35), phase:'comp'});
+      }
+      // Instantaneous combustion at TDC
+      pts.push({v:1.0, p: Pmax*0.92, phase:'comb'});
+      // Power/expansion: TDC→BDC
+      for(let v=1; v<=cr; v+=0.05) {
+        pts.push({v, p: (Pmax*0.92) * Math.pow(1/v, 1.35), phase:'power'});
+      }
+      // Blow-down (exhaust port opens)
+      pts.push({v:cr, p: 1.0, phase:'exhaust'});
+    } else {
+      // 4-stroke ideal Otto: intake at 1bar, compression, combustion, expansion, exhaust
+      // Intake (constant p=1)
+      for(let v=1; v<=cr; v+=0.1) pts.push({v, p:1.0, phase:'intake'});
+      // Compression
+      for(let v=cr; v>=1; v-=0.05) {
+        pts.push({v, p: 1.0 * Math.pow(cr/v, 1.35), phase:'comp'});
+      }
+      // Constant volume combustion
+      pts.push({v:1, p: Pmax*0.92, phase:'comb'});
+      // Expansion
+      for(let v=1; v<=cr; v+=0.05) {
+        pts.push({v, p: (Pmax*0.92)*Math.pow(1/v,1.35), phase:'power'});
+      }
+      // Exhaust stroke back at 1bar
+      for(let v=cr; v>=1; v-=0.1) pts.push({v, p:1.02, phase:'exhaust'});
+    }
+    return pts;
+  }
+
+  // ── REALISTIC cycle (rounded corners, blow-down losses) ──
+  function realisticCyclePoints(is2T) {
+    const pts = [];
+    const smoothstep = (a,b,t) => a + (b-a)*(3*t*t - 2*t*t*t);
+    if(is2T) {
+      // Compression with blowby losses
+      for(let i=0; i<=60; i++) {
+        const v = cr - (cr-1)*(i/60);
+        const ideal = 1.0 * Math.pow(cr/v, 1.35);
+        pts.push({v, p: ideal * (0.93 + 0.05*Math.sin(i/60*Math.PI)), phase:'comp'});
+      }
+      // Gradual combustion (not instantaneous)
+      for(let i=0; i<=15; i++) {
+        const t = i/15;
+        const p = smoothstep(1.0*Math.pow(cr,1.35)*0.93, Pmax*0.82, t);
+        pts.push({v: 1.0 + 0.08*t, p, phase:'comb'});
+      }
+      // Expansion with heat loss
+      for(let i=0; i<=60; i++) {
+        const v = 1.08 + (cr-1.08)*(i/60);
+        const ideal = (Pmax*0.82) * Math.pow(1.08/v, 1.35);
+        pts.push({v, p: ideal * (1 - 0.07*(i/60)), phase:'power'});
+      }
+      // Early exhaust port blow-down (loses pressure before BDC)
+      for(let i=0; i<=20; i++) {
+        const t = i/20;
+        pts.push({v: cr - 0.3*(1-t), p: smoothstep(1.5, 1.05, t), phase:'exhaust'});
+      }
+    } else {
+      // Pumping loop (intake slightly below 1 bar due to throttle loss)
+      for(let v=1; v<=cr; v+=0.15) pts.push({v, p: 0.92 + 0.04*Math.sin(v/cr*Math.PI), phase:'intake'});
+      // Compression
+      for(let i=0; i<=70; i++) {
+        const v = cr - (cr-1)*(i/70);
+        const ideal = 0.94 * Math.pow(cr/v, 1.35);
+        pts.push({v, p: ideal * (0.95 + 0.03*Math.sin(i/70*Math.PI*2)), phase:'comp'});
+      }
+      // Gradual combustion
+      for(let i=0; i<=20; i++) {
+        const t = i/20;
+        pts.push({v: 1.0 + 0.12*t, p: smoothstep(0.94*Math.pow(cr,1.35), Pmax*0.80, t), phase:'comb'});
+      }
+      // Expansion
+      for(let i=0; i<=70; i++) {
+        const v = 1.12 + (cr-1.12)*(i/70);
+        const ideal = (Pmax*0.80)*Math.pow(1.12/v,1.35);
+        pts.push({v, p: ideal*(1-0.08*(i/70)), phase:'power'});
+      }
+      // Exhaust above 1 bar (pumping loss)
+      for(let v=cr; v>=1; v-=0.15) pts.push({v, p: 1.12 + 0.06*Math.sin(v/cr*Math.PI), phase:'exhaust'});
+    }
+    return pts;
+  }
+
+  const phaseColors = {
+    intake:  '#3b82f6',
+    comp:    '#f59e0b',
+    comb:    '#ffffff',
+    power:   '#ff6b35',
+    exhaust: '#ff9d1a'
+  };
+
+  // Draw ideal cycle (dashed, muted)
+  const idealPts = idealCyclePoints(is2T);
+  ctx.setLineDash([3,4]);
+  ctx.lineWidth = 1;
+  let lastPhase = null;
+  idealPts.forEach((pt, i) => {
+    const x = vx(pt.v), y = py_fn(pt.p);
+    if(i===0 || pt.phase !== lastPhase) {
+      if(i>0) ctx.stroke();
+      ctx.strokeStyle = phaseColors[pt.phase] + '44';
+      ctx.beginPath(); ctx.moveTo(x,y);
+    } else {
+      ctx.lineTo(x,y);
+    }
+    lastPhase = pt.phase;
+    if(i===idealPts.length-1) ctx.stroke();
+  });
+  ctx.setLineDash([]);
+
+  // Draw realistic cycle (solid, colored by phase)
+  const realPts = realisticCyclePoints(is2T);
+  ctx.lineWidth = 2;
+  lastPhase = null;
+  realPts.forEach((pt, i) => {
+    const x = vx(pt.v), y = py_fn(pt.p);
+    if(i===0 || pt.phase !== lastPhase) {
+      if(i>0) ctx.stroke();
+      ctx.strokeStyle = phaseColors[pt.phase] + 'cc';
+      ctx.beginPath(); ctx.moveTo(x,y);
+    } else {
+      ctx.lineTo(x,y);
+    }
+    lastPhase = pt.phase;
+    if(i===realPts.length-1) ctx.stroke();
+  });
+
+  // ── Current position dot, tracked on realistic curve ──
+  // Map crank angle to approximate position on realistic curve
+  const ca = is2T ? ca2T : (ca4T % 720);
+  let curV, curP;
+  if(is2T) {
+    const frac = pistonFrac(ca);
+    curV = 1 + frac*(cr-1);
+    if(ca < 30 || ca > 340) { curP = Pmax * 0.82 * Math.pow(1.08/Math.max(1,curV), 1.35); }
+    else if(ca < 180) { curP = (Pmax*0.82) * Math.pow(1.08/curV,1.35) * 0.95; }
+    else { curP = 0.95 * Math.pow(cr/curV, 1.35); }
+  } else {
+    const stroke = Math.floor(ca/180) % 4;
+    const frac = pistonFrac(ca % 360);
+    curV = 1 + frac*(cr-1);
+    if(stroke===0) curP = 0.92;
+    else if(stroke===1) curP = 0.94 * Math.pow(cr/curV,1.35);
+    else if(stroke===2) {
+      const t = (ca%180)/180;
+      curP = t < 0.1 ? Pmax*0.80*Math.pow(1.12/curV,1.35) : (Pmax*0.80)*Math.pow(1.12/curV,1.35)*(1-0.08*t);
+    }
+    else curP = 1.1;
+  }
+  curP = Math.max(0.5, Math.min(Pmax, curP));
+
+  // Trail
+  pvHistory.push({x: vx(curV), y: py_fn(curP)});
+  if(pvHistory.length > 120) pvHistory.shift();
+  if(pvHistory.length > 1) {
+    ctx.strokeStyle = is2T ? 'rgba(255,107,53,0.5)' : 'rgba(59,130,246,0.5)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    pvHistory.forEach((p,i) => i===0 ? ctx.moveTo(p.x,p.y) : ctx.lineTo(p.x,p.y));
+    ctx.stroke();
+  }
+
+  // Live dot
+  const dx = vx(curV), dy = py_fn(curP);
+  ctx.fillStyle = is2T ? '#ff6b35' : '#3b82f6';
+  ctx.beginPath(); ctx.arc(dx,dy,5,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath(); ctx.arc(dx,dy,2.5,0,Math.PI*2); ctx.fill();
+
+  // Live readout
+  ctx.font = '10px monospace'; ctx.textAlign = 'left';
+  ctx.fillStyle = is2T ? '#ff6b35' : '#3b82f6';
+  ctx.fillText(`P: ${curP.toFixed(1)} bar`, pad.l+4, pad.t+13);
+  ctx.fillStyle = '#5a6270';
+  ctx.fillText(`V: ${curV.toFixed(2)}×Vmin`, pad.l+4, pad.t+25);
+
+  // Legend
+  ctx.font = '10px monospace'; ctx.textAlign = 'right';
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.setLineDash([3,3]);
+  ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(pad.l+pw-60, pad.t+8); ctx.lineTo(pad.l+pw-46, pad.t+8); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(pad.l+pw-60, pad.t+18); ctx.lineTo(pad.l+pw-46, pad.t+18); ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.textAlign = 'left';
+  ctx.fillText('Ideal', pad.l+pw-44, pad.t+12);
+  ctx.fillText('Real',  pad.l+pw-44, pad.t+22);
+
+  // Phase legend strip (bottom)
+  const phases = is2T
+    ? [['COMP','#f59e0b'],['POWER','#ff6b35'],['EXHAUST','#ff9d1a']]
+    : [['INTAKE','#3b82f6'],['COMP','#f59e0b'],['POWER','#ff6b35'],['EXHAUST','#ff9d1a']];
+  const lw = pw / phases.length;
+  phases.forEach(([name, col], i) => {
+    ctx.fillStyle = col + '22';
+    ctx.fillRect(pad.l + i*lw, pad.t+ph+18, lw, 14);
+    ctx.fillStyle = col + 'dd';
+    ctx.font = '9px monospace'; ctx.textAlign = 'center';
+    ctx.fillText(name, pad.l + i*lw + lw/2, pad.t+ph+29);
+  });
+}
+const pvHist2T=[], pvHist4T=[];
+
+// ═══════════════════════════════════════════════
+// TIMELINE
+// ═══════════════════════════════════════════════
+function drawTimeline() {
+  const W = cTL.parentElement.clientWidth || 600;
+  cTL.width = W; cTL.height = 54;
+  const ctx = xTL;
+  ctx.clearRect(0,0,W,54);
+
+  const pad=28, tw=W-pad*2;
+  const r1y=1, r1h=20, r2y=25, r2h=20;
+
+  // 2T phases
+  const p2=[
+    {label:'POWER',  s:0,     e:.44, col:'#ff6b35'},
+    {label:'EX+TR',  s:.44,   e:.72, col:'#ff9d1a'},
+    {label:'TRANS',  s:.72,   e:.78, col:'#3b82f6'},
+    {label:'COMP',   s:.78,   e:1,   col:'#f59e0b'},
+  ];
+  // 4T phases
+  const p4=[
+    {label:'INTAKE',  s:0,    e:.25, col:'#3b82f6'},
+    {label:'COMPRESS',s:.25,  e:.5,  col:'#f59e0b'},
+    {label:'POWER',   s:.5,   e:.75, col:'#ff6b35'},
+    {label:'EXHAUST', s:.75,  e:1,   col:'#ff9d1a'},
+  ];
+
+  function drawRow(phases, y, h) {
+    phases.forEach(ph=>{
+      ctx.fillStyle = ph.col+'30';
+      ctx.fillRect(pad+ph.s*tw, y, (ph.e-ph.s)*tw, h);
+      ctx.strokeStyle=ph.col+'55'; ctx.lineWidth=0.5;
+      ctx.strokeRect(pad+ph.s*tw, y, (ph.e-ph.s)*tw, h);
+      ctx.fillStyle=ph.col+'cc'; ctx.font='9px monospace'; ctx.textAlign='center';
+      ctx.fillText(ph.label, pad+(ph.s+(ph.e-ph.s)*0.5)*tw, y+h*0.72);
+    });
+  }
+  drawRow(p2,r1y,r1h);
+  drawRow(p4,r2y,r2h);
+
+  // Row labels
+  ctx.font='9px monospace'; ctx.fillStyle='#5a6270'; ctx.textAlign='right';
+  ctx.fillText('2T',pad-4,r1y+14); ctx.fillText('4T',pad-4,r2y+14);
+
+  // Cursors
+  const c2=ca2T/360, c4=ca4T/720;
+  [
+    {f:c2,y:r1y-1,h:r1h+2,col:'#ff6b35'},
+    {f:c4,y:r2y-1,h:r2h+2,col:'#3b82f6'}
+  ].forEach(c=>{
+    ctx.strokeStyle=c.col; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(pad+c.f*tw,c.y); ctx.lineTo(pad+c.f*tw,c.y+c.h); ctx.stroke();
+    ctx.fillStyle=c.col;
+    ctx.beginPath(); ctx.arc(pad+c.f*tw,c.y,3,0,Math.PI*2); ctx.fill();
+  });
+
+  // Degree marks
+  ctx.font='9px monospace'; ctx.fillStyle='#4a5a6a'; ctx.textAlign='center';
+  [0,90,180,270,360].forEach(d=>{
+    ctx.fillText(d+'°', pad+(d/360)*tw, 52);
+  });
+  ctx.textAlign='left';
+}
+
+// ═══════════════════════════════════════════════
+// POWER CURVE
+// ═══════════════════════════════════════════════
+function s2T_fn(r) {
+  if(r<3000) return .02*(r/3000);
+  if(r<5000) return .02+.03*((r-3000)/2000);
+  if(r<7500) return .05+.22*Math.pow((r-5000)/2500,.7);
+  if(r<8500) return .27-.08*((r-7500)/1000);
+  return Math.max(0,.19-.15*((r-8500)/1500));
+}
+function s4T_fn(r) {
+  if(r<1000) return .01;
+  if(r<5000) return .01+.08*((r-1000)/4000);
+  if(r<7000) return .09+.03*((r-5000)/2000);
+  return Math.max(0,.12-.10*((r-7000)/3000));
+}
+
+function drawPowerCurve() {
+  const W = cPC.parentElement.clientWidth || 186;
+  cPC.width=W; cPC.height=80;
+  const ctx=xPC;
+  ctx.clearRect(0,0,W,80);
+  const pad={l:8,r:8,t:6,b:16};
+  const pw=W-pad.l-pad.r, ph=80-pad.t-pad.b;
+  const rMin=500,rMax=10000,vMax=.30;
+  const rx=r=>pad.l+(r-rMin)/(rMax-rMin)*pw;
+  const vy=v=>pad.t+ph-(v/vMax)*ph;
+
+  // Grid
+  ctx.strokeStyle='rgba(255,255,255,0.05)'; ctx.lineWidth=.5;
+  [0,.1,.2,.3].forEach(v=>{ctx.beginPath();ctx.moveTo(pad.l,vy(v));ctx.lineTo(pad.l+pw,vy(v));ctx.stroke();});
+
+  // Powerband zone shade
+  ctx.fillStyle='rgba(255,107,53,0.06)';
+  ctx.fillRect(rx(4500),pad.t,rx(8500)-rx(4500),ph);
+
+  // 4T
+  ctx.strokeStyle='#3b82f6'; ctx.lineWidth=1.5;
+  ctx.beginPath();
+  for(let r=rMin;r<=rMax;r+=50){const x=rx(r),y=vy(s4T_fn(r));r===rMin?ctx.moveTo(x,y):ctx.lineTo(x,y);}
+  ctx.stroke();
+
+  // 2T
+  ctx.strokeStyle='#ff6b35'; ctx.lineWidth=2;
+  ctx.beginPath();
+  for(let r=rMin;r<=rMax;r+=50){const x=rx(r),y=vy(s2T_fn(r));r===rMin?ctx.moveTo(x,y):ctx.lineTo(x,y);}
+  ctx.stroke();
+
+  // Current RPM
+  ctx.strokeStyle='rgba(255,255,255,.2)'; ctx.lineWidth=1; ctx.setLineDash([2,3]);
+  ctx.beginPath(); ctx.moveTo(rx(rpm),pad.t); ctx.lineTo(rx(rpm),pad.t+ph); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Labels
+  ctx.font='9px monospace'; ctx.fillStyle='#4a5a6a'; ctx.textAlign='left';
+  ctx.fillText('500',pad.l,78); ctx.fillText('10k',pad.l+pw-16,78);
+  ctx.fillText('.30',pad.l,pad.t+9);
+}
+
+// ═══════════════════════════════════════════════
+// TELEMETRY
+// ═══════════════════════════════════════════════
+const infoData = {
+  normal_low:  {t:'Below Powerband',    b:'Pipe reflection timing mismatched at low RPM. Pressure wave arrives too early — disrupts charge. Engine feels flat. This is the "dead zone" before the hit.'},
+  normal_mid:  {t:'Building Resonance', b:'Approaching powerband threshold. Reflected wave timing improves. Some ηv gain. Engine starts responding but has not hit the explosive transition yet.'},
+  normal_high: {t:'Powerband — Resonance Active', b:'Reflected compression wave arrives exactly as transfer ports close. Escaped charge shoved back in. ηv >100% without a compressor. This is WHY the 2T feels violent. Note: 4T engines also exploit exhaust scavenging via intake/exhaust valve overlap at high RPM — but it is tunable, not mandatory every cycle.'},
+  powerband:   {t:'Tuned Resonance — ~6500 RPM Sweet Spot', b:'Pipe length L = v/(2f) phase-locks reflected wave to port closure. ηv >100% — free supercharging. Push above ~7700 RPM and the wave arrives LATE (port already closed) — efficiency collapses. This is why 2T power curves have a sharp cliff. Specific power peaks here — 150cc 2T embarrasses the 250cc 4T.'},
+  seizure:     {t:'⚠ SEIZURE — Critical Thermal Failure', b:'Q̇ = ṁ·QLHV·(1−ηth) exceeds oil film recovery rate at this RPM. Aluminum piston expands faster than bore clearance. Contact imminent. 2-strokes have no separate lubrication circuit.'},
+  lean:        {t:'Lean Mixture — Detonation Risk',b:'AFR too high — insufficient fuel charge. Combustion temperature spike without cooling mass. Piston crown temperatures exceed oil film limits. Precursor to seizure.'},
+};
+
+function updateTelemetry() {
+  const sv2 = s2T_fn(rpm), sv4 = s4T_fn(rpm);
+  const p2 = sv2*150, p4 = sv4*250;
+  document.getElementById('tv2tP').textContent  = p2.toFixed(1)+' kW';
+  document.getElementById('tv4tP').textContent  = p4.toFixed(1)+' kW';
+  document.getElementById('tv2tSp').textContent = (sv2*1000).toFixed(2)+' W/cc';
+  document.getElementById('tv4tSp').textContent = (sv4*1000).toFixed(2)+' W/cc';
+  const q2 = (rpm/500).toFixed(1), q4 = (rpm/1000).toFixed(1);
+  document.getElementById('tv2tQ').textContent  = q2+' kJ/s';
+  document.getElementById('tv4tQ').textContent  = q4+' kJ/s';
+  const ev2 = rpm>4500 ? Math.min(118, 95+(rpm-4500)/200) : 72+rpm/200;
+  document.getElementById('tv2tEv').textContent = ev2.toFixed(0)+'%';
+  document.getElementById('tv4tEv').textContent = Math.min(92, 60+rpm/150).toFixed(0)+'%';
+
+  // Phase strips
+  const ph2 = ca2T<160?2:ca2T<260?3:ca2T<320?0:1;
+  document.querySelectorAll('#strip2T .phase-seg').forEach((el,i)=>el.classList.toggle('on',i===ph2));
+  const ph4 = Math.floor(ca4T/180)%4;
+  document.querySelectorAll('#strip4T .phase-seg').forEach((el,i)=>el.classList.toggle('on',i===ph4));
+
+  // HUD
+  document.getElementById('ca2Tdisp').textContent = Math.round(ca2T)+'°';
+  document.getElementById('ca4Tdisp').textContent = Math.round(ca4T)+'°';
+  const pn2=['TRANS','COMP','POWER','EX+SCL'],pn4=['INTAKE','COMPRESS','POWER','EXHAUST'];
+  document.getElementById('phaseDisp').textContent = `2T:${pn2[ph2]} 4T:${pn4[ph4]}`;
+
+  // Context info
+  let key;
+  if(scenario==='seizure') key='seizure';
+  else if(scenario==='lean') key='lean';
+  else if(scenario==='powerband') key='powerband';
+  else if(rpm<3000) key='normal_low';
+  else if(rpm<5500) key='normal_mid';
+  else key='normal_high';
+  const d=infoData[key];
+  document.getElementById('infoTitle').textContent=d.t;
+  document.getElementById('infoBody').textContent=d.b;
+}
+
+// ═══════════════════════════════════════════════
+// MAIN LOOP
+// ═══════════════════════════════════════════════
+function loop(ts) {
+  if(playing && lastT!==null){
+    const dt=Math.min((ts-lastT)/1000,.033);
+    // Fix: use a fixed reference speed (1500 RPM) scaled by speedMult
+    // so slow-motion is equally slow regardless of RPM setting.
+    // RPM only affects telemetry/power values, not animation rate at a given speedMult.
+    const REF_RPM = 1500;
+    const dps = REF_RPM * 6 * speedMult;
+    ca2T=(ca2T+dps*dt)%360;
+    ca4T=(ca4T+dps*dt)%720;
+  }
+  lastT=ts;
+
+  if(activeTab==='cross'){
+    if(viewMode!=='4T') draw2T(ca2T);
+    if(viewMode!=='2T') draw4T(ca4T);
+  } else if(activeTab==='exp'){
+    drawExpansionChamber();
+  } else if(activeTab==='pv'){
+    drawPV(cPV2,xPV2,ca2T,true,pvHist2T);
+    drawPV(cPV4,xPV4,ca4T,false,pvHist4T);
+  }
+  drawTimeline();
+  drawPowerCurve();
+  updateTelemetry();
+  requestAnimationFrame(loop);
+}
+
+function startApp() {
+  if(!initCanvases()) { console.error('Canvas init failed — aborting.'); return; }
+  requestAnimationFrame(loop);
+}
+
+if(document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', startApp);
+} else {
+  startApp();
+}
+
+// ═══════════════════════════════════════════════
+// CONTROL FUNCTIONS
+// ═══════════════════════════════════════════════
+function setRPM(r) {
+  rpm=r;
+  document.getElementById('rpmSlider').value=r;
+  document.getElementById('rpmDisplay').textContent=r;
+}
+
+function togglePlay() {
+  playing=!playing;
+  const b=document.getElementById('btnPlay');
+  b.textContent=playing?'⏸ PAUSE':'▶ PLAY';
+  if(playing) lastT=null;
+}
+
+function setSpeed(s) {
+  speedMult = s;
+  ['sp005','sp01','sp025','sp05','sp1'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.classList.remove('on');
+  });
+  const map = {0.05:'sp005', 0.1:'sp01', 0.25:'sp025', 0.5:'sp05', 1:'sp1'};
+  const btn = map[s] && document.getElementById(map[s]);
+  if(btn) btn.classList.add('on');
+}
+
+function step(deg) {
+  if(playing) { playing=false; document.getElementById('btnPlay').textContent='▶ PLAY'; }
+  ca2T=((ca2T+deg)%360+360)%360;
+  ca4T=((ca4T+deg*2)%720+720)%720;
+}
+
+function togLayer(el, layer) {
+  layers[layer] = !layers[layer];
+  el.classList.toggle('on', layers[layer]);
+  const pip = el.querySelector('.tog-pip');
+  if(pip) pip.style.opacity = layers[layer] ? '1' : '0.3';
+}
+
+function setMode(m) {
+  viewMode = m;
+
+  const labels = { compare:'COMPARE MODE', '2T':'2-STROKE ONLY', '4T':'4-STROKE ONLY' };
+  const descs = {
+    compare: '⚡ POWER FREQUENCY: 2T fires every 360° vs 4T every 720°. At same RPM the 2T has 2× combustion events. Watch the flame flash rate side-by-side — in the classic carbureted era (pre-2000s), the 150cc 2T routinely outpowered the 250cc 4T in specific power. Modern 4T fuel injection and variable valve timing have largely closed this gap. Both engine types use exhaust scavenging; it is mandatory every cycle on 2T, selectively tuned via cam overlap on 4T.',
+    '2T':    '🔍 2-STROKE ISOLATED: Port-based breathing — no valves. EX and TR ports visible on bore walls. Scavenging overlap is the key efficiency lever. Fresh charge and exhaust gases coexist briefly — this causes the 2T HC emissions problem. Scavenging is REQUIRED every single cycle; without it the engine cannot breathe. Compare: 4T engines also scavenge, but via tunable valve overlap.',
+    '4T':    '🔍 4-STROKE ISOLATED: Valve-based breathing — full 720° Otto cycle. Clean separation of intake/exhaust strokes. Watch valves open/close. The extra exhaust stroke is a pumping penalty vs 2T, but enables precise scavenging control. Note: 4T engines ALSO use exhaust scavenging via intake/exhaust valve overlap — critical in performance cams. Unlike 2T where scavenging is mandatory every cycle, 4T scavenging is tunable.'
+  };
+
+  ['btnCompare','btn2T','btn4T'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.classList.remove('on');
+  });
+  const activeBtn = document.getElementById(m==='compare'?'btnCompare':m==='2T'?'btn2T':'btn4T');
+  if(activeBtn) activeBtn.classList.add('on');
+
+  const h2T = document.getElementById('half2T');
+  const h4T = document.getElementById('half4T');
+  if(h2T) h2T.style.display = m==='4T' ? 'none' : 'flex';
+  if(h4T) h4T.style.display = m==='2T' ? 'none' : 'flex';
+
+  const modeBadge = document.getElementById('modeBadge');
+  if(modeBadge) modeBadge.textContent = labels[m] || m;
+  const modeDesc = document.getElementById('modeDesc');
+  if(modeDesc) modeDesc.textContent = descs[m] || '';
+
+  // Flash outline on newly active panel(s)
+  const flashEl = (id, col) => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.style.outline = `1px solid ${col}`;
+    setTimeout(() => { el.style.outline = ''; }, 800);
+  };
+  if(m === 'compare') { flashEl('half2T','rgba(0,212,255,0.4)'); flashEl('half4T','rgba(0,212,255,0.4)'); }
+  else if(m === '2T') { flashEl('half2T','rgba(255,107,53,0.5)'); }
+  else                { flashEl('half4T','rgba(59,130,246,0.5)'); }
+}
+
+function setScenario(sc, btn) {
+  scenario=sc;
+  ['scNormal','scPower','scSz','scLean'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.classList.remove('on','hot-on','red-on');
+  });
+  const cls={normal:'on',powerband:'hot-on',seizure:'red-on',lean:'red-on'};
+  btn.className='btn '+(cls[sc]||'on');
+
+  const d={
+    normal:    'Normal running. Toggle layers to isolate phenomena.',
+    powerband: 'RPM raised to powerband zone. Watch ηv climb above 100%. See reflected wave in Expansion Chamber tab.',
+    seizure:   '⚠ High-RPM thermal overload. 2× combustion events per rev means insufficient time for oil film recovery.',
+    lean:      'Lean air-fuel mixture. Insufficient charge mass → hotter combustion → thermal runaway risk on 2T.'
+  };
+  document.getElementById('scenarioDesc').textContent=d[sc];
+
+  if(sc==='powerband') setRPM(7500);
+  if(sc==='seizure')   setRPM(8500);
+  if(sc==='lean')      setRPM(3500);
+  if(sc==='normal')    setRPM(1500);
+}
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById('tabCross').classList.toggle('on', tab==='cross');
+  document.getElementById('tabExp').classList.toggle('on',   tab==='exp');
+  document.getElementById('tabPV').classList.toggle('on',    tab==='pv');
+  document.getElementById('viewCross').classList.toggle('on', tab==='cross');
+  document.getElementById('viewExp').classList.toggle('on',   tab==='exp');
+  document.getElementById('viewPV').classList.toggle('on',    tab==='pv');
+  // Reset PV history when switching to PV tab so trace builds fresh
+  if(tab==='pv'){ pvHist2T.length=0; pvHist4T.length=0; }
+}
+
+function openOverlay(id)  { document.getElementById(id).classList.add('on'); }
+function closeOverlay(id) { document.getElementById(id).classList.remove('on'); }
+</script>
+</body>
+</html>

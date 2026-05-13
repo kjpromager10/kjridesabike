@@ -1,0 +1,2271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VVA — Interactive Visualizer</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600&family=Barlow+Condensed:wght@300;400;600;700&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --bg0: #080b10;
+  --bg1: #0d1117;
+  --bg2: #131920;
+  --bg3: #1a2330;
+  --bg4: #1f2c3d;
+  --panel: #0f1621;
+  --border: rgba(80,160,255,0.12);
+  --border2: rgba(80,160,255,0.22);
+  --accent: #3b82f6;
+  --accent2: #60a5fa;
+  --accent3: #93c5fd;
+  --amber: #f59e0b;
+  --amber2: #fbbf24;
+  --red: #ef4444;
+  --red2: #f87171;
+  --green: #22c55e;
+  --green2: #4ade80;
+  --teal: #14b8a6;
+  --teal2: #2dd4bf;
+  --purple: #a855f7;
+  --text1: #e2e8f0;
+  --text2: #94a3b8;
+  --text3: #64748b;
+  --mono: 'JetBrains Mono', monospace;
+  --cond: 'Barlow Condensed', sans-serif;
+  --sans: 'Barlow', sans-serif;
+  --glow-blue: 0 0 20px rgba(59,130,246,0.35);
+  --glow-amber: 0 0 20px rgba(245,158,11,0.35);
+  --glow-red: 0 0 20px rgba(239,68,68,0.4);
+}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg0);
+  color: var(--text1);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* HEADER */
+header {
+  background: linear-gradient(180deg, rgba(8,11,16,0.98) 0%, rgba(13,17,23,0.95) 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(12px);
+}
+.header-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  gap: 16px;
+}
+.logo {
+  font-family: var(--cond);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.logo-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: var(--glow-blue);
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(.85)} }
+.badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--accent2);
+  border: 1px solid rgba(59,130,246,0.3);
+  padding: 2px 8px;
+  border-radius: 3px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.tab-bar {
+  display: flex;
+  gap: 2px;
+}
+.tab-btn {
+  font-family: var(--cond);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--text3);
+  background: none;
+  border: none;
+  padding: 6px 14px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all .2s;
+  white-space: nowrap;
+}
+.tab-btn:hover { color: var(--text2); background: rgba(255,255,255,0.04); }
+.tab-btn.active { color: var(--accent2); background: rgba(59,130,246,0.1); }
+
+/* TABS */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* MAIN LAYOUT */
+.main-layout {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px 24px 40px;
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 20px;
+}
+@media (max-width: 1100px) {
+  .main-layout { grid-template-columns: 1fr; }
+}
+
+/* RPM HERO */
+.rpm-hero {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.rpm-display {
+  font-family: var(--mono);
+  font-size: 52px;
+  font-weight: 600;
+  color: var(--accent2);
+  line-height: 1;
+  text-shadow: var(--glow-blue);
+  min-width: 200px;
+  letter-spacing: -2px;
+}
+.rpm-label {
+  font-family: var(--cond);
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--text3);
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+.rpm-slider-wrap {
+  flex: 1;
+  min-width: 260px;
+}
+.rpm-slider-labels {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  margin-bottom: 6px;
+}
+input[type=range].rpm-slider {
+  width: 100%;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--bg3);
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+}
+input[type=range].rpm-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--accent3);
+  box-shadow: var(--glow-blue);
+  cursor: pointer;
+  transition: transform .1s;
+}
+input[type=range].rpm-slider::-webkit-slider-thumb:active { transform: scale(1.2); }
+.rpm-slider-track {
+  height: 6px;
+  background: var(--bg3);
+  border-radius: 3px;
+  position: relative;
+  overflow: hidden;
+}
+.rpm-fill {
+  position: absolute;
+  top: 0; left: 0; height: 100%;
+  background: linear-gradient(90deg, var(--teal), var(--accent), var(--amber), var(--red));
+  border-radius: 3px;
+  transition: width .1s;
+}
+.status-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 160px;
+}
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text2);
+}
+.chip-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.chip-value { color: var(--text1); font-weight: 600; margin-left: 4px; }
+
+/* PLAYBACK BAR */
+.playback-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 14px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.play-btn {
+  background: rgba(59,130,246,0.15);
+  border: 1px solid rgba(59,130,246,0.3);
+  color: var(--accent2);
+  width: 32px; height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  transition: all .15s;
+  flex-shrink: 0;
+}
+.play-btn:hover { background: rgba(59,130,246,0.25); box-shadow: var(--glow-blue); }
+.play-btn.active { background: rgba(59,130,246,0.3); color: #fff; }
+.speed-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text3);
+  white-space: nowrap;
+}
+.speed-select {
+  font-family: var(--mono);
+  font-size: 11px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.toggle-group {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+.toggle-pill {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .8px;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--text3);
+  cursor: pointer;
+  transition: all .2s;
+}
+.toggle-pill.on { border-color: rgba(59,130,246,0.5); color: var(--accent2); background: rgba(59,130,246,0.1); }
+.toggle-pill.warn-pill.on { border-color: rgba(239,68,68,0.5); color: var(--red2); background: rgba(239,68,68,0.1); }
+
+/* ENGINE CANVAS */
+.canvas-wrap {
+  position: relative;
+  background: var(--bg1);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+#engineCanvas {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+}
+.canvas-overlay {
+  position: absolute;
+  top: 10px; right: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  pointer-events: none;
+}
+.overlay-chip {
+  font-family: var(--mono);
+  font-size: 10px;
+  background: rgba(8,11,16,0.85);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 8px;
+  color: var(--text2);
+  backdrop-filter: blur(4px);
+}
+.overlay-chip span { color: var(--accent2); }
+
+/* SIDE PANEL */
+.side-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* PANELS */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255,255,255,0.02);
+}
+.panel-title {
+  font-family: var(--cond);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text2);
+}
+.panel-body { padding: 14px; }
+
+/* TACHOMETER */
+.tacho-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 14px 10px;
+}
+canvas#tachCanvas { width: 200px; height: 120px; }
+
+/* GRAPH */
+.graph-container {
+  position: relative;
+  height: 140px;
+}
+.graph-container canvas { width: 100% !important; height: 100% !important; }
+
+/* VVA INDICATOR */
+.vva-indicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+}
+.vva-cam {
+  flex: 1;
+  background: var(--bg3);
+  border-radius: 6px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  transition: border-color .4s, box-shadow .4s;
+}
+.vva-cam.active { border-color: rgba(59,130,246,0.5); box-shadow: var(--glow-blue); }
+.vva-cam.active-amber { border-color: rgba(245,158,11,0.5); box-shadow: var(--glow-amber); }
+.vva-cam-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+canvas.cam-canvas { width: 100%; height: 60px; display: block; }
+.vva-arrow {
+  font-size: 16px;
+  color: var(--text3);
+  flex-shrink: 0;
+}
+
+/* KNOCK PANEL */
+.knock-warn {
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.25);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin: 8px 14px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--red2);
+  display: none;
+  animation: knockFlash .3s ease-in-out;
+}
+.knock-warn.visible { display: block; }
+@keyframes knockFlash { 0%{opacity:0;transform:scale(.98)} 50%{opacity:1;transform:scale(1.01)} 100%{opacity:1;transform:scale(1)} }
+
+/* GRAPHS TAB */
+.graphs-layout {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px 24px 40px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  gap: 16px;
+}
+.graph-panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+}
+.graph-panel-title {
+  font-family: var(--cond);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text2);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.graph-panel-title .live-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse 1.5s infinite;
+}
+.graph-tall { height: 200px; position: relative; }
+.graph-tall canvas { width: 100% !important; height: 100% !important; }
+.graph-disclaimer {
+  margin-top: 8px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  line-height: 1.6;
+  border-top: 1px solid var(--border);
+  padding-top: 7px;
+}
+
+/* ECU TELEMETRY */
+.ecu-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 10px 14px 14px;
+}
+.ecu-cell {
+  background: var(--bg3);
+  border-radius: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+}
+.ecu-cell-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 2px;
+}
+.ecu-cell-value {
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text1);
+  line-height: 1;
+}
+.ecu-cell-unit {
+  font-size: 10px;
+  color: var(--text3);
+  margin-left: 2px;
+}
+
+/* FORMULA OVERLAY */
+.formula-bar {
+  background: rgba(168,85,247,0.06);
+  border: 1px solid rgba(168,85,247,0.2);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin: 0 14px 10px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: #c084fc;
+  line-height: 1.8;
+  display: none;
+}
+.formula-bar.visible { display: block; }
+
+/* SOURCES TAB */
+.sources-layout {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px;
+}
+.sources-section {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.sources-section h3 {
+  font-family: var(--cond);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text2);
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255,255,255,0.02);
+}
+.sources-section ul {
+  padding: 14px 16px;
+  list-style: none;
+}
+.sources-section ul li {
+  padding: 6px 0;
+  color: var(--text2);
+  font-size: 13px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.sources-section ul li:last-child { border-bottom: none; }
+.src-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--accent2);
+  background: rgba(59,130,246,0.1);
+  border: 1px solid rgba(59,130,246,0.2);
+  padding: 1px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+a { color: var(--accent2); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg1); }
+::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 3px; }
+
+/* MOBILE */
+@media (max-width: 700px) {
+  .header-inner { height: auto; padding: 8px 0; flex-wrap: wrap; }
+  .tab-btn { font-size: 11px; padding: 5px 8px; }
+  .rpm-hero { gap: 12px; }
+  .rpm-display { font-size: 36px; min-width: 140px; }
+  .main-layout { padding: 12px 12px 32px; }
+  .graphs-layout { grid-template-columns: 1fr; padding: 12px; }
+}
+
+/* VALVE TIMING DIAGRAM */
+.vtd-wrap {
+  padding: 10px 14px 14px;
+}
+
+/* PROGRESS BAR */
+.prog-bar {
+  height: 4px;
+  background: var(--bg3);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 6px;
+}
+.prog-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width .15s, background .3s;
+}
+
+/* STEP-LABEL */
+.step-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 3px;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-dot"></div>
+      VVA- Yamaha
+      <span class="badge">Interactive</span>
+    </div>
+    <nav class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('viz', event)">Visualizer</button>
+      <button class="tab-btn" onclick="switchTab('graphs', event)">Live Graphs</button>
+      <button class="tab-btn" onclick="switchTab('sources', event)">Notes & Sources</button>
+    </nav>
+  </div>
+</header>
+
+<!-- VIZ TAB -->
+<div id="tab-viz" class="tab-panel active">
+<div class="main-layout">
+  <!-- LEFT: Engine canvas -->
+  <div>
+    <!-- RPM Hero -->
+    <div class="rpm-hero">
+      <div>
+        <div class="rpm-display" id="rpmDisplay">1,000</div>
+        <div class="rpm-label">Engine Speed · RPM</div>
+      </div>
+      <div class="rpm-slider-wrap">
+        <div class="rpm-slider-labels">
+          <span>IDLE 1k</span><span>3k</span><span>5k</span><span>7k</span><span>9k</span><span>11k</span><span>14k</span>
+        </div>
+        <input type="range" class="rpm-slider" id="rpmSlider" min="1000" max="14000" step="100" value="1000">
+        <div class="prog-bar" style="margin-top:6px">
+          <div class="prog-fill" id="rpmFill" style="width:0%;background:var(--teal)"></div>
+        </div>
+      </div>
+      <div class="status-chips">
+        <div class="chip">
+          <div class="chip-dot" style="background:var(--teal2)"></div>
+          CAM PROFILE: <span class="chip-value" id="camStatus">MILD</span>
+        </div>
+        <div class="chip">
+          <div class="chip-dot" style="background:var(--amber2)"></div>
+          IGN ADVANCE: <span class="chip-value" id="ignStatus">8°</span>
+        </div>
+        <div class="chip">
+          <div class="chip-dot" style="background:var(--purple)"></div>
+          CAM SWITCH: <span class="chip-value">7,400 RPM</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Playback bar -->
+    <div class="playback-bar">
+      <button class="play-btn active" id="playBtn" onclick="togglePlay()" title="Play/Pause">&#9646;&#9646;</button>
+      <button class="play-btn" onclick="stepFrame(-1)" title="Step back">&#9664;</button>
+      <button class="play-btn" onclick="stepFrame(1)" title="Step forward">&#9654;</button>
+      <span class="speed-label">SPEED:</span>
+      <select class="speed-select" id="speedSel" onchange="setSpeed(this.value)">
+        <option value="0.05">0.05× (Frame)</option>
+        <option value="0.1">0.1× (Ultra Slow)</option>
+        <option value="0.25">0.25× (Slow Mo)</option>
+        <option value="0.5" selected>0.5× (Half)</option>
+        <option value="1">1× Normal</option>
+        <option value="2">2× Fast</option>
+      </select>
+      <div class="toggle-group">
+        <button class="toggle-pill on" id="tgl-labels" onclick="toggleOverlay('labels',this)">Labels</button>
+        <button class="toggle-pill on" id="tgl-flow" onclick="toggleOverlay('flow',this)">Airflow</button>
+        <button class="toggle-pill on" id="tgl-flame" onclick="toggleOverlay('flame',this)">Flame</button>
+        <button class="toggle-pill" id="tgl-formula" onclick="toggleFormula(this)">Formulas</button>
+        <button class="toggle-pill warn-pill" id="tgl-knock" onclick="toggleKnock(this)">Knock Sim</button>
+      </div>
+    </div>
+
+    <!-- Formula bar -->
+    <div class="formula-bar" id="formulaBar">
+      VE = Actual Air Inducted / Theoretical Cylinder Volume &nbsp;|&nbsp;
+      MPS = 2 × Stroke(m) × RPM / 60 &nbsp;|&nbsp;
+      IGN_ADV ≈ 8° + (RPM − 1000) × 0.0022°/RPM, max 38° BTDC (pre-mapped ECU curve) &nbsp;|&nbsp;
+      VVA cam switch at 7,400 RPM (Yamaha R15 V3/V4 confirmed) — lift change only, no cam phasing &nbsp;|&nbsp;
+      P(kW) = T(Nm) × 2π × RPM / 60 / 1000
+    </div>
+
+    <!-- Main engine canvas -->
+    <div class="canvas-wrap">
+      <canvas id="engineCanvas" width="720" height="560"></canvas>
+      <div class="canvas-overlay">
+        <div class="overlay-chip">TDC: <span id="ovTDC">—</span></div>
+        <div class="overlay-chip">CRANK: <span id="ovCrank">0°</span></div>
+        <div class="overlay-chip">PHASE: <span id="ovPhase">INTAKE</span></div>
+        <div class="overlay-chip">VE: <span id="ovVE">68%</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT SIDE PANEL -->
+  <div class="side-panel">
+    <!-- Tachometer -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Tachometer</div>
+        <div class="badge">LIVE</div>
+      </div>
+      <div class="tacho-wrap">
+        <canvas id="tachCanvas" width="260" height="155"></canvas>
+      </div>
+      <div class="ecu-grid">
+        <div class="ecu-cell">
+          <div class="ecu-cell-label">Piston Speed</div>
+          <div class="ecu-cell-value" id="eccPS">4.0<span class="ecu-cell-unit">m/s</span></div>
+        </div>
+        <div class="ecu-cell">
+          <div class="ecu-cell-label">Cyl Pressure</div>
+          <div class="ecu-cell-value" id="eccCP">12<span class="ecu-cell-unit">bar</span></div>
+        </div>
+        <div class="ecu-cell">
+          <div class="ecu-cell-label">Vol. Efficiency</div>
+          <div class="ecu-cell-value" id="eccVE">68<span class="ecu-cell-unit">%</span></div>
+        </div>
+        <div class="ecu-cell">
+          <div class="ecu-cell-label">Ign Advance</div>
+          <div class="ecu-cell-value" id="eccIA">8<span class="ecu-cell-unit">° BTDC</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VVA Panel -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">VVA — Cam Profile</div>
+        <div class="badge" id="vvaBadge">LOW CAM</div>
+      </div>
+      <div class="vva-indicator">
+        <div class="vva-cam active" id="cam1wrap">
+          <div class="vva-cam-title">Low RPM Cam</div>
+          <canvas class="cam-canvas" id="cam1" width="120" height="60"></canvas>
+          <div class="step-label" style="color:var(--teal2);font-size:9px">Mild Lift / Short Dur.</div>
+        </div>
+        <div class="vva-arrow">&#8594;</div>
+        <div class="vva-cam" id="cam2wrap">
+          <div class="vva-cam-title">High RPM Cam</div>
+          <canvas class="cam-canvas" id="cam2" width="120" height="60"></canvas>
+          <div class="step-label" style="color:var(--amber2);font-size:9px">Aggressive Lift / Long Dur.</div>
+        </div>
+      </div>
+      <div class="vtd-wrap">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:6px">Valve Lift Timeline (Crank Angle)</div>
+        <canvas id="valveLiftCanvas" width="340" height="90" style="width:100%;height:90px;border-radius:4px;background:var(--bg3)"></canvas>
+        <div style="display:flex;gap:12px;margin-top:5px;font-family:var(--mono);font-size:10px;color:var(--text3)">
+          <span style="color:var(--teal2)">— Intake</span>
+          <span style="color:var(--amber2)">— Exhaust</span>
+          <span style="color:rgba(100,255,100,0.7)">▓ Overlap</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Knock panel -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Knock Simulation</div>
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)" id="knockLed"></div>
+      </div>
+      <div class="knock-warn" id="knockWarn">
+        ⚡ KNOCK — UNCONTROLLED AUTOIGNITION (R15 prevents this via conservative pre-mapped ECU timing)
+      </div>
+      <div class="panel-body" style="padding-top:6px">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:6px">Timing Correction</div>
+        <canvas id="knockCanvas" width="340" height="55" style="width:100%;height:55px;border-radius:4px;background:var(--bg3)"></canvas>
+        <div style="margin-top:10px">
+          <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--text3);margin-bottom:4px">
+            <span>TIMING RETARD</span>
+            <span id="retardVal">0.0°</span>
+          </div>
+          <div class="prog-bar"><div class="prog-fill" id="retardBar" style="width:0%;background:var(--red)"></div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- GRAPHS TAB -->
+<div id="tab-graphs" class="tab-panel">
+<div class="graphs-layout">
+  <div class="graph-panel">
+    <div class="graph-panel-title"><div class="live-dot"></div> Cylinder Pressure vs Crank Angle</div>
+    <div class="graph-tall"><canvas id="gPressure" role="img" aria-label="Cylinder pressure curve vs crank angle, showing combustion peak after TDC"></canvas></div>
+    <div class="graph-disclaimer">⚠ Simplified polytropic model (γ = 1.35). Shape and phase are correct; absolute bar values are illustrative — actual R15 cylinder pressure is not publicly available.</div>
+  </div>
+  <div class="graph-panel">
+    <div class="graph-panel-title"><div class="live-dot"></div> Ignition Timing vs RPM</div>
+    <div class="graph-tall"><canvas id="gIgnition" role="img" aria-label="Ignition advance angle in degrees BTDC across RPM range"></canvas></div>
+    <div class="graph-disclaimer">⚠ RPM-only approximation (8° idle → 38° high RPM). Real R15 ECU uses a 2D map (RPM × throttle load) that Yamaha has not published. Do not treat these values as R15 spec data.</div>
+  </div>
+  <div class="graph-panel">
+    <div class="graph-panel-title"><div class="live-dot"></div> Valve Lift vs Crank Angle</div>
+    <div class="graph-tall"><canvas id="gValveLift" role="img" aria-label="Intake and exhaust valve lift profiles over crank angle"></canvas></div>
+    <div class="graph-disclaimer">ℹ Lift profile uses a sine-wave approximation. Real cam lobes have asymmetric ramp profiles. Durations (220°/260° intake, 230°/270° exhaust) and VVA switch at 7,400 RPM are based on published R15 V3 specs.</div>
+  </div>
+  <div class="graph-panel">
+    <div class="graph-panel-title"><div class="live-dot"></div> Volumetric Efficiency vs RPM</div>
+    <div class="graph-tall"><canvas id="gVE" role="img" aria-label="Volumetric efficiency percentage across RPM range with VVA transition marked"></canvas></div>
+    <div class="graph-disclaimer">⚠ Hand-fitted empirical curve — not dyno-measured data. Shape matches the general behaviour of a 4-valve high-revving engine with VVA. Actual R15 VE figures are not publicly available.</div>
+  </div>
+  <div class="graph-panel">
+    <div class="graph-panel-title"><div class="live-dot"></div> Airflow Velocity vs RPM</div>
+    <div class="graph-tall"><canvas id="gAirflow" role="img" aria-label="Intake port airflow velocity versus RPM"></canvas></div>
+    <div class="graph-disclaimer">⚠ Qualitative trend only. Values derived from mean piston speed scaled by a fixed factor — not from flow bench or CFD data. The rising trend and VVA bump are directionally correct; absolute m/s numbers are not meaningful.</div>
+  </div>
+  <div class="graph-panel">
+    <div class="graph-panel-title"><div class="live-dot"></div> Torque &amp; Power vs RPM</div>
+    <div class="graph-tall"><canvas id="gTorque" role="img" aria-label="Estimated torque and power curves versus RPM, showing VVA enhancement"></canvas></div>
+    <div class="graph-disclaimer">ℹ Peak points anchored to published R15 spec (~14.7 Nm @ 8,500 RPM, ~19 PS @ 10,000 RPM). Curve shape between those points is a hand-fitted approximation — not dyno data. VVA torque retention above 7,400 RPM is illustrative.</div>
+  </div>
+</div>
+</div>
+
+<!-- SOURCES TAB -->
+<div id="tab-sources" class="tab-panel">
+<div class="sources-layout">
+
+  <div class="sources-section">
+    <h3>What This Is</h3>
+    <ul>
+      <li><span class="src-label">EDU</span> This is an <strong>educational visualizer</strong> built to help people understand how a 4-stroke engine works — the physics of combustion, valve timing, ignition advance, and variable valve actuation. It is not a simulation tool, not an engineering reference, and not affiliated with any manufacturer.</li>
+      <li><span class="src-label">EDU</span> All numbers, curves, and animations are derived from publicly available engineering textbooks, SAE papers, and manufacturer press releases — studied and reconstructed for learning purposes. No proprietary ECU maps, no OEM software, no confidential data was used or reverse-engineered.</li>
+      <li><span class="src-label">EDU</span> The engine modeled is loosely based on a 155cc class single-cylinder 4-stroke sportbike (Bore ~58mm, Stroke ~58.7mm, CR ~11.6:1) — used as a relatable real-world example. All parameters are approximations for illustration, not spec-sheet values.</li>
+    </ul>
+  </div>
+
+  <div class="sources-section">
+    <h3>What's Simplified (and Why That's Fine for Learning)</h3>
+    <ul>
+      <li><span class="src-label">GEOM</span> Piston motion uses standard slider-crank geometry (λ = 0.3). Real con-rod ratios vary 0.25–0.33 — close enough that the visual motion is accurate.</li>
+      <li><span class="src-label">TIMING</span> Ignition advance is modeled as a simple RPM-only curve (8° at idle → 38° at high RPM). Real ECU maps are 2D lookup tables (RPM × throttle load) and are OEM-proprietary. The curve shown is a textbook representative shape.</li>
+      <li><span class="src-label">VVA</span> VVA crossover shown at 7,400 RPM — confirmed per Yamaha R15 V3 spec and service manual. The switch is shown as instant; in reality it's a mechanical engagement via a pin in the rocker arm. Low cam: intake duration ~220°, exhaust ~230°. High cam: intake ~260°, exhaust ~270° — longer duration at high RPM allows better cylinder filling. The R15 does NOT have VVT (continuous cam phasing) — valve timing is fixed; only lift changes at the crossover point.</li>
+      <li><span class="src-label">TIMING</span> Valve events use realistic 4-stroke timing: exhaust opens ~490° (50° BBDC of power stroke), intake opens ~700° (20° BTDC of intake TDC — overlap zone), intake closes ~200° (20° ABDC of intake stroke). These match published valve timing conventions for a high-revving sportbike engine (Heywood, Blair). Ignition advance is an RPM-only approximation; real ECU maps are 2D load-RPM tables.</li>
+      <li><span class="src-label">VE</span> Volumetric efficiency is a hand-fitted empirical curve matching the general shape of published dyno data. Real VE comes from 1D gas dynamics simulation (Ricardo WAVE, GT-Power, etc.).</li>
+      <li><span class="src-label">POWER</span> Torque peaks ~14.7 Nm at ~7,500 RPM; power peaks ~18–19 kW at ~10,000 RPM — consistent with publicly available spec data for this engine class. P = T × 2πN/60. These are crankshaft figures; wheel power is lower after drivetrain losses.</li>
+      <li><span class="src-label">KNOCK</span> Knock simulation is illustrative only — it shows the concept of uncontrolled autoignition and timing retard as a general engine concept. The Yamaha R15 V3 does not have a knock sensor. Knock is prevented by design: Yamaha engineers bake a conservative ignition advance map into the factory ECU, pre-calculated per RPM and load. There is no real-time knock detection or ECU retard on the R15.</li>
+      <li><span class="src-label">AIRFLOW</span> Airflow arrows are qualitative direction indicators. Real intake port flow involves 3D turbulence, tumble ratio, and pressure wave dynamics not modeled here.</li>
+    </ul>
+  </div>
+
+  <div class="sources-section">
+    <h3>Where the Knowledge Comes From</h3>
+    <ul>
+      <li><span class="src-label">TEXT</span> Heywood, J.B. — <em>Internal Combustion Engine Fundamentals</em>. McGraw-Hill, 1988. — The definitive textbook on combustion physics, volumetric efficiency, and ignition timing.</li>
+      <li><span class="src-label">TEXT</span> Blair, G.P. — <em>Design and Simulation of Four-Stroke Engines</em>. SAE International, 1999. — Source for valve timing conventions and gas dynamics.</li>
+      <li><span class="src-label">TEXT</span> Stone, R. — <em>Introduction to Internal Combustion Engines</em>, 4th ed. Palgrave Macmillan, 2012. — Used for Otto-cycle approximations and piston kinematics.</li>
+      <li><span class="src-label">SAE</span> SAE Paper 2004-01-1452 — "Variable Valve Timing and Lift Strategies for High-Speed Engines." — Basis for VVA crossover RPM behavior and lift profile differences.</li>
+      <li><span class="src-label">SAE</span> SAE Paper 890388 — "Combustion Chamber Design for High Speed 4-Stroke Engines." — Reference for combustion chamber geometry conventions.</li>
+      <li><span class="src-label">PAPER</span> Fontana, G. et al. — "Variable Valve Timing for Fuel Economy Improvement in a Small Spark-Ignition Engine." <em>Applied Energy</em>, 2009. — Supporting reference for VVT phase modeling.</li>
+      <li><span class="src-label">OEM</span> Yamaha Motor Co. public press releases and spec sheets for the R15 V4 / YZF-R15 — used only for publicly disclosed figures (VVA crossover range, bore/stroke, power output). <a href="https://www.yamaha-motor.com/sport/motorcycles/yzf-r15.html" target="_blank">yamaha-motor.com</a></li>
+    </ul>
+  </div>
+
+  <div class="sources-section">
+    <h3>Things Worth Knowing</h3>
+    <ul>
+      <li><span class="src-label">NOTE</span> At 14,000 RPM each degree of crank rotation takes ~12 microseconds. That's why ignition fires 30–38° before TDC — flame propagation time is near-constant, but the available crank window keeps shrinking.</li>
+      <li><span class="src-label">NOTE</span> Mean piston speed at 14,000 RPM ≈ 27.5 m/s. Most engines start losing ring seal and hitting flow limits above ~25 m/s — this is why max RPM isn't just about cam springs and materials; it's a fundamental fluid dynamics constraint.</li>
+      <li><span class="src-label">NOTE</span> VVA (discrete cam switching) and VVT (continuously variable phasing) are different things. The R15 uses VVA — two physical cam profiles, one engagement mechanism. Honda's VTEC is the same concept. BMW and Toyota use continuous VVT on both cams independently.</li>
+      <li><span class="src-label">NOTE</span> Ram tuning — intake tract pressure waves arriving at the valve at just the right moment — can push VE above 100% in a narrow RPM band. This is why race engines have tuned intake lengths. Not modeled here, but it's real.</li>
+      <li><span class="src-label">NOTE</span> This runs entirely in your browser. No server, no tracking, no data sent anywhere. Just HTML5 Canvas and Chart.js.</li>
+    </ul>
+  </div>
+
+</div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────────────────────────
+const S = {
+  rpm: 1000,
+  crankAngle: 0,        // degrees, 0–720 (full cycle)
+  playing: true,
+  speed: 0.5,
+  advOffset: 0,
+  overlays: { labels: true, flow: true, flame: true },
+  knockOn: false,
+  knockActive: false,
+  knockRetard: 0,
+  formulaVisible: false,
+  lastTime: null,
+  phase: 0,            // animation frame t
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ENGINE MODEL
+// ─────────────────────────────────────────────────────────────────────────────
+const E = {
+  stroke: 58.7,         // mm
+  bore: 58.0,           // mm
+  cr: 11.6,             // compression ratio
+  rodRatio: 0.3,        // λ = rod/stroke
+  vvaXover: 7400,       // RPM for VVA switch (Yamaha R15 V3 confirmed)
+
+  // Piston position (0=TDC, 1=BDC) from crank angle θ (degrees)
+  pistonPos(theta) {
+    const r = 1; // normalized half-stroke
+    const th = theta * Math.PI / 180;
+    return r * (1 - Math.cos(th)) / 2
+         + (E.rodRatio / 4) * (1 - Math.cos(2 * th));
+  },
+
+  // Ignition advance in degrees BTDC — ECU map approximation for 155cc 4T high-revving engine
+  // Idle: ~8° BTDC, rises linearly, caps ~38° BTDC around 10k+ RPM (typical sportbike ECU map shape)
+  ignitionAdvance(rpm) {
+    const base = 8;
+    const slope = 0.00220;
+    return Math.min(38, Math.max(base, base + (rpm - 1000) * slope));
+  },
+
+  // VVT phase — R15 does NOT have VVT (no continuous cam phasing).
+  // Valve timing is fixed. This always returns 0 to keep intakeWindow() correct.
+  vvtPhase(rpm) {
+    return 0;
+  },
+
+  // VVA active?
+  vvaHigh(rpm) { return rpm >= E.vvaXover; },
+
+  // Volumetric efficiency (0–1)
+  ve(rpm) {
+    const base = 0.65 + 0.28 * Math.sin(Math.PI * (rpm - 1000) / 12000 * 0.9);
+    const vvaBoost = E.vvaHigh(rpm) ? 0.06 * Math.min(1, (rpm - 7500) / 2000) : 0;
+    return Math.min(0.97, base + vvaBoost);
+  },
+
+  // Mean piston speed m/s
+  mps(rpm) { return 2 * (E.stroke / 1000) * rpm / 60; },
+
+  // Intake valve open window — correct 4-stroke timing
+  // Opens near end of EXHAUST stroke (TDC overlap) ~700° (20° BTDC of 720°/0° TDC)
+  // VVT advances opening earlier (lower open value), duration increases with VVA
+  // Low cam: ~220° duration. High cam (VVA): ~260° duration.
+  // At 0 VVT: open=700°, close=700+220=920→wraps to ~200° (20° ABDC of intake)
+  // At max VVT (25°): open=675°, close=675+220=895→wraps to ~175°
+  intakeWindow(rpm) {
+    const vvt = E.vvtPhase(rpm);
+    const dur = E.vvaHigh(rpm) ? 260 : 220;
+    const open = 700 - vvt;   // opens near end of exhaust stroke (TDC overlap)
+    return { open, close: open + dur, dur };
+  },
+
+  // Exhaust valve open window — correct 4-stroke timing
+  // Opens late in POWER stroke (BBDC) ~490° (50° before BDC at 540°)
+  // Closes early in INTAKE stroke (ATDC overlap) ~20° (wraps: close=720+20=740)
+  // Low cam: ~230° duration. High cam (VVA): ~270° duration.
+  exhaustWindow(rpm) {
+    const dur = E.vvaHigh(rpm) ? 270 : 230;
+    const open = 490;
+    return { open, close: open + dur, dur };
+  },
+
+  // Valve lift (0–1) at crank angle ca
+  // Handles windows that wrap past 720° (e.g. intake opens at 700°, closes at 920°)
+  valveLift(ca, window) {
+    const { open, close } = window;
+    let ca_mod = ((ca % 720) + 720) % 720;
+    // If window wraps past 720°, shift ca_mod up when it's in the wrapped portion
+    if (close > 720) {
+      // wrapped portion is 0° to (close-720°)
+      if (ca_mod < (close - 720)) ca_mod += 720;
+    }
+    if (ca_mod < open || ca_mod > close) return 0;
+    const frac = (ca_mod - open) / (close - open);
+    return Math.sin(Math.PI * frac);
+  },
+
+  // Approximate cylinder pressure vs crank angle (0–720 cycle)
+  cylinderPressure(ca) {
+    const rpm = S.rpm;
+    const adv = E.ignitionAdvance(rpm);
+    const knock = S.knockOn && S.knockActive;
+    const cr = E.cr;
+    const gamma = 1.35;
+    const atm = 1.0;
+    // Find phase: 0=intake,1=compression,2=power,3=exhaust
+    const c = ((ca % 720) + 720) % 720;
+    if (c < 180) return atm * 0.95; // intake
+    if (c < 360) {
+      // compression
+      const frac = (c - 180) / 180;
+      return atm * Math.pow(1 + (cr - 1) * frac, gamma);
+    }
+    if (c < 540) {
+      // power: heat release at ignition point
+      const ignPoint = 360 - adv;  // in cycle degrees
+      const ci = c - 180; // 0=BDC, 180=TDC
+      const ignRel = 180 - adv;
+      if (ci < ignRel) {
+        const f = ci / 180;
+        return atm * Math.pow(1 + (cr - 1) * f, gamma);
+      }
+      // post-ignition expansion
+      const fi = (ci - ignRel) / (180 - ignRel + 0.001);
+      const peakP = atm * cr * (knock ? 3.8 : 3.2);
+      const decay = Math.pow(Math.max(0, 1 - fi * 0.85), gamma);
+      return Math.max(atm, peakP * decay);
+    }
+    return atm * 1.05; // exhaust
+  }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CANVAS ENGINE DRAWING
+// ─────────────────────────────────────────────────────────────────────────────
+const ec = document.getElementById('engineCanvas');
+const ctx = ec.getContext('2d');
+
+// Colors
+const C = {
+  bg:     '#080b10',
+  wall:   '#1a2330',
+  wallStroke: '#2a3f58',
+  piston: '#1e3a5f',
+  pistonStroke: '#3b82f6',
+  rod:    '#1a2e45',
+  crank:  '#1e3a5f',
+  spark:  '#ffffff',
+  intake: 'rgba(59,180,255,0.7)',
+  exhaust:'rgba(255,120,40,0.8)',
+  overlap:'rgba(120,255,120,0.35)',
+  flame:  ['#ff4400','#ff7700','#ffaa00','#ffcc44'],
+  knock:  '#ff2020',
+  valve:  '#2dd4bf',
+  exhaust_valve: '#f59e0b',
+  label:  '#94a3b8',
+  glow_blue: 'rgba(59,130,246,0.18)',
+  glow_amber:'rgba(245,158,11,0.18)',
+  pwave:  'rgba(59,130,246,0.12)',
+};
+
+// Layout constants (for 720×560 canvas)
+const L = {
+  cx: 360,       // cylinder center x
+  cy: 280,       // cylinder center y (piston TDC position + half-stroke)
+  boreW: 140,    // bore width px
+  strokeH: 200,  // stroke height px
+  wallT: 18,     // wall thickness
+  headH: 60,     // head height
+  crankY: 500,   // crankshaft center y
+  crankR: 40,    // crank throw radius px
+  rodLen: 140,   // connecting rod length px
+};
+
+function drawEngine() {
+  const ca = S.crankAngle;
+  const rpm = S.rpm;
+  const ca_mod = ((ca % 720) + 720) % 720;
+
+  // Piston position (normalized 0=TDC, 1=BDC)
+  const pistonNorm = E.pistonPos(ca_mod >= 360 ? ca_mod - 360 : ca_mod);
+  // Map to canvas: TDC = headH + wallT, BDC = headH + wallT + strokeH
+  const pistonY = L.cy - L.strokeH / 2 + pistonNorm * L.strokeH;
+
+  // Valve lifts
+  const iw = E.intakeWindow(rpm);
+  const ew = E.exhaustWindow(rpm);
+  const iLift = E.valveLift(ca_mod, iw);
+  const eLift = E.valveLift(ca_mod, ew);
+  const iLiftPx = iLift * 20;
+  const eLiftPx = eLift * 20;
+
+  // Crank pin position
+  const crankTheta = (ca_mod < 360 ? ca_mod : ca_mod - 360) * Math.PI / 180;
+  const crankPinX = L.cx + Math.sin(crankTheta) * L.crankR;
+  const crankPinY = L.crankY - Math.cos(crankTheta) * L.crankR;
+
+  // Wrist pin position (top of rod)
+  const wristX = L.cx;
+  const wristY = pistonY + 24; // inside piston
+
+  // Phase detection
+  let phase = 'INTAKE';
+  if (ca_mod >= 180 && ca_mod < 360) phase = 'COMPRESSION';
+  else if (ca_mod >= 360 && ca_mod < 540) phase = 'POWER';
+  else if (ca_mod >= 540) phase = 'EXHAUST';
+
+  const W = ec.width, H = ec.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // Background gradient
+  const bgGrad = ctx.createRadialGradient(L.cx, L.cy, 20, L.cx, L.cy, 400);
+  bgGrad.addColorStop(0, '#0d1421');
+  bgGrad.addColorStop(1, '#080b10');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid lines (subtle)
+  ctx.strokeStyle = 'rgba(59,130,246,0.04)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+  for (let y = 0; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+
+  // ── COMBUSTION CHAMBER / HEAD ──
+  const headTop = L.cy - L.strokeH / 2 - L.headH;
+  const halfB = L.boreW / 2;
+  const wallL = L.cx - halfB - L.wallT;
+  const wallR = L.cx + halfB + L.wallT;
+
+  // Head walls
+  ctx.fillStyle = C.wall;
+  ctx.strokeStyle = C.wallStroke;
+  ctx.lineWidth = 1.5;
+  // Left wall
+  roundRect(ctx, wallL, headTop, L.wallT, L.strokeH + L.headH + 10, 4);
+  ctx.fill(); ctx.stroke();
+  // Right wall
+  roundRect(ctx, wallR - L.wallT, headTop, L.wallT, L.strokeH + L.headH + 10, 4);
+  ctx.fill(); ctx.stroke();
+  // Head top
+  roundRect(ctx, wallL, headTop - 20, wallR - wallL, 20, 4);
+  ctx.fill(); ctx.stroke();
+
+  // Combustion chamber (head bowl)
+  ctx.beginPath();
+  ctx.arc(L.cx, headTop + 5, halfB * 0.9, 0, Math.PI);
+  ctx.lineTo(L.cx - halfB * 0.9, headTop + 5);
+  ctx.fillStyle = '#0a1018';
+  ctx.fill();
+
+  // ── AIRFLOW / PRESSURE WAVES ──
+  if (S.overlays.flow) {
+    // Intake: air flows DOWN into cylinder through intake port (left side)
+    // Gate on valve lift only — not phase string — so it works with real valve timing
+    if (iLift > 0.05) {
+      ctx.save();
+      const flowAlpha = iLift * 0.85;
+      // From above head (port) downward into chamber
+      drawFlowArrows(ctx, L.cx - halfB * 0.38, headTop - 20, L.cx - halfB * 0.38, headTop + 12, flowAlpha, C.intake, false);
+      ctx.restore();
+    }
+    // Exhaust: gas flows UP out of cylinder through exhaust port (right side)
+    if (eLift > 0.05) {
+      ctx.save();
+      const flowAlpha = eLift * 0.85;
+      // From inside chamber upward and OUT through port (above head)
+      drawFlowArrows(ctx, L.cx + halfB * 0.38, headTop + 12, L.cx + halfB * 0.38, headTop - 22, flowAlpha, C.exhaust, true);
+      ctx.restore();
+    }
+    // Pressure wave during compression/power
+    if (phase === 'COMPRESSION' || phase === 'POWER') {
+      const frac = phase === 'COMPRESSION' ? (ca_mod - 180) / 180 : Math.max(0, 1 - (ca_mod - 360) / 180);
+      const pr = frac * halfB * 0.7;
+      ctx.beginPath();
+      ctx.arc(L.cx, headTop + 8, pr, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(59,130,246,${frac * 0.3})`;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+  }
+
+  // ── VALVES ──
+  // Intake valve (left side of head)
+  const ivX = L.cx - halfB * 0.4;
+  const ivY = headTop + iLiftPx;
+  const evX = L.cx + halfB * 0.4;
+  const evY = headTop + eLiftPx;
+
+  // Intake valve body
+  ctx.fillStyle = iLift > 0.05 ? C.valve : '#1a3a50';
+  ctx.strokeStyle = iLift > 0.05 ? C.valve : '#1a3a50';
+  ctx.lineWidth = 1;
+  drawValve(ctx, ivX, ivY, iLift > 0.05, 'intake');
+
+  // Exhaust valve body
+  ctx.fillStyle = eLift > 0.05 ? C.exhaust_valve : '#3a2010';
+  drawValve(ctx, evX, evY, eLift > 0.05, 'exhaust');
+
+  // Valve overlap highlight
+  if (iLift > 0.1 && eLift > 0.1 && S.overlays.flow) {
+    ctx.fillStyle = C.overlap;
+    ctx.fillRect(L.cx - halfB, headTop, L.boreW, 8);
+  }
+
+  // ── SPARK PLUG ──
+  const spX = L.cx;
+  const spY = headTop + 6;
+  ctx.fillStyle = '#888';
+  ctx.fillRect(spX - 2, headTop - 14, 4, 20);
+  ctx.fillStyle = '#ccc';
+  ctx.beginPath(); ctx.arc(spX, spY, 3, 0, Math.PI * 2); ctx.fill();
+
+  // Spark flash
+  const ignAdv = E.ignitionAdvance(rpm);
+  const ignPoint = 360 - ignAdv;
+  const nearIgn = ca_mod >= 350 && ca_mod < 370;
+  if (nearIgn || (phase === 'POWER' && (ca_mod - 360) < 20)) {
+    const sparkAlpha = nearIgn ? 1 : Math.max(0, 1 - (ca_mod - 360) / 20);
+    ctx.save();
+    ctx.globalAlpha = sparkAlpha;
+    drawSpark(ctx, spX, spY);
+    ctx.restore();
+  }
+
+  // ── FLAME FRONT ──
+  if (S.overlays.flame && phase === 'POWER') {
+    const fi = (ca_mod - 360) / 180;
+    if (fi > 0 && fi < 0.9) {
+      const chamberH = pistonY - headTop;
+      const maxR = Math.min(halfB * 0.9, chamberH * 0.9);
+      const fr = fi * maxR * 1.1;
+      drawFlame(ctx, spX, spY, fr, fi, S.knockOn && S.knockActive);
+    }
+  }
+
+  // ── CYLINDER WALLS (bore) ──
+  // Left bore line
+  ctx.strokeStyle = C.wallStroke;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(L.cx - halfB, headTop + 5);
+  ctx.lineTo(L.cx - halfB, pistonY + 30);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(L.cx + halfB, headTop + 5);
+  ctx.lineTo(L.cx + halfB, pistonY + 30);
+  ctx.stroke();
+
+  // ── CONNECTING ROD ──
+  ctx.strokeStyle = '#2a4060';
+  ctx.lineWidth = 7;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(wristX, wristY);
+  ctx.lineTo(crankPinX, crankPinY);
+  ctx.stroke();
+  ctx.strokeStyle = '#3b82f6';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // ── PISTON ──
+  const pH = 38;
+  ctx.save();
+  // Piston body
+  const pistonGrad = ctx.createLinearGradient(L.cx - halfB + 8, 0, L.cx + halfB - 8, 0);
+  pistonGrad.addColorStop(0, '#1a2e50');
+  pistonGrad.addColorStop(0.3, '#2a4878');
+  pistonGrad.addColorStop(0.7, '#2a4878');
+  pistonGrad.addColorStop(1, '#1a2e50');
+  ctx.fillStyle = pistonGrad;
+  ctx.strokeStyle = '#3b82f6';
+  ctx.lineWidth = 1.5;
+  roundRect(ctx, L.cx - halfB + 8, pistonY - pH/2, L.boreW - 16, pH, 4);
+  ctx.fill(); ctx.stroke();
+  // Piston rings (3)
+  for (let i = 0; i < 3; i++) {
+    const ry = pistonY - pH/2 + 6 + i * 10;
+    ctx.strokeStyle = i < 2 ? 'rgba(59,130,246,0.7)' : 'rgba(100,150,220,0.4)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(L.cx - halfB + 8, ry);
+    ctx.lineTo(L.cx + halfB - 8, ry);
+    ctx.stroke();
+  }
+  // Wrist pin
+  ctx.fillStyle = '#3b82f6';
+  ctx.beginPath(); ctx.arc(wristX, wristY, 5, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+
+  // ── CRANKSHAFT ──
+  ctx.save();
+  // Crank journal
+  ctx.fillStyle = '#1a2a40';
+  ctx.strokeStyle = '#3b82f6';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(L.cx, L.crankY, L.crankR + 12, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  // Crank web
+  ctx.strokeStyle = '#2a4a80';
+  ctx.lineWidth = 8;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(L.cx, L.crankY);
+  ctx.lineTo(crankPinX, crankPinY);
+  ctx.stroke();
+  // Main journal
+  ctx.fillStyle = '#1e3a5f';
+  ctx.strokeStyle = '#3b82f6';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(L.cx, L.crankY, 12, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  // Crank pin
+  ctx.fillStyle = '#60a5fa';
+  ctx.beginPath(); ctx.arc(crankPinX, crankPinY, 7, 0, Math.PI * 2); ctx.fill();
+  // Counter-balance weight
+  const cbTheta = crankTheta + Math.PI;
+  const cbX = L.cx + Math.sin(cbTheta) * (L.crankR + 6);
+  const cbY = L.crankY - Math.cos(cbTheta) * (L.crankR + 6);
+  ctx.fillStyle = '#1a3a60';
+  ctx.strokeStyle = '#2a5090';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.ellipse(cbX, cbY, 18, 10, cbTheta, 0, Math.PI * 2);
+  ctx.fill(); ctx.stroke();
+  ctx.restore();
+
+  // ── LABELS ──
+  if (S.overlays.labels) {
+    ctx.save();
+    ctx.font = '500 11px JetBrains Mono, monospace';
+    ctx.textAlign = 'left';
+
+    // Phase label
+    const phaseColors = { INTAKE: '#3b82f6', COMPRESSION: '#a855f7', POWER: '#f59e0b', EXHAUST: '#ef4444' };
+    ctx.fillStyle = phaseColors[phase] || '#fff';
+    ctx.font = '700 15px Barlow Condensed, sans-serif';
+    ctx.letterSpacing = '2px';
+    ctx.fillText(phase, 30, headTop + 16);
+
+    // TDC/BDC markers
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.font = '600 11px JetBrains Mono, monospace';
+    ctx.fillText('TDC', wallR + 6, L.cy - L.strokeH/2 + 5);
+    ctx.fillText('BDC', wallR + 6, L.cy + L.strokeH/2 + 5);
+    ctx.setLineDash([3, 4]);
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(wallL - 10, L.cy - L.strokeH/2); ctx.lineTo(wallR + 50, L.cy - L.strokeH/2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(wallL - 10, L.cy + L.strokeH/2); ctx.lineTo(wallR + 50, L.cy + L.strokeH/2); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Valve labels
+    ctx.fillStyle = C.valve;
+    ctx.font = '600 11px JetBrains Mono, monospace';
+    ctx.fillText('INT', ivX - 14, headTop - 24);
+    ctx.fillStyle = C.exhaust_valve;
+    ctx.fillText('EXH', evX - 14, headTop - 24);
+
+    // Lift values
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = '10px JetBrains Mono, monospace';
+    ctx.fillText((iLift * 9.5).toFixed(1) + 'mm', ivX - 18, headTop + iLiftPx + 26);
+    ctx.fillText((eLift * 8.8).toFixed(1) + 'mm', evX - 18, headTop + eLiftPx + 26);
+
+    // Ignition advance marker on crank
+    ctx.save();
+    ctx.translate(L.cx, L.crankY);
+    const advRad = ((360 - E.ignitionAdvance(rpm)) - 180) * Math.PI / 180;
+    ctx.strokeStyle = 'rgba(255,200,0,0.5)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.sin(advRad)*55, -Math.cos(advRad)*55); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = '500 10px JetBrains Mono, monospace';
+    ctx.fillText(E.ignitionAdvance(rpm).toFixed(0) + '°BTDC', Math.sin(advRad)*62, -Math.cos(advRad)*62);
+    ctx.restore();
+
+    // Crank angle display
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.font = '500 11px JetBrains Mono, monospace';
+    ctx.fillText(ca_mod.toFixed(0) + '°', L.cx + 20, L.crankY + 36);
+
+    ctx.restore();
+  }
+
+  // ── KNOCK VISUALIZATION ──
+  if (S.knockOn && S.knockActive && phase === 'POWER' && (ca_mod - 360) < 60) {
+    const kFrac = (ca_mod - 360) / 60;
+    const chamberH = pistonY - headTop;
+    // Shockwave rings
+    for (let i = 0; i < 3; i++) {
+      const r = (kFrac + i * 0.15) * halfB * 0.9;
+      if (r < 0) continue;
+      ctx.beginPath();
+      ctx.arc(L.cx + (i % 2 === 0 ? 20 : -20), headTop + chamberH * 0.4, Math.min(r, halfB * 0.85), 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(255,30,30,${0.7 - kFrac * 0.5})`;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+    // Red flash overlay
+    ctx.fillStyle = `rgba(239,68,68,${0.08 * (1 - kFrac)})`;
+    ctx.fillRect(L.cx - halfB, headTop, L.boreW, chamberH);
+  }
+
+  // ── VVA STATUS BADGE ──
+  const vvaH = E.vvaHigh(rpm);
+  ctx.save();
+  ctx.fillStyle = vvaH ? 'rgba(245,158,11,0.15)' : 'rgba(20,184,166,0.12)';
+  roundRect(ctx, 30, H - 55, 140, 28, 4);
+  ctx.fill();
+  ctx.fillStyle = vvaH ? '#f59e0b' : '#14b8a6';
+  ctx.font = '600 11px Barlow Condensed, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('VVA: ' + (vvaH ? 'HIGH CAM' : 'LOW CAM'), 40, H - 36);
+  ctx.restore();
+
+  // Update overlays
+  document.getElementById('ovCrank').textContent = ca_mod.toFixed(0) + '°';
+  document.getElementById('ovPhase').textContent = phase;
+  document.getElementById('ovVE').textContent = (E.ve(rpm) * 100).toFixed(0) + '%';
+  const ignAdv2 = E.ignitionAdvance(rpm);
+  document.getElementById('ovTDC').textContent = ca_mod > 355 && ca_mod < 375 ? 'NOW' : (ca_mod > 350 ? 'NEAR' : '—');
+}
+
+function drawValve(ctx, x, y, open, type) {
+  const col = type === 'intake' ? C.valve : C.exhaust_valve;
+  const closed_col = type === 'intake' ? '#0a2030' : '#2a1000';
+  ctx.fillStyle = open ? col : closed_col;
+  ctx.strokeStyle = col;
+  ctx.lineWidth = 1.5;
+  // Stem
+  ctx.beginPath();
+  ctx.moveTo(x, y - 30);
+  ctx.lineTo(x, y);
+  ctx.stroke();
+  // Head (disc)
+  ctx.beginPath();
+  ctx.ellipse(x, y + 3, 9, 3, 0, 0, Math.PI * 2);
+  ctx.fill(); ctx.stroke();
+}
+
+function drawSpark(ctx, x, y) {
+  // Lightning bolt
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 2;
+  ctx.shadowColor = '#60a5fa';
+  ctx.shadowBlur = 14;
+  ctx.beginPath();
+  ctx.moveTo(x - 4, y - 8);
+  ctx.lineTo(x + 2, y - 2);
+  ctx.lineTo(x - 2, y - 2);
+  ctx.lineTo(x + 4, y + 8);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+  // Glow
+  const g = ctx.createRadialGradient(x, y, 0, x, y, 18);
+  g.addColorStop(0, 'rgba(200,220,255,0.45)');
+  g.addColorStop(1, 'rgba(59,130,246,0)');
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(x, y, 18, 0, Math.PI * 2); ctx.fill();
+}
+
+function drawFlame(ctx, cx, cy, radius, fi, isKnock) {
+  if (radius <= 0) return;
+  const stops = isKnock
+    ? [['rgba(255,30,30,0.8)', 0], ['rgba(255,120,0,0.5)', 0.5], ['rgba(255,200,0,0)', 1]]
+    : [['rgba(255,180,0,0.7)', 0], ['rgba(255,80,0,0.45)', 0.5], ['rgba(255,50,0,0)', 1]];
+  const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+  stops.forEach(([c, s]) => g.addColorStop(s, c));
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+  ctx.fillStyle = g;
+  ctx.fill();
+}
+
+function drawFlowArrows(ctx, x1, y1, x2, y2, alpha, color, isExhaust) {
+  const steps = 3;
+  const dx = (x2 - x1) / steps;
+  const dy = (y2 - y1) / steps;
+  // arrow points in direction of travel: (dx,dy)
+  const len = Math.sqrt(dx * dx + dy * dy);
+  const nx = dx / len, ny = dy / len; // unit direction
+  const wingLen = 5;
+  // perpendicular for arrowhead wings
+  const wx = -ny * wingLen, wy = nx * wingLen;
+
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    // slight lateral spread for visual interest, no random — deterministic offset
+    const spread = (i % 2 === 0 ? -5 : 5) * (isExhaust ? 0.8 : 0.7);
+    const x = x1 + dx * i + spread;
+    const y = y1 + dy * i;
+    const segAlpha = alpha * (1 - t * 0.35);
+
+    // Arrow shaft (small segment in flow direction)
+    const shaftLen = Math.min(len * 0.7, 9);
+    ctx.strokeStyle = color.replace(/[\d.]+\)$/, `${segAlpha})`);
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + nx * shaftLen, y + ny * shaftLen);
+    ctx.stroke();
+
+    // Arrowhead at tip
+    const tx = x + nx * shaftLen, ty = y + ny * shaftLen;
+    ctx.beginPath();
+    ctx.moveTo(tx, ty);
+    ctx.lineTo(tx - nx * wingLen + wx, ty - ny * wingLen + wy);
+    ctx.moveTo(tx, ty);
+    ctx.lineTo(tx - nx * wingLen - wx, ty - ny * wingLen - wy);
+    ctx.stroke();
+  }
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TACHOMETER
+// ─────────────────────────────────────────────────────────────────────────────
+const tach = document.getElementById('tachCanvas');
+const tc = tach.getContext('2d');
+
+function drawTacho() {
+  // Use CSS pixel dimensions (DPR transform applied by resizeCanvas)
+  const W = 260, H = 155;
+  tc.clearRect(0, 0, W, H);
+  const cx = W / 2, cy = H - 18;
+  const R = 100;
+  // Arc goes clockwise from Math.PI (left/9-o-clock) to 2*Math.PI/0 (right/3-o-clock)
+  // i.e. sweeps the BOTTOM semicircle
+  const startA = Math.PI;        // left
+  const totalA = Math.PI;        // half circle
+  const rpmFrac = Math.max(0, Math.min(1, (S.rpm - 1000) / 13000));
+
+  // Track background
+  tc.beginPath();
+  tc.arc(cx, cy, R, startA, startA + totalA);
+  tc.strokeStyle = '#1a2330';
+  tc.lineWidth = 14;
+  tc.stroke();
+
+  // Colored fill track (only up to current RPM)
+  if (rpmFrac > 0) {
+    const trackGrad = tc.createLinearGradient(cx - R, 0, cx + R, 0);
+    trackGrad.addColorStop(0, '#14b8a6');
+    trackGrad.addColorStop(0.4, '#3b82f6');
+    trackGrad.addColorStop(0.75, '#f59e0b');
+    trackGrad.addColorStop(1, '#ef4444');
+    tc.beginPath();
+    tc.arc(cx, cy, R, startA, startA + rpmFrac * totalA);
+    tc.strokeStyle = trackGrad;
+    tc.lineWidth = 12;
+    tc.stroke();
+  }
+
+  // VVA crossover tick
+  const xovFrac = (E.vvaXover - 1000) / 13000;
+  const xovA = startA + xovFrac * totalA;
+  tc.beginPath();
+  tc.moveTo(cx + (R - 16) * Math.cos(xovA), cy + (R - 16) * Math.sin(xovA));
+  tc.lineTo(cx + (R + 4)  * Math.cos(xovA), cy + (R + 4)  * Math.sin(xovA));
+  tc.strokeStyle = '#f59e0b';
+  tc.lineWidth = 2;
+  tc.stroke();
+
+  // Tick marks — RPM labels every 2k
+  for (let r = 1; r <= 14; r++) {
+    const f = (r * 1000 - 1000) / 13000;
+    const a = startA + f * totalA;
+    const isMajor = r % 2 === 0;
+    const r1 = R - (isMajor ? 18 : 10);
+    const r2 = R - 4;
+    tc.beginPath();
+    tc.moveTo(cx + r1 * Math.cos(a), cy + r1 * Math.sin(a));
+    tc.lineTo(cx + r2 * Math.cos(a), cy + r2 * Math.sin(a));
+    tc.strokeStyle = isMajor ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.2)';
+    tc.lineWidth = isMajor ? 1.5 : 1;
+    tc.stroke();
+    if (isMajor) {
+      tc.fillStyle = 'rgba(255,255,255,0.55)';
+      tc.font = '500 10px JetBrains Mono, monospace';
+      tc.textAlign = 'center';
+      tc.textBaseline = 'middle';
+      tc.fillText(r, cx + (R - 30) * Math.cos(a), cy + (R - 30) * Math.sin(a));
+    }
+  }
+
+  // Needle — rotate(needleA) maps +x direction toward the arc position
+  const needleA = startA + rpmFrac * totalA;
+  tc.save();
+  tc.translate(cx, cy);
+  tc.rotate(needleA);
+  tc.beginPath();
+  tc.moveTo(-6, 0);         // tail stub behind pivot
+  tc.lineTo(R - 18, -2);   // tip upper edge
+  tc.lineTo(R - 18,  2);   // tip lower edge
+  tc.closePath();
+  tc.fillStyle = '#ef4444';
+  tc.fill();
+  tc.restore();
+
+  // Center hub
+  tc.beginPath(); tc.arc(cx, cy, 7, 0, Math.PI * 2);
+  tc.fillStyle = '#1a2330'; tc.fill();
+  tc.strokeStyle = '#3b82f6'; tc.lineWidth = 1.5; tc.stroke();
+
+  // RPM readout
+  tc.fillStyle = '#e2e8f0';
+  tc.font = '600 20px JetBrains Mono, monospace';
+  tc.textAlign = 'center';
+  tc.textBaseline = 'alphabetic';
+  tc.fillText(S.rpm.toLocaleString(), cx, cy - 12);
+  tc.fillStyle = '#64748b';
+  tc.font = '400 9px Barlow Condensed, sans-serif';
+  tc.textBaseline = 'top';
+  tc.fillText('× 1 RPM', cx, cy - 4);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CAM LOBE CANVASES
+// ─────────────────────────────────────────────────────────────────────────────
+function drawCamLobe(canvasId, isHigh, active) {
+  const cv = document.getElementById(canvasId);
+  const cx2 = cv.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = cv.offsetWidth || 120;
+  const cssH = 60;
+  cv.width  = Math.round(cssW * dpr);
+  cv.height = Math.round(cssH * dpr);
+  cx2.setTransform(dpr, 0, 0, dpr, 0, 0);
+  cx2.clearRect(0, 0, cssW, cssH);
+
+  const x0 = cssW / 2, y0 = cssH * 0.58;
+  const baseR = 14;
+  const lobeH = isHigh ? 26 : 15;
+  const lobeW = isHigh ? 0.85 : 0.6;
+
+  // Cam rotates at half crank speed (4-stroke)
+  const camAngle = (S.crankAngle / 2) * Math.PI / 180;
+
+  cx2.save();
+  cx2.translate(x0, y0);
+  cx2.rotate(camAngle);
+  cx2.beginPath();
+  for (let a = 0; a < Math.PI * 2; a += 0.04) {
+    const lobe = Math.max(0, Math.sin(a) * Math.pow(Math.max(0, Math.sin(a)), lobeW));
+    const r = baseR + lobe * lobeH;
+    const px = r * Math.cos(a - Math.PI / 2);
+    const py = r * Math.sin(a - Math.PI / 2);
+    a === 0 ? cx2.moveTo(px, py) : cx2.lineTo(px, py);
+  }
+  cx2.closePath();
+  cx2.fillStyle = active ? (isHigh ? 'rgba(245,158,11,0.18)' : 'rgba(20,184,166,0.18)') : 'rgba(26,35,48,0.8)';
+  cx2.strokeStyle = active ? (isHigh ? '#f59e0b' : '#14b8a6') : '#2a3f58';
+  cx2.lineWidth = 1.5;
+  cx2.fill(); cx2.stroke();
+
+  cx2.beginPath(); cx2.arc(0, 0, 4, 0, Math.PI * 2);
+  cx2.fillStyle = active ? (isHigh ? '#f59e0b' : '#14b8a6') : '#2a3f58';
+  cx2.fill();
+
+  cx2.strokeStyle = active ? (isHigh ? 'rgba(245,158,11,0.45)' : 'rgba(20,184,166,0.45)') : 'rgba(100,116,139,0.25)';
+  cx2.lineWidth = 1;
+  cx2.setLineDash([2, 3]);
+  cx2.beginPath(); cx2.moveTo(0, 0); cx2.lineTo(0, -(baseR + lobeH)); cx2.stroke();
+  cx2.setLineDash([]);
+  cx2.restore();
+
+  cx2.fillStyle = active ? (isHigh ? '#fbbf24' : '#2dd4bf') : '#64748b';
+  cx2.font = '500 10px JetBrains Mono, monospace';
+  cx2.textAlign = 'center';
+  cx2.textBaseline = 'bottom';
+  cx2.fillText(isHigh ? 'HIGH CAM' : 'LOW CAM', x0, cssH - 1);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// VALVE LIFT TIMELINE
+// ─────────────────────────────────────────────────────────────────────────────
+function drawValveLiftTimeline() {
+  const cv = document.getElementById('valveLiftCanvas');
+  const cx2 = cv.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  // Use getBoundingClientRect for accurate CSS width — offsetWidth can be stale
+  const rect = cv.getBoundingClientRect();
+  const cssW = Math.max(1, rect.width || cv.offsetWidth || 340);
+  const cssH = 90;
+  cv.width  = Math.round(cssW * dpr);
+  cv.height = Math.round(cssH * dpr);
+  cx2.setTransform(dpr, 0, 0, dpr, 0, 0);
+  cx2.clearRect(0, 0, cssW, cssH);
+
+  const rpm = S.rpm;
+  const iw = E.intakeWindow(rpm);
+  const ew = E.exhaustWindow(rpm);
+
+  const LABEL_H = 16;
+  const graphH = cssH - LABEL_H;
+  // bandW: each of the 4 phases occupies exactly 1/4 of the canvas.
+  // Do NOT derive from caToX(end)-caToX(start) because caToX(720) wraps to 0.
+  const bandW = cssW / 4;
+
+  // caToX: NO modulo — ca ranges 0..720 linearly across the canvas
+  function caToX(ca) { return (ca / 720) * cssW; }
+
+  // Phase bands — draw backgrounds first
+  const phases = [
+    { idx:0, bg:'rgba(59,130,246,0.07)',  lb:'rgba(59,130,246,0.15)',  lc:'rgba(140,190,255,0.9)', label:'INTAKE'   },
+    { idx:1, bg:'rgba(168,85,247,0.07)',  lb:'rgba(168,85,247,0.15)',  lc:'rgba(210,150,255,0.9)', label:'COMPR.'   },
+    { idx:2, bg:'rgba(245,158,11,0.08)',  lb:'rgba(245,158,11,0.18)',  lc:'rgba(255,200,80,0.95)', label:'POWER'    },
+    { idx:3, bg:'rgba(239,68,68,0.07)',   lb:'rgba(239,68,68,0.16)',   lc:'rgba(255,140,140,0.9)', label:'EXHAUST'  },
+  ];
+  phases.forEach(p => {
+    const x1 = p.idx * bandW;
+    cx2.fillStyle = p.bg;
+    cx2.fillRect(x1, 0, bandW, graphH);
+    cx2.fillStyle = p.lb;
+    cx2.fillRect(x1, graphH, bandW, LABEL_H);
+  });
+
+  // Overlap shading
+  let ovStart = -1;
+  for (let ca = 0; ca <= 720; ca++) {
+    const both = E.valveLift(ca, iw) > 0.01 && E.valveLift(ca, ew) > 0.01;
+    if (both && ovStart < 0) ovStart = ca;
+    if (!both && ovStart >= 0) {
+      cx2.fillStyle = 'rgba(100,255,100,0.18)';
+      cx2.fillRect(caToX(ovStart), 0, caToX(ca) - caToX(ovStart), graphH);
+      ovStart = -1;
+    }
+  }
+  if (ovStart >= 0) {
+    cx2.fillStyle = 'rgba(100,255,100,0.18)';
+    cx2.fillRect(caToX(ovStart), 0, cssW - caToX(ovStart), graphH);
+  }
+
+  // Phase dividers
+  cx2.strokeStyle = 'rgba(255,255,255,0.14)';
+  cx2.lineWidth = 1;
+  [1, 2, 3].forEach(i => {
+    const x = i * bandW;
+    cx2.beginPath(); cx2.moveTo(x, 0); cx2.lineTo(x, cssH); cx2.stroke();
+  });
+
+  // Exhaust lift curve
+  cx2.beginPath();
+  for (let ca = 0; ca <= 720; ca += 2) {
+    const y = graphH - E.valveLift(ca, ew) * (graphH - 6) - 3;
+    ca === 0 ? cx2.moveTo(caToX(ca), y) : cx2.lineTo(caToX(ca), y);
+  }
+  cx2.strokeStyle = '#f59e0b';
+  cx2.lineWidth = 1.5;
+  cx2.stroke();
+
+  // Intake lift curve
+  cx2.beginPath();
+  for (let ca = 0; ca <= 720; ca += 2) {
+    const y = graphH - E.valveLift(ca, iw) * (graphH - 6) - 3;
+    ca === 0 ? cx2.moveTo(caToX(ca), y) : cx2.lineTo(caToX(ca), y);
+  }
+  cx2.strokeStyle = '#2dd4bf';
+  cx2.lineWidth = 1.5;
+  cx2.stroke();
+
+  // Crank position marker
+  const ca_mod = ((S.crankAngle % 720) + 720) % 720;
+  cx2.strokeStyle = 'rgba(255,255,255,0.75)';
+  cx2.lineWidth = 1.5;
+  cx2.setLineDash([3, 3]);
+  cx2.beginPath(); cx2.moveTo(caToX(ca_mod), 0); cx2.lineTo(caToX(ca_mod), cssH); cx2.stroke();
+  cx2.setLineDash([]);
+
+  // Phase labels — drawn LAST on top of everything, clipped to their band
+  cx2.textAlign = 'center';
+  cx2.textBaseline = 'middle';
+  phases.forEach(p => {
+    const x1 = p.idx * bandW;
+    const cx = x1 + bandW / 2;
+    const cy = graphH + LABEL_H / 2;
+    // Auto-shrink font if label is too wide for the band
+    let fontSize = 9;
+    cx2.font = `700 ${fontSize}px JetBrains Mono, monospace`;
+    const tw = cx2.measureText(p.label).width;
+    if (tw > bandW - 4) {
+      fontSize = Math.max(6, Math.floor(fontSize * (bandW - 4) / tw));
+      cx2.font = `700 ${fontSize}px JetBrains Mono, monospace`;
+    }
+    cx2.save();
+    cx2.beginPath();
+    cx2.rect(x1 + 1, graphH, bandW - 2, LABEL_H);
+    cx2.clip();
+    cx2.fillStyle = p.lc;
+    cx2.fillText(p.label, cx, cy);
+    cx2.restore();
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// KNOCK CANVAS
+// ─────────────────────────────────────────────────────────────────────────────
+const knockHistY = new Array(120).fill(0);
+function drawKnockCanvas() {
+  const cv = document.getElementById('knockCanvas');
+  const cx2 = cv.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = cv.offsetWidth || 340;
+  const cssH = 55;
+  cv.width  = Math.round(cssW * dpr);
+  cv.height = Math.round(cssH * dpr);
+  cx2.setTransform(dpr, 0, 0, dpr, 0, 0);
+  cx2.clearRect(0, 0, cssW, cssH);
+
+  // Scroll history
+  knockHistY.push(S.knockRetard);
+  if (knockHistY.length > cssW / 2) knockHistY.shift();
+
+  // Draw signal
+  cx2.beginPath();
+  knockHistY.forEach((v, i) => {
+    const x = (i / knockHistY.length) * cssW;
+    const y = cssH - (v / 12) * (cssH - 8) - 2;
+    i === 0 ? cx2.moveTo(x, y) : cx2.lineTo(x, y);
+  });
+  cx2.strokeStyle = S.knockRetard > 0.5 ? '#ef4444' : '#22c55e';
+  cx2.lineWidth = 1.5;
+  cx2.stroke();
+
+  // Baseline
+  cx2.strokeStyle = 'rgba(255,255,255,0.08)';
+  cx2.lineWidth = 1;
+  cx2.beginPath(); cx2.moveTo(0, cssH - 2); cx2.lineTo(cssW, cssH - 2); cx2.stroke();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CHARTS.JS LIVE GRAPHS
+// ─────────────────────────────────────────────────────────────────────────────
+let charts = {};
+
+function buildRpmArray(steps) {
+  const arr = [];
+  for (let i = 0; i <= steps; i++) arr.push(Math.round(1000 + i * 13000 / steps));
+  return arr;
+}
+
+const rpmArr = buildRpmArray(40);
+
+const chartDefaults = {
+  responsive: true,
+  maintainAspectRatio: false,
+  animation: { duration: 200 },
+  plugins: { legend: { display: false } },
+  scales: {
+    x: { ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+    y: { ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } }
+  }
+};
+
+function buildCharts() {
+  // 1. Cylinder pressure
+  const caLabels = Array.from({ length: 73 }, (_, i) => i * 10);
+  charts.pressure = new Chart(document.getElementById('gPressure'), {
+    type: 'line',
+    data: {
+      labels: caLabels,
+      datasets: [{
+        label: 'Pressure (bar)',
+        data: caLabels.map(ca => E.cylinderPressure(ca)),
+        borderColor: '#3b82f6',
+        backgroundColor: 'rgba(59,130,246,0.08)',
+        borderWidth: 2, pointRadius: 0, fill: true, tension: 0.4
+      }]
+    },
+    options: { ...chartDefaults,
+      scales: { ...chartDefaults.scales,
+        x: { ...chartDefaults.scales.x, title: { display: true, text: 'Crank Angle °', color: '#64748b', font: { size: 10 } }},
+        y: { ...chartDefaults.scales.y, title: { display: true, text: 'bar', color: '#64748b', font: { size: 10 } }}
+      }
+    }
+  });
+
+  // 2. Ignition timing vs RPM
+  charts.ignition = new Chart(document.getElementById('gIgnition'), {
+    type: 'line',
+    data: {
+      labels: rpmArr.map(r => r >= 1000 ? r / 1000 + 'k' : r),
+      datasets: [{
+        label: 'Advance (°BTDC)',
+        data: rpmArr.map(r => +E.ignitionAdvance(r).toFixed(1)),
+        borderColor: '#f59e0b',
+        backgroundColor: 'rgba(245,158,11,0.08)',
+        borderWidth: 2, pointRadius: 0, fill: true, tension: 0.4
+      }]
+    },
+    options: { ...chartDefaults,
+      scales: { ...chartDefaults.scales,
+        x: { ...chartDefaults.scales.x, ticks: { ...chartDefaults.scales.x.ticks, maxRotation: 45 }},
+        y: { ...chartDefaults.scales.y, title: { display: true, text: '° BTDC', color: '#64748b', font: { size: 10 } }}
+      }
+    }
+  });
+
+  // 3. Valve lift profiles
+  const caArr = Array.from({ length: 73 }, (_, i) => i * 10);
+  charts.valveLift = new Chart(document.getElementById('gValveLift'), {
+    type: 'line',
+    data: {
+      labels: caArr,
+      datasets: [
+        { label: 'Intake', data: caArr.map(ca => E.valveLift(ca, E.intakeWindow(S.rpm))),
+          borderColor: '#2dd4bf', borderWidth: 2, pointRadius: 0, tension: 0.3, fill: false },
+        { label: 'Exhaust', data: caArr.map(ca => E.valveLift(ca, E.exhaustWindow(S.rpm))),
+          borderColor: '#f59e0b', borderWidth: 2, pointRadius: 0, tension: 0.3,
+          borderDash: [4, 3], fill: false }
+      ]
+    },
+    options: { ...chartDefaults,
+      scales: { ...chartDefaults.scales,
+        x: { ...chartDefaults.scales.x, title: { display: true, text: 'Crank Angle °', color: '#64748b', font: { size: 10 } }}
+      },
+      plugins: {
+        legend: { display: true, labels: { color: '#94a3b8', boxWidth: 16, font: { family: 'JetBrains Mono', size: 10 } } }
+      }
+    }
+  });
+
+  // 4. VE
+  charts.ve = new Chart(document.getElementById('gVE'), {
+    type: 'line',
+    data: {
+      labels: rpmArr.map(r => r / 1000 + 'k'),
+      datasets: [{
+        label: 'VE (%)',
+        data: rpmArr.map(r => +(E.ve(r) * 100).toFixed(1)),
+        borderColor: '#22c55e',
+        backgroundColor: 'rgba(34,197,94,0.07)',
+        borderWidth: 2, pointRadius: 0, fill: true, tension: 0.4
+      }]
+    },
+    options: { ...chartDefaults,
+      scales: { ...chartDefaults.scales,
+        x: { ...chartDefaults.scales.x, ticks: { ...chartDefaults.scales.x.ticks, maxRotation: 45 }},
+        y: { ...chartDefaults.scales.y,
+          min: 50,
+          title: { display: true, text: '%', color: '#64748b', font: { size: 10 } }
+        }
+      }
+    }
+  });
+
+  // 5. Airflow
+  charts.airflow = new Chart(document.getElementById('gAirflow'), {
+    type: 'line',
+    data: {
+      labels: rpmArr.map(r => r / 1000 + 'k'),
+      datasets: [{
+        label: 'Port Velocity (m/s)',
+        data: rpmArr.map(r => +(E.mps(r) * 4.5 * E.ve(r)).toFixed(1)),
+        borderColor: '#a855f7',
+        backgroundColor: 'rgba(168,85,247,0.07)',
+        borderWidth: 2, pointRadius: 0, fill: true, tension: 0.4
+      }]
+    },
+    options: { ...chartDefaults,
+      scales: { ...chartDefaults.scales,
+        x: { ...chartDefaults.scales.x, ticks: { ...chartDefaults.scales.x.ticks, maxRotation: 45 }},
+        y: { ...chartDefaults.scales.y, title: { display: true, text: 'm/s', color: '#64748b', font: { size: 10 } }}
+      }
+    }
+  });
+
+  // 6. Torque / Power
+  // Torque (Nm) — empirical curve matching R15 V4 shape
+  // Peak ~14.7 Nm @ ~7,500 RPM, falls off at high RPM
+  function torque(rpm) {
+    // Base bell curve peaking near 7,500 RPM
+    const r = rpm / 1000;
+    const base = 11.5 + 3.8 * Math.sin(Math.PI * Math.max(0, r - 1) / 11.5 * 0.92);
+    // VVA boost above 7,500 RPM: maintains torque longer
+    const vvaBoost = rpm >= E.vvaXover ? 0.9 * Math.min(1, (rpm - 7500) / 2500) : 0;
+    // High-RPM fall-off (breathing limit)
+    const falloff = rpm > 10000 ? Math.pow(Math.max(0, 1 - (rpm - 10000) / 5000), 1.4) : 1;
+    return +Math.max(6, (base + vvaBoost) * falloff).toFixed(2);
+  }
+  function power(rpm)  {
+    // P (kW) = T (Nm) * ω (rad/s) / 1000
+    return +(torque(rpm) * rpm * Math.PI / 30 / 1000).toFixed(2);
+  }
+  charts.torque = new Chart(document.getElementById('gTorque'), {
+    type: 'line',
+    data: {
+      labels: rpmArr.map(r => r / 1000 + 'k'),
+      datasets: [
+        { label: 'Torque (Nm)', data: rpmArr.map(torque),
+          borderColor: '#f59e0b', borderWidth: 2, pointRadius: 0, tension: 0.4, fill: false,
+          yAxisID: 'y' },
+        { label: 'Power (kW)', data: rpmArr.map(power),
+          borderColor: '#ef4444', borderWidth: 2, pointRadius: 0, tension: 0.4, fill: false,
+          borderDash: [5, 3], yAxisID: 'y2' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: { duration: 200 },
+      plugins: {
+        legend: { display: true, labels: { color: '#94a3b8', boxWidth: 16, font: { family: 'JetBrains Mono', size: 10 } } }
+      },
+      scales: {
+        x: { ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 10 }, maxRotation: 45 }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#f59e0b', font: { family: 'JetBrains Mono', size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' }, title: { display: true, text: 'Nm', color: '#f59e0b', font: { size: 10 } } },
+        y2: { position: 'right', ticks: { color: '#ef4444', font: { family: 'JetBrains Mono', size: 10 } }, grid: { display: false }, title: { display: true, text: 'kW', color: '#ef4444', font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+function updateCharts() {
+  if (!charts.pressure) return;
+  const rpm = S.rpm;
+  const caLabels = Array.from({ length: 73 }, (_, i) => i * 10);
+  const ca_mod = ((S.crankAngle % 720) + 720) % 720;
+
+  // Cylinder pressure — recalculate with current RPM (affects ignition timing)
+  charts.pressure.data.datasets[0].data = caLabels.map(ca => +E.cylinderPressure(ca).toFixed(2));
+  // Mark current crank position on pressure chart
+  const nearestIdx = Math.min(72, Math.max(0, Math.round(ca_mod / 10)));
+  charts.pressure.data.datasets[0].pointRadius = caLabels.map((_, i) => i === nearestIdx ? 5 : 0);
+  charts.pressure.data.datasets[0].pointBackgroundColor = caLabels.map((_, i) =>
+    i === nearestIdx ? '#60a5fa' : 'transparent');
+  charts.pressure.update('none');
+
+  // Valve lift — recalculate with current RPM (affects duration and VVT phase)
+  const iw = E.intakeWindow(rpm);
+  const ew = E.exhaustWindow(rpm);
+  charts.valveLift.data.datasets[0].data = caLabels.map(ca => +E.valveLift(ca, iw).toFixed(3));
+  charts.valveLift.data.datasets[1].data = caLabels.map(ca => +E.valveLift(ca, ew).toFixed(3));
+  // Current position marker
+  charts.valveLift.data.datasets[0].pointRadius = caLabels.map((_, i) => i === nearestIdx ? 5 : 0);
+  charts.valveLift.data.datasets[1].pointRadius = caLabels.map((_, i) => i === nearestIdx ? 5 : 0);
+  charts.valveLift.update('none');
+
+  // RPM-based charts: move dot indicator to current RPM
+  const rpmIdx = Math.min(40, Math.max(0, Math.round((rpm - 1000) / 13000 * 40)));
+  charts.ignition.data.datasets[0].pointRadius = rpmArr.map((_, i) => i === rpmIdx ? 5 : 0);
+  charts.ignition.update('none');
+
+  charts.ve.data.datasets[0].pointRadius = rpmArr.map((_, i) => i === rpmIdx ? 5 : 0);
+  charts.ve.update('none');
+
+  charts.airflow.data.datasets[0].pointRadius = rpmArr.map((_, i) => i === rpmIdx ? 5 : 0);
+  charts.airflow.update('none');
+
+  charts.torque.data.datasets[0].pointRadius = rpmArr.map((_, i) => i === rpmIdx ? 5 : 0);
+  charts.torque.data.datasets[1].pointRadius = rpmArr.map((_, i) => i === rpmIdx ? 5 : 0);
+  charts.torque.update('none');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// UI UPDATES
+// ─────────────────────────────────────────────────────────────────────────────
+function updateUI() {
+  const rpm = S.rpm;
+  const adv = E.ignitionAdvance(rpm);
+  const mps = E.mps(rpm);
+  const ve = E.ve(rpm) * 100;
+  const vvaH = E.vvaHigh(rpm);
+
+  document.getElementById('rpmDisplay').textContent = rpm.toLocaleString();
+  document.getElementById('ignStatus').textContent = adv.toFixed(0) + '°';
+  document.getElementById('camStatus').textContent = vvaH ? 'AGGR' : 'MILD';
+
+  // ECU cells
+  document.getElementById('eccPS').innerHTML = mps.toFixed(1) + '<span class="ecu-cell-unit">m/s</span>';
+  const ca_mod = ((S.crankAngle % 720) + 720) % 720;
+  const cp = E.cylinderPressure(ca_mod);
+  document.getElementById('eccCP').innerHTML = cp.toFixed(0) + '<span class="ecu-cell-unit">bar</span>';
+  document.getElementById('eccVE').innerHTML = ve.toFixed(0) + '<span class="ecu-cell-unit">%</span>';
+  document.getElementById('eccIA').innerHTML = Math.max(0, adv - S.knockRetard).toFixed(0) + '<span class="ecu-cell-unit">° BTDC</span>';
+
+  // RPM fill
+  const rpmPct = ((rpm - 1000) / 13000 * 100).toFixed(0);
+  document.getElementById('rpmFill').style.width = rpmPct + '%';
+  const fillColor = rpm < 5000 ? 'var(--teal)' : rpm < 9000 ? 'var(--accent)' : rpm < 12000 ? 'var(--amber)' : 'var(--red)';
+  document.getElementById('rpmFill').style.background = fillColor;
+
+  // VVA cams
+  document.getElementById('cam1wrap').className = 'vva-cam' + (!vvaH ? ' active' : '');
+  document.getElementById('cam2wrap').className = 'vva-cam' + (vvaH ? ' active-amber' : '');
+  document.getElementById('vvaBadge').textContent = vvaH ? 'HIGH CAM' : 'LOW CAM';
+  document.getElementById('vvaBadge').style.color = vvaH ? 'var(--amber)' : 'var(--teal)';
+  drawCamLobe('cam1', false, !vvaH);
+  drawCamLobe('cam2', true, vvaH);
+
+  // Knock
+  const retardPct = (S.knockRetard / 12 * 100).toFixed(0);
+  document.getElementById('retardBar').style.width = retardPct + '%';
+  document.getElementById('retardVal').textContent = S.knockRetard.toFixed(1) + '°';
+  const knockLed = document.getElementById('knockLed');
+  if (S.knockRetard > 0.5) {
+    knockLed.style.background = 'var(--red)';
+    knockLed.style.boxShadow = '0 0 8px var(--red)';
+  } else {
+    knockLed.style.background = 'var(--green)';
+    knockLed.style.boxShadow = '0 0 8px var(--green)';
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// KNOCK SIMULATION
+// ─────────────────────────────────────────────────────────────────────────────
+let knockTimer = 0;
+function updateKnock(dt) {
+  if (!S.knockOn) {
+    S.knockActive = false;
+    S.knockRetard = Math.max(0, S.knockRetard - 0.8 * dt);
+    document.getElementById('knockWarn').classList.remove('visible');
+    return;
+  }
+  // Knock probability increases with advance offset and high RPM
+  knockTimer += dt;
+  const knockProb = 0.4 + S.advOffset / 45 * 0.4 + (S.rpm - 8000) / 6000 * 0.2;
+  if (knockTimer > 0.6 + Math.random() * 0.8) {
+    knockTimer = 0;
+    if (Math.random() < knockProb) {
+      S.knockActive = true;
+      S.knockRetard = Math.min(12, S.knockRetard + 1.5 + Math.random() * 2);
+      document.getElementById('knockWarn').classList.add('visible');
+    } else {
+      S.knockActive = false;
+      S.knockRetard = Math.max(0, S.knockRetard - 0.5);
+      document.getElementById('knockWarn').classList.remove('visible');
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ANIMATION LOOP
+// ─────────────────────────────────────────────────────────────────────────────
+let chartUpdateTimer = 0;
+// Fixed reference RPM for animation: animation always plays at a constant visual rate
+// regardless of RPM setting. S.speed is the only speed control.
+// At 1x speed, one full 720° cycle takes ~2 seconds visually.
+const ANIM_BASE_DEG_PER_SEC = 360; // 1 full cycle per 2s at 1x speed
+
+function loop(ts) {
+  requestAnimationFrame(loop);
+  if (!S.lastTime) { S.lastTime = ts; }
+  const dt = Math.min((ts - S.lastTime) / 1000, 0.05);
+  S.lastTime = ts;
+
+  if (S.playing) {
+    // Animation speed is purely controlled by S.speed — NOT by RPM.
+    // RPM only affects physics parameters (ignition timing, VE, valve events).
+    const degPerSec = ANIM_BASE_DEG_PER_SEC * S.speed;
+    S.crankAngle = (S.crankAngle + degPerSec * dt) % 720;
+  }
+
+  updateKnock(dt);
+  drawEngine();
+  drawTacho();
+  drawValveLiftTimeline();
+  drawKnockCanvas();
+  updateUI();
+
+  chartUpdateTimer += dt;
+  if (chartUpdateTimer > 0.15) {   // update charts at ~6 fps — fast enough to feel live
+    chartUpdateTimer = 0;
+    updateCharts();
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONTROLS
+// ─────────────────────────────────────────────────────────────────────────────
+document.getElementById('rpmSlider').addEventListener('input', function () {
+  S.rpm = parseInt(this.value);
+});
+
+function togglePlay() {
+  S.playing = !S.playing;
+  const btn = document.getElementById('playBtn');
+  btn.innerHTML = S.playing ? '&#9646;&#9646;' : '&#9654;';
+  btn.classList.toggle('active', S.playing);
+}
+
+function stepFrame(dir) {
+  S.crankAngle = (S.crankAngle + dir * 2 + 720) % 720;
+}
+
+function setSpeed(v) {
+  S.speed = parseFloat(v);
+}
+
+function toggleOverlay(key, btn) {
+  S.overlays[key] = !S.overlays[key];
+  btn.classList.toggle('on', S.overlays[key]);
+}
+
+function toggleFormula(btn) {
+  S.formulaVisible = !S.formulaVisible;
+  document.getElementById('formulaBar').classList.toggle('visible', S.formulaVisible);
+  btn.classList.toggle('on', S.formulaVisible);
+}
+
+function toggleKnock(btn) {
+  S.knockOn = !S.knockOn;
+  btn.classList.toggle('on', S.knockOn);
+  if (!S.knockOn) {
+    S.knockRetard = 0;
+    S.knockActive = false;
+    document.getElementById('knockWarn').classList.remove('visible');
+  }
+}
+
+function switchTab(id, event) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  event.target.classList.add('active');
+  if (id === 'graphs') { setTimeout(updateCharts, 50); }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CANVAS RESIZE
+// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// CANVAS RESIZE — DPR-aware for crisp text on all screens
+// ─────────────────────────────────────────────────────────────────────────────
+function resizeCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+  const wrap = ec.parentElement;
+  const cssW = wrap.clientWidth;
+  const cssH = Math.round(cssW * 560 / 720);
+  // Set CSS display size
+  ec.style.width  = cssW + 'px';
+  ec.style.height = cssH + 'px';
+  // Set backing store size (DPR × CSS size)
+  ec.width  = Math.round(cssW * dpr);
+  ec.height = Math.round(cssH * dpr);
+  // Scale all draw calls so coordinates stay in CSS-pixel space
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  // Tachometer canvas
+  const tachCssW = 260, tachCssH = 155;
+  tach.style.width  = tachCssW + 'px';
+  tach.style.height = tachCssH + 'px';
+  tach.width  = Math.round(tachCssW * dpr);
+  tach.height = Math.round(tachCssH * dpr);
+  tc.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  buildCharts();
+  requestAnimationFrame(loop);
+});
+</script>
+</body>
+</html>
