@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brake Fade Simulator</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0c;
+  --panel: #111114;
+  --panel2: #18181d;
+  --panel3: #1e1f26;
+  --border: rgba(255,255,255,0.06);
+  --border2: rgba(255,255,255,0.11);
+  --text: #dde1ea;
+  --muted: #6a6f82;
+  --muted2: #42465a;
+  --accent: #ff4500;
+  --blue: #3a8fff;
+  --green: #2dbd6e;
+  --amber: #f0a500;
+  --organic: #2dbd6e;
+  --ceramic: #3a8fff;
+  --sintered: #ff4500;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;overflow:hidden}
+
+/* ── LAYOUT ── */
+.app{display:grid;grid-template-rows:56px 1fr;height:100vh}
+
+/* ── HEADER ── */
+header{
+  display:flex;align-items:center;gap:1rem;
+  padding:0 1.5rem;
+  border-bottom:1px solid var(--border2);
+  background:var(--panel);
+  flex-shrink:0;
+}
+.logo{font-size:17px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent)}
+.logo span{color:var(--text)}
+.header-sub{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--muted);margin-left:0.5rem}
+.header-right{margin-left:auto;display:flex;gap:0.75rem;align-items:center}
+.hbadge{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);border:1px solid var(--border2);padding:3px 9px;border-radius:2px}
+
+/* ── MAIN SPLIT ── */
+.main{display:grid;grid-template-columns:1fr 380px;overflow:hidden}
+
+/* ── LEFT SIDE ── */
+.left-col{display:flex;flex-direction:column;border-right:1px solid var(--border);overflow:hidden}
+.canvas-wrap{flex:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;min-height:0}
+canvas#wheelCanvas{display:block}
+.canvas-glow{position:absolute;inset:0;pointer-events:none;transition:background 0.4s}
+
+/* ── BRAKE ZONE ── */
+.brake-zone{
+  padding:1rem 1.5rem;
+  background:var(--panel);
+  border-top:1px solid var(--border);
+  display:flex;align-items:center;gap:1.5rem;
+  flex-shrink:0;
+}
+.brake-btn{
+  position:relative;
+  width:88px;height:88px;border-radius:50%;
+  border:2px solid var(--accent);
+  background:rgba(255,69,0,0.08);
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:3px;
+  user-select:none;
+  transition:background 0.1s,transform 0.08s,box-shadow 0.15s;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:none;
+  flex-shrink:0;
+}
+.brake-btn.pressing{
+  background:rgba(255,69,0,0.28);
+  transform:scale(0.93);
+  box-shadow:0 0 32px rgba(255,69,0,0.45);
+}
+.brake-btn-ring{position:absolute;inset:-7px;border-radius:50%;border:1px solid rgba(255,69,0,0.2);pointer-events:none;transition:border-color 0.2s}
+.brake-btn.pressing .brake-btn-ring{border-color:rgba(255,69,0,0.65)}
+.brake-btn-label{font-size:15px;font-weight:700;letter-spacing:0.12em;color:var(--accent)}
+.brake-btn-sub{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted)}
+
+.status-strip{display:flex;flex-direction:column;gap:10px;flex:1;min-width:0}
+.stat-row{display:flex;gap:1.5rem;flex-wrap:wrap}
+.stat-item{display:flex;flex-direction:column;min-width:70px}
+.stat-label{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:0.07em;text-transform:uppercase;margin-bottom:1px}
+.stat-val{font-family:'Share Tech Mono',monospace;font-size:20px;font-weight:500;color:var(--text);transition:color 0.3s;line-height:1}
+.stat-val.hot{color:var(--accent)}
+.stat-val.warm{color:var(--amber)}
+.stat-val.cool{color:var(--green)}
+
+.controls-row{display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap}
+.speed-control{display:flex;flex-direction:column;gap:5px}
+.speed-label{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase}
+input[type=range]{
+  width:130px;height:3px;-webkit-appearance:none;appearance:none;
+  background:var(--panel2);border-radius:2px;outline:none;cursor:pointer;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:14px;height:14px;border-radius:50%;
+  background:var(--accent);cursor:pointer;
+}
+.pad-selector{display:flex;gap:6px}
+.pad-btn{
+  padding:5px 13px;border-radius:2px;border:1px solid var(--border2);
+  background:transparent;color:var(--muted);font-family:'Rajdhani',sans-serif;
+  font-size:13px;font-weight:600;cursor:pointer;letter-spacing:0.05em;
+  text-transform:uppercase;transition:all 0.15s;
+}
+.pad-btn.active[data-pad="organic"]{border-color:var(--organic);color:var(--organic);background:rgba(45,189,110,0.09)}
+.pad-btn.active[data-pad="ceramic"]{border-color:var(--ceramic);color:var(--ceramic);background:rgba(58,143,255,0.09)}
+.pad-btn.active[data-pad="sintered"]{border-color:var(--sintered);color:var(--sintered);background:rgba(255,69,0,0.09)}
+
+/* ── RIGHT PANEL (scrollable) ── */
+.right-panel{display:flex;flex-direction:column;background:var(--panel);overflow-y:auto;overflow-x:hidden}
+.right-panel::-webkit-scrollbar{width:4px}
+.right-panel::-webkit-scrollbar-track{background:transparent}
+.right-panel::-webkit-scrollbar-thumb{background:var(--muted2);border-radius:2px}
+
+.panel-section{padding:1.1rem 1.3rem;border-bottom:1px solid var(--border)}
+.psec-title{
+  font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:0.11em;
+  text-transform:uppercase;color:var(--muted2);margin-bottom:0.85rem;
+  display:flex;align-items:center;gap:8px;
+}
+.psec-title::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ── TEMP GAUGE ── */
+.gauge-wrap{height:14px;background:var(--panel2);border-radius:2px;overflow:hidden;margin-bottom:7px;position:relative}
+.gauge-fill{height:100%;border-radius:2px;transition:width 0.18s ease,background 0.3s}
+.gauge-marks{display:flex;justify-content:space-between}
+.gauge-marks span{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted2)}
+.thresh-row{position:relative;height:20px;margin-top:5px}
+
+/* ── FRICTION ── */
+.mu-row{display:flex;align-items:baseline;gap:8px;margin-bottom:5px}
+.mu-big{font-family:'Share Tech Mono',monospace;font-size:40px;font-weight:500;transition:color 0.3s;line-height:1}
+.mu-lbl{font-size:13px;color:var(--muted)}
+.mu-bar-wrap{height:7px;background:var(--panel2);border-radius:3px;overflow:hidden;margin-bottom:6px}
+.mu-bar{height:100%;border-radius:3px;transition:width 0.18s,background 0.3s}
+.mu-scale{display:flex;justify-content:space-between;margin-bottom:8px}
+.mu-scale span{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted2)}
+.fade-state{font-family:'Share Tech Mono',monospace;font-size:12px;padding:4px 10px;border-radius:2px;display:inline-block}
+.state-normal{background:rgba(45,189,110,0.12);color:var(--green)}
+.state-onset{background:rgba(240,165,0,0.12);color:var(--amber)}
+.state-fade{background:rgba(255,69,0,0.15);color:var(--accent)}
+
+/* ── PAD INFO ── */
+.pad-info-row{display:flex;justify-content:space-between;margin-bottom:5px;align-items:baseline}
+.pad-info-key{font-size:13px;color:var(--muted)}
+.pad-info-val{font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--text)}
+.pad-note{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6;border-left:2px solid var(--border2);padding-left:8px}
+
+/* ── μ(T) CHART ── */
+.chart-box{background:var(--panel2);border-radius:3px;padding:0.75rem;margin-top:0.5rem}
+canvas.small-chart{display:block;width:100%!important}
+
+/* ── FORMULA CARDS ── */
+.formula-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:0.5rem}
+.fcard{background:var(--panel2);border-radius:3px;padding:0.75rem;border-top:2px solid var(--border2)}
+.fcard.red{border-top-color:var(--accent)}
+.fcard.blue{border-top-color:var(--blue)}
+.fcard.green{border-top-color:var(--green)}
+.fcard.amber{border-top-color:var(--amber)}
+.fcard-title{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted2);margin-bottom:6px}
+.fcard-eq{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--text);background:var(--panel3);padding:5px 7px;border-radius:2px;margin-bottom:6px;white-space:nowrap;overflow-x:auto}
+.fcard-desc{font-size:11px;color:var(--muted);line-height:1.55}
+.fcard-desc b{color:var(--text)}
+
+/* ── PAD COMPARISON TABLE ── */
+.cmp-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:0.5rem}
+.cmp-table th{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted2);text-align:left;padding:5px 8px;border-bottom:1px solid var(--border2)}
+.cmp-table td{padding:7px 8px;border-bottom:1px solid var(--border);color:var(--muted);font-size:12px;vertical-align:top}
+.cmp-table td:first-child{font-weight:600;font-size:13px}
+.org-col{color:var(--organic)!important}
+.cer-col{color:var(--ceramic)!important}
+.sin-col{color:var(--sintered)!important}
+.badge{display:inline-block;font-family:'Share Tech Mono',monospace;font-size:9px;padding:1px 6px;border-radius:2px}
+.badge-hi{background:rgba(255,68,68,0.12);color:#ff6666;border:1px solid rgba(255,68,68,0.2)}
+.badge-md{background:rgba(240,165,0,0.12);color:var(--amber);border:1px solid rgba(240,165,0,0.2)}
+.badge-lo{background:rgba(45,189,110,0.12);color:var(--green);border:1px solid rgba(45,189,110,0.2)}
+
+/* ── TEMP HISTORY PLOT (right panel) ── */
+.plot-wrap{height:160px;position:relative;margin-top:0.5rem}
+canvas#plotCanvas{display:block;width:100%!important;height:100%!important}
+.plot-legend{display:flex;gap:1rem;margin-bottom:6px;flex-wrap:wrap}
+.pleg{display:flex;align-items:center;gap:5px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted)}
+.pleg-line{width:16px;height:2px;border-radius:1px;flex-shrink:0}
+
+/* ── ASSUMPTION BOX ── */
+.note-box{background:var(--panel2);border-left:2px solid var(--amber);border-radius:0 3px 3px 0;padding:0.65rem 0.85rem;margin-top:0.5rem}
+.note-box p{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);line-height:1.6}
+.note-box b{color:var(--text)}
+
+/* ── RESET BTN ── */
+.reset-btn{
+  width:100%;padding:7px;border:1px solid var(--border2);
+  background:transparent;color:var(--muted);font-family:'Rajdhani',sans-serif;
+  font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;
+  cursor:pointer;border-radius:2px;transition:all 0.15s;margin-top:0.75rem;
+}
+.reset-btn:hover{border-color:var(--border2);color:var(--text);background:var(--panel2)}
+
+/* ── SCROLLBAR HINT ── */
+.scroll-hint{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted2);text-align:center;padding:0.5rem;letter-spacing:0.05em}
+
+/* ── SOURCES ── */
+.src-list{display:flex;flex-direction:column;gap:8px}
+.src-item{display:flex;gap:8px;align-items:flex-start}
+.src-num{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted2);min-width:22px;padding-top:1px;flex-shrink:0}
+.src-body{font-size:11px;color:var(--muted);line-height:1.6}
+.src-title{font-weight:600;color:var(--text)}
+.src-body em{color:var(--muted2);font-style:italic}
+</style>
+</head>
+<body>
+<div class="app">
+
+<header>
+  <div class="logo">Brake<span>Fade</span></div>
+  <div class="header-sub">// thermal physics simulator</div>
+  <div class="header-right">
+    <div class="hbadge">Lumped Capacitance · p = 0.97</div>
+    <div class="hbadge">τ = m·Cₚ / h·A</div>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- ═══ LEFT: WHEEL + BRAKE ═══ -->
+  <div class="left-col">
+    <div class="canvas-wrap">
+      <div class="canvas-glow" id="canvasGlow"></div>
+      <canvas id="wheelCanvas"></canvas>
+    </div>
+    <div class="brake-zone">
+      <button class="brake-btn" id="brakeBtn" aria-label="Hold to brake">
+        <div class="brake-btn-ring"></div>
+        <div class="brake-btn-label">BRAKE</div>
+        <div class="brake-btn-sub">hold / tap</div>
+      </button>
+      <div class="status-strip">
+        <div class="stat-row">
+          <div class="stat-item">
+            <div class="stat-label">Rotor Temp</div>
+            <div class="stat-val cool" id="tempDisplay">35°C</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Speed</div>
+            <div class="stat-val" id="speedDisplay">80 km/h</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Brake Force</div>
+            <div class="stat-val" id="forceDisplay">0 N</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Slope</div>
+            <div class="stat-val" id="slopeDisplay">0°</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Heat In</div>
+            <div class="stat-val" id="heatDisplay">0 W</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Heat Out</div>
+            <div class="stat-val" id="coolDisplay">0 W</div>
+          </div>
+        </div>
+        <div class="controls-row">
+          <div class="speed-control">
+            <div class="speed-label">Initial speed: <span id="speedSliderLabel">80 km/h</span></div>
+            <input type="range" id="speedSlider" min="20" max="150" value="80" step="5">
+          </div>
+          <div class="speed-control">
+            <div class="speed-label">Slope: <span id="slopeSliderLabel">0°</span></div>
+            <input type="range" id="slopeSlider" min="0" max="15" value="0" step="1">
+          </div>
+          <div class="pad-selector">
+            <button class="pad-btn active" data-pad="organic">Organic</button>
+            <button class="pad-btn" data-pad="ceramic">Ceramic</button>
+            <button class="pad-btn" data-pad="sintered">Sintered</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ RIGHT PANEL (scrollable) ═══ -->
+  <div class="right-panel">
+
+    <!-- 1. TEMP GAUGE -->
+    <div class="panel-section">
+      <div class="psec-title">01 — Rotor Temperature</div>
+      <div class="gauge-wrap"><div class="gauge-fill" id="tempGauge"></div></div>
+      <div class="gauge-marks"><span>35°C</span><span>250</span><span>465</span><span>680</span><span>900°C</span></div>
+      <div class="thresh-row" id="thresholdTicks"></div>
+    </div>
+
+    <!-- 2. FRICTION μ -->
+    <div class="panel-section">
+      <div class="psec-title">02 — Friction Coefficient μ(T)</div>
+      <div class="mu-row">
+        <div class="mu-big" id="muDisplay">0.400</div>
+        <div class="mu-lbl">at current temp</div>
+      </div>
+      <div class="mu-bar-wrap"><div class="mu-bar" id="muBar"></div></div>
+      <div class="mu-scale"><span>μ = 0.00</span><span>μ = 0.55</span></div>
+      <div id="fadeStateEl" class="fade-state state-normal">✓ NORMAL</div>
+    </div>
+
+    <!-- 3. μ(T) GRAPH -->
+    <div class="panel-section">
+      <div class="psec-title">03 — μ vs Temperature Graph</div>
+      <div class="chart-box">
+        <canvas id="muChart" height="130"></canvas>
+      </div>
+      <div class="plot-legend" style="margin-top:8px">
+        <div class="pleg"><div class="pleg-line" style="background:var(--organic)"></div>Organic</div>
+        <div class="pleg"><div class="pleg-line" style="background:var(--ceramic)"></div>Ceramic</div>
+        <div class="pleg"><div class="pleg-line" style="background:var(--sintered)"></div>Sintered</div>
+        <div class="pleg"><div class="pleg-line" style="background:#fff;opacity:0.3"></div>Current T</div>
+      </div>
+    </div>
+
+    <!-- 4. TEMP HISTORY PLOT -->
+    <div class="panel-section">
+      <div class="psec-title">04 — Temperature History</div>
+      <div class="plot-legend">
+        <div class="pleg"><div class="pleg-line" style="background:var(--text)"></div>Rotor T</div>
+        <div class="pleg"><div class="pleg-line" style="background:var(--organic);opacity:0.7"></div>Org 300°C</div>
+        <div class="pleg"><div class="pleg-line" style="background:var(--ceramic);opacity:0.7"></div>Cer 400°C</div>
+        <div class="pleg"><div class="pleg-line" style="background:var(--sintered);opacity:0.7"></div>Sin 550°C</div>
+      </div>
+      <div class="plot-wrap"><canvas id="plotCanvas"></canvas></div>
+      <button class="reset-btn" id="resetBtn">↺ Reset Simulation</button>
+    </div>
+
+    <!-- 5. PAD INFO -->
+    <div class="panel-section">
+      <div class="psec-title">05 — Active Pad: <span id="padNameDisplay" style="color:var(--text)">Organic</span></div>
+      <div class="pad-info-row"><div class="pad-info-key">Fade onset</div><div class="pad-info-val" id="padFadeOnset">300°C</div></div>
+      <div class="pad-info-row"><div class="pad-info-key">Full fade temp</div><div class="pad-info-val" id="padFullFade">450°C</div></div>
+      <div class="pad-info-row"><div class="pad-info-key">Friction mechanism</div><div class="pad-info-val" id="padMech">Adhesive</div></div>
+      <div class="pad-info-row"><div class="pad-info-key">Rotor wear</div><div class="pad-info-val" id="padWear">Low</div></div>
+      <div class="pad-note" id="padNote"></div>
+    </div>
+
+    <!-- 6. PHYSICS FORMULAS -->
+    <div class="panel-section">
+      <div class="psec-title">06 — Physics Model</div>
+      <div class="formula-grid">
+        <div class="fcard red">
+          <div class="fcard-title">Heat generation</div>
+          <div class="fcard-eq">Q̇ = (F+F_g)·μ·v·p</div>
+          <div class="fcard-desc"><b>F</b> = clamp force 800 N<br><b>F_g</b> = mg·sinθ (slope)<br><b>+soak</b> at standstill ∝ ΔT<br><b>p</b> = 0.97 partition</div>
+        </div>
+        <div class="fcard blue">
+          <div class="fcard-title">Temp rise</div>
+          <div class="fcard-eq">dT = Q̇·dt/(m·Cₚ)</div>
+          <div class="fcard-desc"><b>m</b> = 0.40 kg rotor<br><b>Cₚ</b> = 490 J/kg·K<br>cast iron specific heat</div>
+        </div>
+        <div class="fcard green">
+          <div class="fcard-title">Convective cooling</div>
+          <div class="fcard-eq">τ = m·Cₚ/(h·A)</div>
+          <div class="fcard-desc"><b>h</b> = f(speed) W/m²K<br><b>A</b> = 0.055 m² rotor<br>τ ≈ 50–90 s real-world</div>
+        </div>
+        <div class="fcard amber">
+          <div class="fcard-title">Friction vs Temp</div>
+          <div class="fcard-eq">μ(T): rise→stable→fade</div>
+          <div class="fcard-desc">Peak near 150–300°C<br>Drops above fade onset<br>Resin outgassing [Bijwe 2005]</div>
+        </div>
+      </div>
+      <div class="note-box" style="margin-top:0.75rem">
+        <p><b>Physics model:</b> While braking, cooling uses real τ (no scaling) so heat accumulates correctly. When not braking, cooling is 8× faster for playability. Standstill soak is ΔT-driven (k·(T−T_amb)) — heat conducts from hot rotor back through pad at a rate proportional to temperature excess, equilibrating at ~330°C. On a slope, effective clamp force = F_clamp + mg·sinθ, consistently applied to both heat generation and deceleration.</p>
+      </div>
+    </div>
+
+    <!-- 7. PAD COMPARISON TABLE -->
+    <div class="panel-section">
+      <div class="psec-title">07 — Compound Comparison</div>
+      <table class="cmp-table">
+        <thead>
+          <tr>
+            <th>Pad</th>
+            <th>Fade onset</th>
+            <th>Full fade</th>
+            <th>Cold bite</th>
+            <th>Rotor wear</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="org-col">Organic</td>
+            <td>300°C</td><td>450°C</td>
+            <td><span class="badge badge-lo">Excellent</span></td>
+            <td><span class="badge badge-lo">Low</span></td>
+          </tr>
+          <tr>
+            <td class="cer-col">Ceramic</td>
+            <td>400°C</td><td>580°C</td>
+            <td><span class="badge badge-lo">Good</span></td>
+            <td><span class="badge badge-lo">Low</span></td>
+          </tr>
+          <tr>
+            <td class="sin-col">Sintered</td>
+            <td>550°C</td><td>800°C</td>
+            <td><span class="badge badge-md">Moderate</span></td>
+            <td><span class="badge badge-hi">High</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="note-box" style="margin-top:0.75rem">
+        <p><b>Why sintered isn't "always better":</b> abrasive friction needs activation heat, causes more rotor wear, and is noisier. For city riding (&lt;200°C rotor temps), organic is the right choice. Match the pad to the operating temperature range, not the maximum capability. Sources: EBC Technical Blog, Di Cocco et al. 2023, Chan &amp; Stachowiak 2004, Limpert (1999).</p>
+      </div>
+    </div>
+
+
+    <!-- 8. SOURCES -->
+    <div class="panel-section">
+      <div class="psec-title">08 — Sources &amp; References</div>
+      <div class="src-list">
+        <div class="src-item">
+          <div class="src-num">[1]</div>
+          <div class="src-body"><span class="src-title">SAE J866</span> — Friction Coefficient Identification and Environmental Marking System for Brake Linings. SAE International. Cold μ letter codes: F=0.35–0.45, G=0.45–0.55, H=0.55–0.65.</div>
+        </div>
+        <div class="src-item">
+          <div class="src-num">[2]</div>
+          <div class="src-body"><span class="src-title">Di Cocco, Bellini, Iacoviello &amp; Iacoviello (2023)</span> — "Temperature Influence on Brake Pad Friction Coefficient Modelisation." <em>MDPI Materials</em> 17(1), 189. DOI: 10.3390/ma17010189. PMC10779514. μ rises 0.4→0.6 at 100–180°C, falls to 0.2 at 350°C for a standard sintered compound. Basis for μ(T) curve shape.</div>
+        </div>
+        <div class="src-item">
+          <div class="src-num">[3]</div>
+          <div class="src-body"><span class="src-title">Limpert, R. (1999)</span> — <em>Brake Design and Safety</em>, 2nd ed. SAE International. Heat partition coefficient p≈0.97, convection h(v) correlation, lumped capacitance model.</div>
+        </div>
+        <div class="src-item">
+          <div class="src-num">[4]</div>
+          <div class="src-body"><span class="src-title">Medina, L. (2023)</span> — "Computing the convection coefficient of a brake disc." makerluis.com (Nov 2023). Compares Limpert h(v) correlation against Formula Student CFD telemetry data; h≈58 W/m²K at 60 km/h confirmed. Also: "Estimating the working temperature of a brake disc" (Jul 2023), same site — lumped-body MATLAB/Python implementation with Biot number check.</div>
+        </div>
+        <div class="src-item">
+          <div class="src-num">[5]</div>
+          <div class="src-body"><span class="src-title">Belhocine et al. (2014)</span> — "Thermal analysis of both ventilated and full disc brake rotors with frictional heat generation." <em>Applied and Computational Mechanics</em> 8, 5–24. Gray cast iron FG 15: Cₚ=490 J/kg·K, k=57 W/mK (confirmed across Belhocine &amp; Bouchetara companion papers on the same material). Basis for rotor thermal mass model.</div>
+        </div>
+        <div class="src-item">
+          <div class="src-num">[6]</div>
+          <div class="src-body"><span class="src-title">Chan &amp; Stachowiak (2004)</span> — "Review of automotive brake friction materials." <em>Proc. Institution of Mechanical Engineers, Part D: Journal of Automobile Engineering</em> 218(9), 953–966. DOI: 10.1243/0954407041856773. Comprehensive review of organic, semi-metallic, and sintered pad types; mechanisms, fade behaviour, and trade-offs across friction material classes.</div>
+        </div>
+        <div class="src-item">
+          <div class="src-num">[7]</div>
+          <div class="src-body"><span class="src-title">Bijwe, Nidhi, Majumdar &amp; Satapathy (2005)</span> — "Influence of modified phenolic resins on the fade and recovery behavior of friction materials." <em>Wear</em> 259(7–12), 1068–1078. DOI: 10.1016/j.wear.2005.01.011. Fade onset 300–400°C corresponds to glass-transition exceedance of phenolic binder; outgassing and μ collapse mechanism confirmed experimentally. Basis for organic pad fade model.</div>
+        </div>
+        <div class="src-item">
+          <div class="src-num">[8]</div>
+          <div class="src-body"><span class="src-title">Grzes, P. (2019)</span> — "Maximum temperature of the disc during repeated braking applications." <em>Advances in Mechanical Engineering</em> 11(3). DOI: 10.1177/1687814019837826. FEM validates lumped model for engineering temperature estimates across repeated brake cycles. τ methodology and bulk temperature equilibration confirmed.</div>
+        </div>
+        <div class="src-item">
+          <div class="src-num">[9]</div>
+          <div class="src-body"><span class="src-title">EBC Brakes Technical Blog &amp; SR-11 Product Specification</span> — ebcbrakes.com. Fade definition, glazing mechanism. SR-11 sintered: rated 0–925°C operating range, "near perfectly flat friction profile of 0.5 mu throughout" (some listings quote 0.55 mu). No resin binder = no outgassing = no green fade. Organic city use, sintered track/mountain recommendation. Consistent with Chan &amp; Stachowiak [6] classification.</div>
+        </div>
+      </div>
+      <div class="note-box" style="margin-top:0.75rem">
+        <p><b>Model accuracy:</b> ±15% on absolute temperature values for a typical 150–200 kg sport motorcycle. Cooling is 8× accelerated when not braking for sim playability. Heat input uses real physics (no scaling). μ(T) curves are illustrative trends — exact values are compound-specific and proprietary.</p>
+      </div>
+    </div>
+
+    <!-- DISCLAIMER -->
+    <div class="panel-section">
+      <div class="psec-title">⚠ Educational Disclaimer</div>
+      <div class="note-box" style="border-left-color:var(--accent)">
+        <p><b>This is an idealized simulation for educational purposes only.</b></p>
+        <p style="margin-top:0.55rem">Formulas used (lumped capacitance, linear h(v), piecewise μ(T)) are simplified engineering models, not replacements for full FEA or empirical brake testing. Real-world rotor temperatures depend on caliper design, pad geometry, rotor ventilation, bedding condition, ambient humidity, altitude, and rider technique — none of which are captured here.</p>
+        <p style="margin-top:0.55rem">μ(T) curves are <b>illustrative trends</b> derived from published studies. Actual friction coefficients are compound-specific, proprietary, and vary batch-to-batch. Do not use this simulator to make braking safety decisions, pad selection for motorsport, or brake system design choices.</p>
+        <p style="margin-top:0.55rem">Physics parameters (M_R, A_R, F_CLAMP, h(v)) are representative of a 150–200 kg sport motorcycle front brake. Your specific setup will differ.</p>
+        <p style="margin-top:0.55rem; color:var(--muted2)">Sources cited are peer-reviewed or industry-standard references. Model ±15% on absolute temperature. Cooling deliberately accelerated 8× when not braking for playability.</p>
+      </div>
+    </div>
+
+    <div class="scroll-hint">▲ scroll up · 9 sections · disclaimer at bottom</div>
+  </div><!-- end right-panel -->
+
+</div><!-- end main -->
+</div><!-- end app -->
+
+<script>
+// ═══════════════════════════════════════════════
+// PHYSICS CONSTANTS
+// ═══════════════════════════════════════════════
+const C_P    = 490;     // J/(kg·K) cast iron
+const M_R    = 0.40;    // kg effective rotor thermal mass
+const A_R    = 0.055;   // m² rotor surface area
+const P_HEAT = 0.97;    // heat partition to rotor
+const T_AMB  = 35;      // °C ambient
+const T_MAX  = 900;     // °C display max
+
+// Single front brake moderate effort: ~800 N clamp force
+// At 80 km/h → surface speed at effective radius 0.135m → ω = v/r_wheel
+// Q̇ = F * μ * v_surface → 800 * 0.40 * ~11 m/s ≈ 3500 W — reasonable
+const F_CLAMP = 800;    // N clamp force (moderate front brake effort)
+
+// Cooling time constant scaling:
+// When BRAKING: real physics (no scale). Heat must win against real dissipation.
+// When NOT braking: accelerate cooling 8× so the sim recovers fast for playability.
+const SIM_COOL_SCALE_IDLE    = 8.0;
+const SIM_COOL_SCALE_BRAKING = 1.0;
+
+// μ values calibrated to SAE J866, Di Cocco et al. 2023 (PMC10779514), Chan & Stachowiak 2004, EBC SR-11 product data:
+// Sintered: slightly lower than organic at cold (first 1-2 pulls — glassy feel),
+//           but peaks HIGHEST (~0.50) and stays almost flat to 560°C — that is the real advantage.
+// Organic: best initial adhesive bite, drops hard above 300°C (resin outgassing).
+// Ceramic: middle ground — delayed fade, moderate peak.
+const PADS = {
+  organic:  {
+    name:'Organic', color:'#2dbd6e',
+    fadeStart:300, fullFade:450,
+    mu0:0.40, muPeak:0.46, peakT:140,
+    stableDrop:0.25, fadeDrop:0.78, floorMu:0.10,
+    mech:'Adhesive/resin', wear:'Low',
+    note:'Good cold bite (adhesive, peaks ~140°C). Resin decomposes above 300°C — gas film lifts pad from rotor, μ collapses fast. City and commute only. Wrong tool for descents.'
+  },
+  ceramic:  {
+    name:'Ceramic', color:'#3a8fff',
+    fadeStart:400, fullFade:580,
+    mu0:0.38, muPeak:0.44, peakT:200,
+    stableDrop:0.15, fadeDrop:0.58, floorMu:0.14,
+    mech:'Ceramic fiber', wear:'Low',
+    note:'Ceramic fibers draw heat away from the interface, delaying resin decomposition to ~400°C. Polymeric binder still present — not immune, just delayed. Best daily + spirited use.'
+  },
+  sintered: {
+    name:'Sintered', color:'#ff4500',
+    fadeStart:560, fullFade:800,
+    mu0:0.38, muPeak:0.50, peakT:280,
+    stableDrop:0.04, fadeDrop:0.16, floorMu:0.38,
+    mech:'Abrasive/metallic', wear:'High',
+    note:'Slightly glassy on very first cold pull — abrasive mechanism needs a little heat. But peaks highest (~0.50) and barely drops to 560°C. No resin = no outgassing. Track, ghats, heavy bikes.'
+  },
+};
+
+function muAt(padKey, T) {
+  const p = PADS[padKey];
+  // Rise: cold start → peak (sintered peaks higher but needs more heat to get there)
+  if (T <= p.peakT) {
+    const frac = Math.max(0, (T - 20) / (p.peakT - 20));
+    return p.mu0 + (p.muPeak - p.mu0) * frac;
+  }
+  // Stable zone: sintered barely moves (key advantage), organic already softening
+  if (T <= p.fadeStart) {
+    const frac = (T - p.peakT) / (p.fadeStart - p.peakT);
+    return p.muPeak - (p.muPeak - p.mu0) * frac * p.stableDrop;
+  }
+  // Fade: organic collapses fast, ceramic moderate, sintered barely yields
+  if (T <= p.fullFade) {
+    const frac = (T - p.fadeStart) / (p.fullFade - p.fadeStart);
+    return p.muPeak * (1 - frac * p.fadeDrop);
+  }
+  return p.floorMu;
+}
+
+const MU_CHART_MAX = 0.55; // headroom above sintered peak (0.50) so curve never clips
+// At 0 km/h: ~15 W/m²K (natural convection)
+// At 100 km/h: ~70 W/m²K (forced convection, Limpert 1999)
+function hConv(vKmh) { return 15 + (vKmh / 100) * 55; }
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let state = {
+  rotorT: T_AMB,
+  speed: 80,
+  braking: false,
+  padKey: 'organic',
+  rotAngle: 0,
+  clampAnim: 0,
+  history: [],
+  lastFrame: null,
+};
+
+// ═══════════════════════════════════════════════
+// CANVAS SETUP
+// ═══════════════════════════════════════════════
+const wCanvas = document.getElementById('wheelCanvas');
+const wCtx    = wCanvas.getContext('2d');
+const pCanvas = document.getElementById('plotCanvas');
+const pCtx    = pCanvas.getContext('2d');
+const mCanvas = document.getElementById('muChart');
+const mCtx    = mCanvas.getContext('2d');
+
+function resizeAll() {
+  const wrap = document.querySelector('.canvas-wrap');
+  const W = wrap.clientWidth, H = wrap.clientHeight;
+  const sz = Math.min(W, H) * 0.84;
+  wCanvas.width = sz; wCanvas.height = sz;
+  wCanvas.style.width = sz + 'px'; wCanvas.style.height = sz + 'px';
+
+  const pw = document.querySelector('.plot-wrap');
+  pCanvas.width  = pw.clientWidth;
+  pCanvas.height = pw.clientHeight;
+
+  const cb = document.querySelector('.chart-box');
+  mCanvas.width  = cb.clientWidth - 24;
+  mCanvas.height = 130;
+
+  drawMuChart(); // static chart, redraw on resize
+}
+resizeAll();
+window.addEventListener('resize', resizeAll);
+
+// ═══════════════════════════════════════════════
+// COLOUR BY TEMPERATURE
+// ═══════════════════════════════════════════════
+function tempColor(T, alpha) {
+  const f = Math.max(0, Math.min(1, (T - T_AMB) / (T_MAX - T_AMB)));
+  let r,g,b;
+  if (f < 0.22) {
+    const t = f/0.22;
+    r=60+t*140; g=62+t*38; b=68-t*30;
+  } else if (f < 0.50) {
+    const t=(f-0.22)/0.28;
+    r=200+t*55; g=100+t*20; b=38-t*20;
+  } else if (f < 0.78) {
+    const t=(f-0.50)/0.28;
+    r=255; g=120+t*120; b=18+t*80;
+  } else {
+    const t=(f-0.78)/0.22;
+    r=255; g=240+t*15; b=98+t*157;
+  }
+  return `rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},${alpha})`;
+}
+
+// ═══════════════════════════════════════════════
+// DRAW WHEEL
+// ═══════════════════════════════════════════════
+function drawWheel() {
+  const c   = wCtx;
+  const sz  = wCanvas.width;
+  const cx  = sz/2, cy = sz/2;
+  const R   = sz*0.40;   // tyre outer
+  const rR  = sz*0.265;  // rotor outer radius
+  const rI  = sz*0.162;  // rotor inner radius
+  const hubR= sz*0.072;  // hub
+  const T   = state.rotorT;
+  const clamp = state.clampAnim;
+  const padKey = state.padKey;
+  const pad = PADS[padKey];
+
+  c.clearRect(0,0,sz,sz);
+
+  // ── ambient glow behind wheel
+  if (T > 160) {
+    const gf = Math.min(1,(T-160)/500);
+    const gr = c.createRadialGradient(cx,cy,rI*0.3,cx,cy,R*1.3);
+    gr.addColorStop(0, tempColor(T, 0.35*gf));
+    gr.addColorStop(1,'transparent');
+    c.beginPath(); c.arc(cx,cy,R*1.3,0,Math.PI*2);
+    c.fillStyle=gr; c.fill();
+  }
+
+  // ── tyre
+  const tg = c.createRadialGradient(cx-R*0.08,cy-R*0.08,R*0.6,cx,cy,R);
+  tg.addColorStop(0,'#2c2c32'); tg.addColorStop(1,'#111115');
+  c.beginPath(); c.arc(cx,cy,R,0,Math.PI*2);
+  c.fillStyle=tg; c.fill();
+  c.lineWidth=2; c.strokeStyle='rgba(255,255,255,0.05)'; c.stroke();
+
+  // tyre inner gap
+  c.beginPath(); c.arc(cx,cy,R*0.82,0,Math.PI*2);
+  c.fillStyle='#0a0a0c'; c.fill();
+
+  // ── spokes (rotate)
+  c.save(); c.translate(cx,cy); c.rotate(state.rotAngle);
+  for (let i=0;i<6;i++) {
+    const a = i/6*Math.PI*2;
+    // spoke body
+    c.beginPath();
+    c.moveTo(Math.cos(a)*hubR*1.15, Math.sin(a)*hubR*1.15);
+    c.lineTo(Math.cos(a)*rI*0.88,   Math.sin(a)*rI*0.88);
+    c.lineWidth=sz*0.019; c.strokeStyle='#252630'; c.lineCap='round'; c.stroke();
+    // spoke highlight
+    c.beginPath();
+    c.moveTo(Math.cos(a)*hubR*1.15, Math.sin(a)*hubR*1.15);
+    c.lineTo(Math.cos(a)*rI*0.88,   Math.sin(a)*rI*0.88);
+    c.lineWidth=sz*0.004; c.strokeStyle='rgba(255,255,255,0.10)'; c.stroke();
+  }
+  c.restore();
+
+  // ── rotor disc (rotates + glows)
+  c.save(); c.translate(cx,cy); c.rotate(state.rotAngle);
+  const hotC  = tempColor(T, 1.0);
+  const coolC = tempColor(Math.max(T_AMB, T-70), 0.75);
+  const rg = c.createRadialGradient(0,0,rI,0,0,rR);
+  rg.addColorStop(0,coolC); rg.addColorStop(0.55,hotC); rg.addColorStop(1,coolC);
+  // annulus
+  c.beginPath(); c.arc(0,0,rR,0,Math.PI*2); c.arc(0,0,rI,Math.PI*2,0,true);
+  c.fillStyle=rg; c.fill();
+  c.lineWidth=1; c.strokeStyle='rgba(255,255,255,0.07)'; c.stroke();
+  // radial slots
+  for (let i=0;i<22;i++) {
+    const a=i/22*Math.PI*2;
+    c.save(); c.rotate(a);
+    c.beginPath(); c.rect(rI+(rR-rI)*0.12,-sz*0.0045,(rR-rI)*0.78,sz*0.009);
+    c.fillStyle='rgba(0,0,0,0.32)'; c.fill();
+    c.restore();
+  }
+  // rim highlight
+  c.beginPath(); c.arc(0,0,rR,0,Math.PI*2);
+  c.lineWidth=sz*0.005; c.strokeStyle='rgba(255,255,255,0.05)'; c.stroke();
+  c.restore();
+
+  // ── caliper (fixed, 9-o'clock)
+  const cx2  = cx - rR*1.03;
+  const cW   = rR*0.58;
+  const cH   = (rR-rI)*0.88;
+  const cY   = cy - cH/2;
+  const pThk = sz*0.033;
+  const pGap = sz*0.026*(1-clamp*0.74);
+
+  // caliper body
+  c.beginPath(); c.roundRect(cx2-cW*0.58, cY-5, cW, cH+10, 4);
+  c.fillStyle='#1e2028'; c.fill();
+  c.lineWidth=1; c.strokeStyle='rgba(255,255,255,0.13)'; c.stroke();
+
+  // bolts
+  for (let bi=0;bi<2;bi++) {
+    const bx=cx2-cW*0.58+cW*0.16+bi*cW*0.64;
+    const by=cY+cH*0.5;
+    c.beginPath(); c.arc(bx,by,sz*0.013,0,Math.PI*2);
+    c.fillStyle='#303240'; c.fill();
+    c.lineWidth=1; c.strokeStyle='rgba(255,255,255,0.09)'; c.stroke();
+  }
+
+  // pistons
+  for (let pi=0;pi<2;pi++) {
+    const py=cY+cH*(0.25+pi*0.5);
+    c.beginPath(); c.arc(cx2-cW*0.09,py,sz*0.019,0,Math.PI*2);
+    c.fillStyle='#2a2c38'; c.fill();
+    c.lineWidth=1; c.strokeStyle='rgba(255,255,255,0.07)'; c.stroke();
+    c.beginPath(); c.arc(cx2+sz*0.006+clamp*sz*0.009,py,sz*0.013,0,Math.PI*2);
+    c.fillStyle='#42445a'; c.fill();
+  }
+
+  // pad gradient
+  const padC = pad.color;
+  const padGrd = c.createLinearGradient(0,0,pThk,0);
+  padGrd.addColorStop(0,padC+'88'); padGrd.addColorStop(1,padC+'cc');
+
+  // inner pad (piston side)
+  const piX = cx2 + pGap;
+  c.beginPath(); c.roundRect(piX, cY+cH*0.05, pThk, cH*0.9, 2);
+  c.fillStyle=padGrd; c.fill();
+  c.lineWidth=1; c.strokeStyle=padC+'55'; c.stroke();
+
+  // contact glow inner
+  if (clamp > 0.08) {
+    const cgX = piX+pThk;
+    c.beginPath(); c.rect(cgX-1,cY+cH*0.05,sz*0.009,cH*0.9);
+    const cg=c.createLinearGradient(cgX,0,cgX+sz*0.009,0);
+    const ci=clamp*(0.45+0.55*(T/T_MAX));
+    cg.addColorStop(0,tempColor(T+50,0.95*ci)); cg.addColorStop(1,'transparent');
+    c.fillStyle=cg; c.fill();
+  }
+
+  // outer pad (fixed side)
+  const poX = cx2 - pGap - pThk;
+  c.beginPath(); c.roundRect(poX,cY+cH*0.05,pThk,cH*0.9,2);
+  c.fillStyle=padGrd; c.fill();
+  c.lineWidth=1; c.strokeStyle=padC+'55'; c.stroke();
+
+  // contact glow outer
+  if (clamp > 0.08) {
+    c.beginPath(); c.rect(poX-sz*0.007,cY+cH*0.05,sz*0.009,cH*0.9);
+    const cg2=c.createLinearGradient(poX,0,poX-sz*0.009,0);
+    const ci2=clamp*(0.45+0.55*(T/T_MAX));
+    cg2.addColorStop(0,tempColor(T+50,0.95*ci2)); cg2.addColorStop(1,'transparent');
+    c.fillStyle=cg2; c.fill();
+  }
+
+  // ── hub (rotates)
+  c.save(); c.translate(cx,cy); c.rotate(state.rotAngle);
+  const hg=c.createRadialGradient(-hubR*0.2,-hubR*0.2,0,0,0,hubR);
+  hg.addColorStop(0,'#54566e'); hg.addColorStop(1,'#1c1e25');
+  c.beginPath(); c.arc(0,0,hubR,0,Math.PI*2);
+  c.fillStyle=hg; c.fill();
+  c.lineWidth=2; c.strokeStyle='rgba(255,255,255,0.09)'; c.stroke();
+  c.beginPath(); c.arc(0,0,hubR*0.28,0,Math.PI*2);
+  c.fillStyle='#0a0a0c'; c.fill();
+  c.restore();
+
+  // ── heat sparks (high temp + braking)
+  if (T > 320 && clamp > 0.25) {
+    const sc = Math.floor((T-320)/90);
+    for (let i=0;i<Math.min(sc,7);i++) {
+      const a=Math.random()*Math.PI*2;
+      const pr=rR*(0.82+Math.random()*0.28);
+      c.beginPath(); c.arc(cx+Math.cos(a)*pr,cy+Math.sin(a)*pr,Math.random()*sz*0.007+sz*0.003,0,Math.PI*2);
+      c.fillStyle=tempColor(T+120,0.65*Math.random()); c.fill();
+    }
+  }
+
+  // ── outgassing vapor
+  if ((padKey==='organic'||padKey==='ceramic') && T>PADS[padKey].fadeStart*0.82 && clamp>0.18) {
+    const vap=Math.min(1,(T-PADS[padKey].fadeStart*0.82)/(PADS[padKey].fullFade*0.5));
+    for (let i=0;i<5;i++) {
+      const vx=piX+Math.random()*5;
+      const vy=cY+cH*0.15+Math.random()*cH*0.7;
+      c.beginPath(); c.arc(vx,vy,sz*0.014+Math.random()*sz*0.016,0,Math.PI*2);
+      c.fillStyle=`rgba(210,190,110,${0.07*vap})`; c.fill();
+    }
+  }
+
+  // ── speed label
+  c.font=`${sz*0.030}px 'Share Tech Mono',monospace`;
+  c.fillStyle='rgba(255,255,255,0.22)'; c.textAlign='center';
+  c.fillText(state.speed.toFixed(0)+' km/h', cx, cy+R*1.13);
+}
+
+// ═══════════════════════════════════════════════
+// DRAW μ(T) CHART (static + moving cursor)
+// ═══════════════════════════════════════════════
+function drawMuChart() {
+  const c = mCtx;
+  const W = mCanvas.width, H = mCanvas.height;
+  if (W<10||H<10) return;
+  const PL=32,PR=6,PT=6,PB=18;
+  const pw=W-PL-PR, ph=H-PT-PB;
+
+  c.clearRect(0,0,W,H);
+  c.fillStyle='#18181d'; c.fillRect(PL,PT,pw,ph);
+
+  // grid
+  for (let i=0;i<=5;i++) {
+    const y=PT+ph*i/5;
+    c.beginPath(); c.moveTo(PL,y); c.lineTo(PL+pw,y);
+    c.strokeStyle='rgba(255,255,255,0.04)'; c.lineWidth=1; c.stroke();
+    const mu=MU_CHART_MAX-i*(MU_CHART_MAX/5);
+    c.font="9px 'Share Tech Mono',monospace"; c.fillStyle='#42465a'; c.textAlign='right';
+    c.fillText(mu.toFixed(2),PL-3,y+3);
+  }
+  for (let i=0;i<=9;i++) {
+    const x=PL+pw*i/9;
+    c.beginPath(); c.moveTo(x,PT); c.lineTo(x,PT+ph);
+    c.strokeStyle='rgba(255,255,255,0.03)'; c.lineWidth=1; c.stroke();
+    const t=i*100;
+    c.font="9px 'Share Tech Mono',monospace"; c.fillStyle='#42465a'; c.textAlign='center';
+    c.fillText(t+'°',x,PT+ph+13);
+  }
+
+  // curves
+  const colors = {organic:'#2dbd6e',ceramic:'#3a8fff',sintered:'#ff4500'};
+  Object.keys(colors).forEach(pk=>{
+    c.beginPath();
+    for (let T=20;T<=900;T+=5) {
+      const mu=muAt(pk,T);
+      const x=PL+(T-20)/880*pw;
+      const y=PT+ph*(1-mu/MU_CHART_MAX);
+      T===20?c.moveTo(x,y):c.lineTo(x,y);
+    }
+    c.strokeStyle=colors[pk]; c.lineWidth=1.8; c.stroke();
+  });
+
+  // vertical cursor at current temp
+  const curT = Math.min(state.rotorT, 900);
+  const curX = PL+(curT-20)/880*pw;
+  c.beginPath(); c.moveTo(curX,PT); c.lineTo(curX,PT+ph);
+  c.strokeStyle='rgba(255,255,255,0.35)'; c.lineWidth=1.5;
+  c.setLineDash([3,3]); c.stroke(); c.setLineDash([]);
+
+  // dot on active pad curve
+  const curMu = muAt(state.padKey, curT);
+  const curY  = PT+ph*(1-curMu/MU_CHART_MAX);
+  c.beginPath(); c.arc(curX,curY,4,0,Math.PI*2);
+  c.fillStyle=colors[state.padKey]; c.fill();
+
+  // temp label
+  c.font="9px 'Share Tech Mono',monospace"; c.fillStyle='rgba(255,255,255,0.5)'; c.textAlign='center';
+  c.fillText(curT.toFixed(0)+'°C', Math.min(curX,PL+pw-18), PT+10);
+}
+
+// ═══════════════════════════════════════════════
+// DRAW TEMP HISTORY PLOT
+// ═══════════════════════════════════════════════
+function drawPlot() {
+  const c=pCtx;
+  const W=pCanvas.width,H=pCanvas.height;
+  if(W<10||H<10) return;
+  c.clearRect(0,0,W,H);
+  const PL=36,PR=6,PT=5,PB=20;
+  const pw=W-PL-PR,ph=H-PT-PB;
+
+  c.fillStyle='#111114'; c.fillRect(PL,PT,pw,ph);
+
+  // grid
+  for(let i=0;i<=5;i++){
+    const y=PT+ph*i/5;
+    c.beginPath(); c.moveTo(PL,y); c.lineTo(PL+pw,y);
+    c.strokeStyle='rgba(255,255,255,0.04)'; c.lineWidth=1; c.stroke();
+    const t=T_MAX-(T_MAX-T_AMB)*i/5;
+    c.font="9px 'Share Tech Mono',monospace"; c.fillStyle='#42465a'; c.textAlign='right';
+    c.fillText(t.toFixed(0),PL-3,y+3);
+  }
+
+  // threshold lines
+  [{T:300,c:'#2dbd6e'},{T:400,c:'#3a8fff'},{T:550,c:'#ff4500'}].forEach(th=>{
+    const y=PT+ph*(1-(th.T-T_AMB)/(T_MAX-T_AMB));
+    c.beginPath(); c.moveTo(PL,y); c.lineTo(PL+pw,y);
+    c.strokeStyle=th.c+'55'; c.lineWidth=1;
+    c.setLineDash([4,4]); c.stroke(); c.setLineDash([]);
+  });
+
+  const hist=state.history;
+  if(hist.length<2) return;
+  const tMin=hist[0].t, tMax=Math.max(hist[hist.length-1].t,tMin+5000);
+  const tRange=tMax-tMin;
+
+  // area
+  c.beginPath();
+  hist.forEach((pt,i)=>{
+    const x=PL+(pt.t-tMin)/tRange*pw;
+    const y=PT+ph*(1-(pt.T-T_AMB)/(T_MAX-T_AMB));
+    i===0?c.moveTo(x,y):c.lineTo(x,y);
+  });
+  c.lineTo(PL+pw,PT+ph); c.lineTo(PL,PT+ph);
+  const ag=c.createLinearGradient(0,PT,0,PT+ph);
+  ag.addColorStop(0,'rgba(255,69,0,0.18)'); ag.addColorStop(1,'rgba(255,69,0,0.01)');
+  c.fillStyle=ag; c.fill();
+
+  // line
+  c.beginPath();
+  hist.forEach((pt,i)=>{
+    const x=PL+(pt.t-tMin)/tRange*pw;
+    const y=PT+ph*(1-(pt.T-T_AMB)/(T_MAX-T_AMB));
+    i===0?c.moveTo(x,y):c.lineTo(x,y);
+  });
+  c.strokeStyle='#dde1ea'; c.lineWidth=1.5; c.stroke();
+
+  // x labels
+  for(let i=0;i<=5;i++){
+    const x=PL+pw*i/5;
+    const t=tMin+tRange*i/5;
+    c.font="9px 'Share Tech Mono',monospace"; c.fillStyle='#42465a'; c.textAlign='center';
+    c.fillText(((t-tMin)/1000).toFixed(0)+'s',x,PT+ph+14);
+  }
+}
+
+// ═══════════════════════════════════════════════
+// UPDATE UI PANELS
+// ═══════════════════════════════════════════════
+function updateUI() {
+  const T=state.rotorT;
+  const padKey=state.padKey;
+  const pad=PADS[padKey];
+  const mu=muAt(padKey,T);
+  const braking=state.braking;
+  const v=state.speed;
+
+  // stat displays
+  const tEl=document.getElementById('tempDisplay');
+  tEl.textContent=T.toFixed(0)+'°C';
+  tEl.className='stat-val'+(T>pad.fadeStart?' hot':T>pad.fadeStart*0.65?' warm':' cool');
+
+  document.getElementById('speedDisplay').textContent=v.toFixed(0)+' km/h';
+  const slopeDeg2 = +document.getElementById('slopeSlider').value;
+  document.getElementById('slopeDisplay').textContent = slopeDeg2 + '°';
+
+  const vMs2 = v/3.6;
+  const slopeRad2 = slopeDeg2*Math.PI/180;
+  let Qdot_total_ui = 0;
+  if (braking) {
+    if (v > 0.2) {
+      const F_grav_ui = 175 * 9.81 * Math.sin(slopeRad2);
+      const F_eff_ui  = F_CLAMP + F_grav_ui;
+      Qdot_total_ui = P_HEAT * F_eff_ui * mu * vMs2;
+    } else {
+      const F_grav_ui = 175 * 9.81 * Math.sin(slopeRad2);
+      const v_creep_ui = Math.max(0.02, F_grav_ui / (F_CLAMP * Math.max(mu, 0.05)));
+      const T_excess_ui = Math.max(0, T - T_AMB);
+      Qdot_total_ui = P_HEAT * F_grav_ui * mu * v_creep_ui + 0.55 * T_excess_ui;
+    }
+  }
+  const h2       = hConv(v);
+  const tau_r2   = (M_R*C_P)/(h2*A_R);
+  const Qdot_out = (T-T_AMB)/tau_r2*M_R*C_P;
+
+  document.getElementById('forceDisplay').textContent = braking ? (F_CLAMP*mu).toFixed(0)+' N' : '0 N';
+  const heatStr = Qdot_total_ui >= 1000 ? (Qdot_total_ui/1000).toFixed(1)+' kW'
+                : Qdot_total_ui > 0     ? Qdot_total_ui.toFixed(0)+' W' : '0 W';
+  document.getElementById('heatDisplay').textContent = heatStr;
+  const coolStr = Qdot_out >= 1000 ? (Qdot_out/1000).toFixed(2)+' kW'
+                : Qdot_out.toFixed(0)+' W';
+  document.getElementById('coolDisplay').textContent = coolStr;
+
+  // temp gauge
+  const gPct=Math.min(100,(T-T_AMB)/(T_MAX-T_AMB)*100);
+  const gEl=document.getElementById('tempGauge');
+  gEl.style.width=gPct+'%';
+  gEl.style.background=T>500?'#ff2200':T>300?'#f0a500':'#2dbd6e';
+
+  // threshold ticks (build once)
+  const tw=document.getElementById('thresholdTicks');
+  if(!tw._built){
+    tw._built=true;
+    [{T:300,c:'#2dbd6e',l:'Org'},{T:400,c:'#3a8fff',l:'Cer'},{T:550,c:'#ff4500',l:'Sin'}].forEach(th=>{
+      const pct=(th.T-T_AMB)/(T_MAX-T_AMB)*100;
+      const d=document.createElement('div');
+      d.style.cssText=`position:absolute;left:${pct}%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:1px;`;
+      d.innerHTML=`<div style="width:1px;height:9px;background:${th.c};opacity:0.75"></div><span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:${th.c};white-space:nowrap">${th.l} ${th.T}°</span>`;
+      tw.appendChild(d);
+    });
+  }
+
+  // μ display
+  const muEl=document.getElementById('muDisplay');
+  muEl.textContent=mu.toFixed(3);
+  const muColor=T>=pad.fullFade?'#ff4444':T>=pad.fadeStart?'#f0a500':'#2dbd6e';
+  muEl.style.color=muColor;
+  const mBar=document.getElementById('muBar');
+  mBar.style.width=(mu/MU_CHART_MAX*100)+'%';
+  mBar.style.background=muColor;
+
+  const fsEl=document.getElementById('fadeStateEl');
+  if(T>=pad.fullFade){fsEl.textContent='⚠ FULL FADE';fsEl.className='fade-state state-fade';}
+  else if(T>=pad.fadeStart){fsEl.textContent='⚡ FADE ONSET';fsEl.className='fade-state state-onset';}
+  else{fsEl.textContent='✓ NORMAL';fsEl.className='fade-state state-normal';}
+
+  // pad info
+  document.getElementById('padNameDisplay').textContent=pad.name;
+  document.getElementById('padFadeOnset').textContent=pad.fadeStart+'°C';
+  document.getElementById('padFullFade').textContent=pad.fullFade+'°C';
+  document.getElementById('padMech').textContent=pad.mech;
+  document.getElementById('padWear').textContent=pad.wear;
+  document.getElementById('padNote').textContent=pad.note;
+
+  // canvas ambient glow
+  const gf=Math.max(0,(T-150)/400);
+  document.getElementById('canvasGlow').style.background=
+    gf>0?`radial-gradient(ellipse at center,${tempColor(T,0.17*gf)} 8%,transparent 68%)`:'';
+}
+
+// ═══════════════════════════════════════════════
+// PHYSICS TICK
+// ═══════════════════════════════════════════════
+function physicsTick(dt) {
+  const T      = state.rotorT;
+  const v      = state.speed;
+  const padKey = state.padKey;
+  const mu     = muAt(padKey, T);
+  const slopeDeg = +document.getElementById('slopeSlider').value;
+  const slopeRad = slopeDeg * Math.PI / 180;
+
+  // ── Convective cooling (real τ, scaled for sim playability) ──
+  // At 0 km/h only natural convection (h≈15), so cooling is very slow — realistic
+  const h        = hConv(v);
+  const tau_real = (M_R * C_P) / (h * A_R);
+  // While braking: real τ (no scale) so heat wins. Not braking: 8× faster for playability.
+  const coolScale= state.braking ? SIM_COOL_SCALE_BRAKING : SIM_COOL_SCALE_IDLE;
+  const tau_sim  = tau_real / coolScale;
+  const dT_cool  = -(T - T_AMB) / tau_sim * dt;
+
+  // ── Heat input from braking ──
+  // Three sources:
+  // 1. Kinetic friction: F·μ·v  (dominant at speed, zero at standstill)
+  // 2. Slope gravity drag braking: rider holds brake to prevent rolling — weight
+  //    component along slope mg·sin(θ) must be balanced by brake. Even at v=0 or
+  //    creep speed, the pad is pressed against the rotor with the clamp force that
+  //    exactly opposes rolling — that sliding still generates heat. We model this
+  //    as a minimum effective velocity = creep speed from gravity (mg·sinθ / drag).
+  // 3. Thermal soak from pad contact at standstill: when clamped against a hot
+  //    rotor with zero airflow, the interface temperature equilibrates. Small but
+  //    non-zero residual heat (pad conduction back into rotor surface). ~150–300 W.
+  let dT_heat = 0;
+  let Qdot_friction = 0;
+  let Qdot_slope    = 0;
+  let Qdot_soak     = 0;
+
+  if (state.braking) {
+    const M_BIKE = 175; // kg total
+
+    if (v > 0.2) {
+      // Normal kinetic friction braking
+      const vMs = v / 3.6;
+      // On a downhill slope rider must press harder to hold/decelerate —
+      // effective brake force = F_CLAMP + mg·sinθ. Both heat and decel use the
+      // same force so the model stays consistent (no double-counting).
+      const F_gravity   = M_BIKE * 9.81 * Math.sin(slopeRad);
+      const F_effective = F_CLAMP + F_gravity; // total force at pad-rotor interface
+      Qdot_friction = P_HEAT * F_effective * mu * vMs;
+
+      // Net decel force = effective brake friction − gravity component pulling bike forward
+      const decel = Math.max(0, F_effective * mu - F_gravity) / M_BIKE;
+      state.speed = Math.max(0, v - decel * dt * 3.6); // dt*3.6: m/s²→km/h/s
+
+    } else {
+      // At (near) standstill with brake held:
+      // Pad resists gravity via clamp friction; slight creep = mg·sinθ / (F_CLAMP·μ)
+      // F_CLAMP is already the total net clamp force — no ÷2.
+      const F_gravity  = M_BIKE * 9.81 * Math.sin(slopeRad);
+      const v_creep    = Math.max(0.02, F_gravity / (F_CLAMP * Math.max(mu, 0.05))); // m/s
+      Qdot_slope       = P_HEAT * F_gravity * mu * v_creep;
+
+      // Heat soak: pad-rotor conduction at standstill — ΔT-driven, like all heat transfer.
+      // More heat conducts back into the rotor surface as rotor temp rises.
+      // k_soak calibrated so ~200 W at 400°C, ~0 W near ambient — physically correct.
+      // Equilibrium at ~330°C — organic fades, ceramic barely, sintered safe (correct behaviour)
+      const T_excess = Math.max(0, T - T_AMB);
+      Qdot_soak = 0.55 * T_excess; // ~200 W at 400°C, ~150 W at 300°C
+
+      state.speed = 0;
+    }
+
+    const Qdot_total = Qdot_friction + Qdot_slope + Qdot_soak;
+    dT_heat = Qdot_total / (M_R * C_P) * dt;
+
+  } else {
+    // Not braking — on a slope, bike rolls, speed recovers toward slider
+    const target = +document.getElementById('speedSlider').value;
+    // Gravity acceleration on slope when no brake
+    const a_gravity = 9.81 * Math.sin(slopeRad) * 3.6; // km/h per s
+    state.speed = Math.min(target, v + (10 + a_gravity) * dt);
+  }
+
+  state.rotorT = Math.max(T_AMB, T + dT_heat + dT_cool);
+
+  // ── Wheel rotation ──
+  const omega = (state.speed/3.6) / 0.30;
+  state.rotAngle += omega*dt;
+
+  // ── Caliper animation ──
+  const target = state.braking ? 1 : 0;
+  state.clampAnim += (target - state.clampAnim) * Math.min(1, dt*14);
+
+  // ── History (every 120ms) ──
+  const now=Date.now();
+  if(state.history.length===0||now-state.history[state.history.length-1].t>120){
+    state.history.push({t:now,T:state.rotorT});
+    if(state.history.length>600) state.history.shift();
+  }
+}
+
+// ═══════════════════════════════════════════════
+// MAIN LOOP
+// ═══════════════════════════════════════════════
+function loop(ts) {
+  const dt = state.lastFrame ? Math.min((ts-state.lastFrame)/1000, 0.05) : 0.016;
+  state.lastFrame = ts;
+  physicsTick(dt);
+  drawWheel();
+  drawPlot();
+  drawMuChart();
+  updateUI();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// ═══════════════════════════════════════════════
+// INPUT
+// ═══════════════════════════════════════════════
+const brakeBtn = document.getElementById('brakeBtn');
+function startBrake(e){ e.preventDefault(); state.braking=true; brakeBtn.classList.add('pressing'); }
+function stopBrake(){ state.braking=false; brakeBtn.classList.remove('pressing'); }
+brakeBtn.addEventListener('mousedown',startBrake);
+brakeBtn.addEventListener('touchstart',startBrake,{passive:false});
+document.addEventListener('mouseup',stopBrake);
+document.addEventListener('touchend',stopBrake);
+
+// Spacebar = brake
+document.addEventListener('keydown',e=>{ if(e.code==='Space'&&!e.repeat){ e.preventDefault(); startBrake(e); } });
+document.addEventListener('keyup',e=>{ if(e.code==='Space') stopBrake(); });
+
+document.getElementById('speedSlider').addEventListener('input',function(){
+  document.getElementById('speedSliderLabel').textContent=this.value+' km/h';
+  if(!state.braking) state.speed=+this.value;
+});
+
+document.getElementById('slopeSlider').addEventListener('input',function(){
+  document.getElementById('slopeSliderLabel').textContent=this.value+'°';
+});
+
+document.querySelectorAll('.pad-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.pad-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    state.padKey=btn.dataset.pad;
+  });
+});
+
+document.getElementById('resetBtn').addEventListener('click',()=>{
+  state.rotorT=T_AMB;
+  state.history=[];
+  state.speed=+document.getElementById('speedSlider').value;
+  state.clampAnim=0;
+});
+</script>
+</body>
+</html>
