@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bolt Grade & Torque Reference — Indian Performance Bikes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Sora:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface2: #222222;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.15);
+    --text: #e8e8e4;
+    --muted: #888880;
+    --faint: #444440;
+    --green: #4ade80;
+    --green-bg: rgba(74,222,128,0.08);
+    --green-border: rgba(74,222,128,0.2);
+    --blue: #60a5fa;
+    --blue-bg: rgba(96,165,250,0.08);
+    --blue-border: rgba(96,165,250,0.2);
+    --amber: #fbbf24;
+    --amber-bg: rgba(251,191,36,0.08);
+    --amber-border: rgba(251,191,36,0.2);
+    --red: #f87171;
+    --red-bg: rgba(248,113,113,0.08);
+    --red-border: rgba(248,113,113,0.25);
+    --radius: 8px;
+    --radius-lg: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Sora', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+
+  /* Layout */
+  .page { max-width: 880px; margin: 0 auto; padding: 40px 20px 80px; }
+  .header { border-bottom: 1px solid var(--border); padding-bottom: 28px; margin-bottom: 36px; }
+  .header h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.3px; margin-bottom: 6px; }
+  .header p { color: var(--muted); font-size: 13px; line-height: 1.7; max-width: 560px; }
+  .disclaimer {
+    background: var(--red-bg);
+    border: 1px solid var(--red-border);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    margin-bottom: 36px;
+    font-size: 12px;
+    color: var(--red);
+    line-height: 1.7;
+  }
+  .disclaimer strong { font-weight: 600; }
+
+  /* Section titles */
+  .section-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--faint);
+    margin-bottom: 14px;
+  }
+  .section { margin-bottom: 48px; }
+
+  /* Grade cards */
+  .grade-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .grade-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 18px 16px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .grade-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .grade-card.g88::before { background: var(--green); }
+  .grade-card.g109::before { background: var(--blue); }
+  .grade-card.g129::before { background: var(--amber); }
+  .grade-card.active::before { opacity: 1; }
+  .grade-card.active.g88 { border-color: var(--green-border); background: var(--green-bg); }
+  .grade-card.active.g109 { border-color: var(--blue-border); background: var(--blue-bg); }
+  .grade-card.active.g129 { border-color: var(--amber-border); background: var(--amber-bg); }
+  .grade-card:hover { border-color: var(--border2); }
+  .grade-num { font-size: 28px; font-weight: 600; margin-bottom: 2px; font-family: 'IBM Plex Mono', monospace; }
+  .g88 .grade-num { color: var(--green); }
+  .g109 .grade-num { color: var(--blue); }
+  .g129 .grade-num { color: var(--amber); }
+  .grade-uts { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+  .grade-yield { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+  .grade-use { font-size: 11px; color: var(--muted); line-height: 1.6; border-top: 1px solid var(--border); padding-top: 10px; }
+
+  /* Stress-strain chart */
+  .chart-wrap { position: relative; width: 100%; height: 280px; }
+
+  /* Legend */
+  .legend { display: flex; gap: 20px; margin-bottom: 12px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); }
+  .legend-line { width: 28px; height: 2px; border-radius: 1px; }
+
+  /* Divider */
+  .divider { height: 1px; background: var(--border); margin: 40px 0; }
+
+  /* Calculator */
+  .calc-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+  }
+  .calc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+  .input-group { display: flex; flex-direction: column; gap: 6px; }
+  .input-label { font-size: 12px; color: var(--muted); }
+  .input-sub { font-size: 11px; color: var(--faint); margin-top: -3px; }
+  select, input[type=number] {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'Sora', sans-serif;
+    font-size: 13px;
+    padding: 8px 10px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.15s;
+    -webkit-appearance: none;
+  }
+  select:focus, input:focus { border-color: var(--border2); }
+  select option { background: #1a1a1a; }
+  .slider-row { display: flex; align-items: center; gap: 10px; }
+  input[type=range] {
+    flex: 1;
+    -webkit-appearance: none;
+    height: 3px;
+    background: var(--border2);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--text);
+    cursor: pointer;
+  }
+  .slider-val { font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 500; min-width: 40px; text-align: right; }
+  .result-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .result-num { font-family: 'IBM Plex Mono', monospace; font-size: 36px; font-weight: 500; }
+  .result-unit { font-size: 14px; color: var(--muted); }
+  .result-formula { font-size: 12px; color: var(--faint); margin-left: auto; }
+  .warn-box {
+    background: var(--red-bg);
+    border: 1px solid var(--red-border);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--red);
+    margin-top: 10px;
+    display: none;
+  }
+
+  /* Torque table */
+  .table-scroll { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    table-layout: fixed;
+  }
+  th {
+    text-align: left;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--faint);
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 11px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface); }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .b88 { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+  .b109 { background: var(--blue-bg); color: var(--blue); border: 1px solid var(--blue-border); }
+  .b129 { background: var(--amber-bg); color: var(--amber); border: 1px solid var(--amber-border); }
+  .crit { font-size: 10px; background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); padding: 1px 6px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
+  .td-muted { color: var(--muted); }
+
+  /* Filter tabs */
+  .filter-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+  .ftab {
+    padding: 5px 13px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-size: 12px;
+    font-family: 'Sora', sans-serif;
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+  .ftab:hover { border-color: var(--border2); color: var(--text); }
+  .ftab.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+  /* References */
+  .refs { margin-top: 40px; }
+  .ref-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .ref-item:last-child { border-bottom: none; }
+  .ref-num { color: var(--faint); font-family: 'IBM Plex Mono', monospace; flex-shrink: 0; }
+  .ref-item a { color: var(--blue); text-decoration: none; }
+  .ref-item a:hover { text-decoration: underline; }
+
+  /* Footer */
+  .footer {
+    margin-top: 60px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--faint);
+    line-height: 1.8;
+  }
+
+  @media (max-width: 600px) {
+    .grade-grid { grid-template-columns: 1fr; }
+    .calc-grid { grid-template-columns: 1fr; }
+    th:nth-child(5), td:nth-child(5) { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <h1>Bolt grade & torque reference</h1>
+    <p>Engineering reference for common fastener grades and typical torque ranges on Indian performance motorcycles. Cross-referenced from publicly available service manuals.</p>
+  </div>
+
+  <div class="disclaimer">
+    <strong>Important:</strong> This is an educational reference only. Torque values shown are general ranges compiled from publicly available service manuals and are not a substitute for your manufacturer's service manual. Always verify torque specs from your bike's official service documentation before any work. Incorrect torque can cause component failure, injury, or death.
+  </div>
+
+  <!-- Grade Reference -->
+  <div class="section">
+    <p class="section-label">Bolt grade reference — click to sync calculator</p>
+    <div class="grade-grid">
+      <div class="grade-card g88" onclick="selectGrade('8.8')" id="card-88">
+        <div class="grade-num">8.8</div>
+        <div class="grade-uts">800 MPa ultimate tensile strength</div>
+        <div class="grade-yield">640 MPa yield strength</div>
+        <div class="grade-use">Non-structural fasteners. Body panels, mirrors, oil drain plug, exhaust studs, covers, bracket bolts.</div>
+      </div>
+      <div class="grade-card g109 active" onclick="selectGrade('10.9')" id="card-109">
+        <div class="grade-num">10.9</div>
+        <div class="grade-uts">1000 MPa ultimate tensile strength</div>
+        <div class="grade-yield">900 MPa yield strength</div>
+        <div class="grade-use">Structural joints. Suspension mounts, wheel axles, swingarm pivot, engine mounts, disc bolts.</div>
+      </div>
+      <div class="grade-card g129" onclick="selectGrade('12.9')" id="card-129">
+        <div class="grade-num">12.9</div>
+        <div class="grade-uts">1200 MPa ultimate tensile strength</div>
+        <div class="grade-yield">1080 MPa yield strength</div>
+        <div class="grade-use">Safety-critical joints only. Brake calipers, steering stem, axle pinch bolts — highest consequence of failure.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stress-Strain -->
+  <div class="section">
+    <p class="section-label">Stress–strain curves by grade</p>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-line" style="background:var(--green)"></div> 8.8</div>
+      <div class="legend-item"><div class="legend-line" style="background:var(--blue);border-top:2px dashed var(--blue);height:0;margin-top:1px"></div> 10.9</div>
+      <div class="legend-item"><div class="legend-line" style="background:transparent;border-top:2px dotted var(--amber);height:0;margin-top:1px"></div> 12.9</div>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="ssChart" role="img" aria-label="Stress-strain curves for bolt grades 8.8, 10.9, and 12.9 showing elastic region, yield point, plastic region, and fracture. Higher grades have higher yield and ultimate tensile strength.">
+        Stress-strain data: 8.8 yields at 640 MPa UTS 800 MPa; 10.9 yields at 900 MPa UTS 1000 MPa; 12.9 yields at 1100 MPa UTS 1220 MPa.
+      </canvas>
+    </div>
+    <p style="font-size:11px;color:var(--faint);margin-top:10px;">Curves are illustrative and based on standard grade definitions (ISO 898-1). Actual curves vary by manufacturer and heat treatment.</p>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Torque Calculator -->
+  <div class="section">
+    <p class="section-label">Torque calculator — T = K × F × d</p>
+    <div class="calc-card">
+      <div class="calc-grid">
+        <div class="input-group">
+          <span class="input-label">Bolt diameter (d)</span>
+          <select id="d-sel" onchange="calcTorque()">
+            <option value="0.005">M5 — 5 mm</option>
+            <option value="0.006">M6 — 6 mm</option>
+            <option value="0.008" selected>M8 — 8 mm</option>
+            <option value="0.010">M10 — 10 mm</option>
+            <option value="0.012">M12 — 12 mm</option>
+            <option value="0.014">M14 — 14 mm</option>
+            <option value="0.016">M16 — 16 mm</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <span class="input-label">Bolt grade</span>
+          <select id="grade-sel" onchange="calcTorque()">
+            <option value="640">8.8 — yield 640 MPa</option>
+            <option value="900" selected>10.9 — yield 900 MPa</option>
+            <option value="1080">12.9 — yield 1080 MPa</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <span class="input-label">Target clamp force F</span>
+          <span class="input-sub">Desired preload in kilonewtons</span>
+          <div class="slider-row">
+            <input type="range" id="f-slider" min="1" max="80" step="1" value="20" oninput="document.getElementById('f-out').textContent=this.value; calcTorque()">
+            <span class="slider-val" id="f-out">20</span>
+            <span style="font-size:11px;color:var(--muted)">kN</span>
+          </div>
+        </div>
+        <div class="input-group">
+          <span class="input-label">Friction factor K</span>
+          <span class="input-sub">Dry ~0.20 · Lubricated ~0.15 · Loctite ~0.12</span>
+          <div class="slider-row">
+            <input type="range" id="k-slider" min="0.10" max="0.25" step="0.01" value="0.20" oninput="document.getElementById('k-out').textContent=parseFloat(this.value).toFixed(2); calcTorque()">
+            <span class="slider-val" id="k-out">0.20</span>
+          </div>
+        </div>
+      </div>
+      <div class="result-box">
+        <span class="result-num" id="torque-result">32</span>
+        <span class="result-unit">Nm</span>
+        <span class="result-formula mono">T = K × F × d</span>
+      </div>
+      <div class="warn-box" id="yield-warn">
+        ⚠ Clamp force may exceed estimated bolt yield capacity for this size and grade — reduce preload or use a higher grade.
+      </div>
+    </div>
+    <p style="font-size:11px;color:var(--faint);margin-top:10px;">K factor is an empirical constant. Actual values depend on surface finish, lubrication, and thread condition. This calculator is for educational estimation only.</p>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Torque Table -->
+  <div class="section">
+    <p class="section-label">Common torque ranges — Indian performance bikes</p>
+    <div class="filter-bar">
+      <button class="ftab active" data-f="all" onclick="filterRows(this)">All</button>
+      <button class="ftab" data-f="braking" onclick="filterRows(this)">Braking</button>
+      <button class="ftab" data-f="suspension" onclick="filterRows(this)">Suspension</button>
+      <button class="ftab" data-f="wheels" onclick="filterRows(this)">Wheels</button>
+      <button class="ftab" data-f="engine" onclick="filterRows(this)">Engine</button>
+      <button class="ftab" data-f="chassis" onclick="filterRows(this)">Chassis</button>
+    </div>
+    <div class="table-scroll">
+      <table id="main-table">
+        <thead>
+          <tr>
+            <th style="width:28%">Location</th>
+            <th style="width:10%">Size</th>
+            <th style="width:13%">Grade</th>
+            <th style="width:17%">Typical range</th>
+            <th style="width:32%">Notes & source</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- References -->
+  <div class="refs section">
+    <p class="section-label">Source references</p>
+    <div class="ref-item">
+      <span class="ref-num">[1]</span>
+      <span>Yamaha YZF-R15 2019 Service Manual (BCW-F8197-E0) — Tightening Torques, pp. 37–42. Search on <a href="https://www.google.com/search?q=Yamaha+R15+2019+service+manual+tightening+torques+manualslib" target="_blank">Google → ManualsLib</a>. Manual ID: 3512143.</span>
+    </div>
+    <div class="ref-item">
+      <span class="ref-num">[2]</span>
+      <span>KTM 390 Duke EU 2013 Repair Manual — Engine & Chassis Tightening Torques, pp. 160–165. Cylinder head: 30 Nm (stage 1), 60 Nm (stage 2); fork stub: 15 Nm; engine bearer on frame: 30 Nm. Search on <a href="https://www.google.com/search?q=KTM+390+Duke+EU+2013+repair+manual+tightening+torques+manualslib" target="_blank">Google → ManualsLib</a>. Manual ID: 900485.</span>
+    </div>
+    <div class="ref-item">
+      <span class="ref-num">[3]</span>
+      <span>KTM 390 Duke 2019 Series Owner's Manual (3213939en) — Technical Data ch. 22, chassis & engine tightening torques. Search on <a href="https://www.google.com/search?q=KTM+390+Duke+2019+owner+manual+technical+data+torque+manualslib" target="_blank">Google → ManualsLib</a>. Manual ID: 1634988.</span>
+    </div>
+    <div class="ref-item">
+      <span class="ref-num">[4]</span>
+      <span>Kawasaki-Bajaj Pulsar 200NS Service Manual — Wheels/Tires chapter. Rear axle nut torque: 108 Nm. Available directly via <a href="https://manualzz.com/doc/57448118/kawasaki-bajaj-pulsar-200-ns-service-manual" target="_blank">Manualzz</a>.</span>
+    </div>
+    <div class="ref-item">
+      <span class="ref-num">[5]</span>
+      <span>ISO 898-1:2013 — Mechanical properties of fasteners made of carbon steel and alloy steel. Grade proof/yield/tensile definitions for 8.8, 10.9, 12.9. International Organization for Standardization.</span>
+    </div>
+    <div class="ref-item">
+      <span class="ref-num">[6]</span>
+      <span>Shigley's Mechanical Engineering Design, 10th Ed. (Budynas & Nisbett) — Ch. 8, Screws, Fasteners, and the Design of Nonpermanent Joints. Torque-tension relationship T = KFd, K-factor values for dry and lubricated conditions.</span>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>Created for educational purposes. All torque values are indicative ranges compiled from publicly available documentation. Do not use as a substitute for your manufacturer's service manual.</p>
+    <p style="margin-top:6px;">Sources: Yamaha Motor India, KTM AG, Kawasaki-Bajaj, ISO 898-1, Shigley's MED. Publicly available via ManualsLib & Manualzz.</p>
+  </div>
+
+</div>
+
+<script>
+const rows = [
+  { loc:'braking', name:'Brake caliper mount bolt', size:'M8', grade:'12.9', cls:'b129', range:'25–30 Nm', note:'Critical — highest consequence. Source: general OEM practice [1][2]', crit:true },
+  { loc:'braking', name:'Front brake disc bolt', size:'M8', grade:'10.9', cls:'b109', range:'18–22 Nm', note:'Often uses Loctite 243. Source: general OEM practice [2]', crit:true },
+  { loc:'braking', name:'Rear brake disc bolt', size:'M8', grade:'10.9', cls:'b109', range:'15–20 Nm', note:'Check for threadlocker requirement. Source: [2]', crit:true },
+  { loc:'braking', name:'Brake hose banjo bolt', size:'M10', grade:'10.9', cls:'b109', range:'20–25 Nm', note:'Replace copper washer each time. Source: general OEM practice', crit:true },
+  { loc:'braking', name:'Brake lever pivot', size:'M6', grade:'8.8', cls:'b88', range:'6–8 Nm', note:'Non-critical. Source: general OEM practice', crit:false },
+
+  { loc:'suspension', name:'Front axle pinch bolt', size:'M8', grade:'12.9', cls:'b129', range:'22–28 Nm', note:'Tighten after fork compression. Source: [1][2]', crit:true },
+  { loc:'suspension', name:'Fork clamp bolt — lower', size:'M8', grade:'10.9', cls:'b109', range:'20–23 Nm', note:'Tighten bottom clamp first. Source: [2]', crit:true },
+  { loc:'suspension', name:'Fork stub / bottom triple clamp', size:'M8', grade:'10.9', cls:'b109', range:'15 Nm', note:'KTM spec: 15 Nm. Source: [2]', crit:false },
+  { loc:'suspension', name:'Rear shock upper mount', size:'M10', grade:'10.9', cls:'b109', range:'35–40 Nm', note:'Source: general OEM practice', crit:true },
+  { loc:'suspension', name:'Rear shock lower mount', size:'M10', grade:'10.9', cls:'b109', range:'30–38 Nm', note:'Source: general OEM practice', crit:true },
+  { loc:'suspension', name:'Swingarm pivot bolt', size:'M14', grade:'10.9', cls:'b109', range:'55–65 Nm', note:'Grease pivot before assembly. Source: general OEM practice [1]', crit:true },
+
+  { loc:'wheels', name:'Front axle nut', size:'M14', grade:'10.9', cls:'b109', range:'55–65 Nm', note:'Use torque wrench only. Source: [1][2]', crit:true },
+  { loc:'wheels', name:'Rear axle nut', size:'M16', grade:'10.9', cls:'b109', range:'90–108 Nm', note:'Pulsar 200NS spec: 108 Nm. Source: [4]', crit:true },
+  { loc:'wheels', name:'Sprocket carrier bolt', size:'M8', grade:'10.9', cls:'b109', range:'20–24 Nm', note:'Check staking condition. Source: general OEM practice', crit:true },
+  { loc:'wheels', name:'Chain adjuster lock nut', size:'M8', grade:'8.8', cls:'b88', range:'12–16 Nm', note:'Recheck alignment after torquing. Source: general OEM practice', crit:false },
+
+  { loc:'engine', name:'Cylinder head bolt — stage 1', size:'M8', grade:'10.9', cls:'b109', range:'30 Nm', note:'KTM 390 spec: 30 Nm (oiled thread). Source: [2]', crit:false },
+  { loc:'engine', name:'Cylinder head bolt — stage 2', size:'M8', grade:'10.9', cls:'b109', range:'60 Nm', note:'KTM 390 spec: 60 Nm. Source: [2]', crit:false },
+  { loc:'engine', name:'Engine mount — frame bearer', size:'M10', grade:'10.9', cls:'b109', range:'30–50 Nm', note:'KTM spec: 30 Nm frame bearer. Source: [2]', crit:false },
+  { loc:'engine', name:'Spark plug', size:'M10', grade:'—', cls:'b88', range:'12–15 Nm', note:'Over-torquing strips alloy head. Source: [1]', crit:false },
+  { loc:'engine', name:'Oil drain plug', size:'M12', grade:'8.8', cls:'b88', range:'20–25 Nm', note:'Replace crush washer each service. Source: general OEM practice', crit:false },
+  { loc:'engine', name:'Exhaust header nut', size:'M8', grade:'8.8', cls:'b88', range:'18–22 Nm', note:'Re-torque after first heat cycle. Source: general OEM practice', crit:false },
+  { loc:'engine', name:'Clutch cover bolt', size:'M6', grade:'8.8', cls:'b88', range:'8–10 Nm', note:'Cross-pattern tightening sequence. Source: general OEM practice', crit:false },
+  { loc:'engine', name:'Camshaft retainer bolt', size:'M5', grade:'8.8', cls:'b88', range:'8 Nm', note:'Yamaha R15 spec: 8 Nm. Source: [1]', crit:false },
+
+  { loc:'chassis', name:'Handlebar clamp bolt', size:'M8', grade:'10.9', cls:'b109', range:'20–25 Nm', note:'Tighten rear bolts first. Source: general OEM practice', crit:false },
+  { loc:'chassis', name:'Steering stem nut', size:'M22', grade:'10.9', cls:'b109', range:'50–60 Nm', note:'Affects steering geometry — critical. Source: [1]', crit:true },
+  { loc:'chassis', name:'Footpeg bracket bolt', size:'M8', grade:'10.9', cls:'b109', range:'25–30 Nm', note:'Source: general OEM practice', crit:false },
+  { loc:'chassis', name:'Number plate bracket', size:'M6', grade:'8.8', cls:'b88', range:'5–7 Nm', note:'Same M6 as caliper bolt, different grade. Source: general OEM practice', crit:false },
+  { loc:'chassis', name:'Fairing inner screw', size:'M5', grade:'8.8', cls:'b88', range:'3–4 Nm', note:'Plastic thread — strip easily. Source: general OEM practice', crit:false },
+];
+
+function buildTable(filter='all') {
+  const tbody = document.getElementById('table-body');
+  const filtered = filter === 'all' ? rows : rows.filter(r => r.loc === filter);
+  tbody.innerHTML = filtered.map(r => `
+    <tr>
+      <td>${r.name}${r.crit ? '<span class="crit">critical</span>' : ''}</td>
+      <td class="td-muted mono">${r.size}</td>
+      <td><span class="badge ${r.cls}">${r.grade}</span></td>
+      <td class="mono" style="font-weight:500">${r.range}</td>
+      <td class="td-muted" style="font-size:12px">${r.note}</td>
+    </tr>
+  `).join('');
+}
+
+function filterRows(btn) {
+  document.querySelectorAll('.ftab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  buildTable(btn.dataset.f);
+}
+
+function selectGrade(g) {
+  ['card-88','card-109','card-129'].forEach(id => document.getElementById(id).classList.remove('active'));
+  const map = {'8.8':'card-88','10.9':'card-109','12.9':'card-129'};
+  document.getElementById(map[g]).classList.add('active');
+  const yieldMap = {'8.8':'640','10.9':'900','12.9':'1080'};
+  document.getElementById('grade-sel').value = yieldMap[g];
+  calcTorque();
+}
+
+function calcTorque() {
+  const K = parseFloat(document.getElementById('k-slider').value);
+  const F = parseFloat(document.getElementById('f-slider').value) * 1000;
+  const d = parseFloat(document.getElementById('d-sel').value);
+  const T = K * F * d;
+  document.getElementById('torque-result').textContent = Math.round(T);
+  const yieldMPa = parseFloat(document.getElementById('grade-sel').value);
+  const dMm = d * 1000;
+  const stressArea = Math.PI * Math.pow(dMm * 0.9743 / 2 - 0.9382 * (dMm < 10 ? 1.25 : 1.5), 2);
+  const maxF = (yieldMPa * stressArea) / 1000;
+  const fKn = parseFloat(document.getElementById('f-slider').value);
+  document.getElementById('yield-warn').style.display = fKn > maxF * 0.9 ? 'block' : 'none';
+}
+
+function buildChart() {
+  const grades = [
+    { label:'8.8', uts:800, yld:640, color:'#4ade80', dash:[] },
+    { label:'10.9', uts:1000, yld:900, color:'#60a5fa', dash:[8,4] },
+    { label:'12.9', uts:1200, yld:1080, color:'#fbbf24', dash:[3,4] },
+  ];
+  const E = 200000;
+  const datasets = grades.map(g => {
+    const eY = g.yld / E;
+    const eU = eY + 0.10;
+    const eF = eU + 0.04;
+    return {
+      label: g.label,
+      data: [
+        {x:0, y:0},
+        {x:+(eY*0.4).toFixed(6), y:g.yld*0.4},
+        {x:+eY.toFixed(6), y:g.yld},
+        {x:+(eY+0.018).toFixed(6), y:g.yld*1.005},
+        {x:+(eY+0.055).toFixed(6), y:g.uts},
+        {x:+eU.toFixed(6), y:g.uts},
+        {x:+eF.toFixed(6), y:g.uts*0.77},
+      ],
+      borderColor: g.color,
+      borderDash: g.dash,
+      borderWidth: 2,
+      pointRadius: 0,
+      tension: 0.3,
+      fill: false,
+    };
+  });
+  new Chart(document.getElementById('ssChart'), {
+    type:'line',
+    data:{ datasets },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      parsing:false,
+      plugins:{
+        legend:{ display:false },
+        tooltip:{
+          backgroundColor:'#1a1a1a',
+          borderColor:'rgba(255,255,255,0.1)',
+          borderWidth:1,
+          titleColor:'#888880',
+          bodyColor:'#e8e8e4',
+          callbacks:{
+            label: ctx => `${ctx.dataset.label}: ${Math.round(ctx.parsed.y)} MPa`
+          }
+        }
+      },
+      scales:{
+        x:{
+          type:'linear',
+          title:{ display:true, text:'Strain (ε)', color:'#444440', font:{size:11} },
+          ticks:{ callback: v => v.toFixed(3), color:'#444440', font:{size:10} },
+          grid:{ color:'rgba(255,255,255,0.05)' },
+          border:{ color:'rgba(255,255,255,0.1)' }
+        },
+        y:{
+          title:{ display:true, text:'Stress (MPa)', color:'#444440', font:{size:11} },
+          min:0, max:1400,
+          ticks:{ color:'#444440', font:{size:10} },
+          grid:{ color:'rgba(255,255,255,0.05)' },
+          border:{ color:'rgba(255,255,255,0.1)' }
+        }
+      }
+    }
+  });
+}
+
+buildTable();
+buildChart();
+calcTorque();
+</script>
+</body>
+</html>
