@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Powertrain Physics Visualizer · Apache RTR 160 4V vs Generic EV</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080b10;--bg1:#0e1318;--bg2:#141b22;
+  --surface:rgba(255,255,255,0.038);--surface2:rgba(255,255,255,0.065);
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --ice:#ff5722;--ice-lt:#ff8a50;--ice-dim:rgba(255,87,34,0.12);--ice-glow:rgba(255,87,34,0.28);
+  --ev:#00e5ff;--ev-lt:#80f0ff;--ev-dim:rgba(0,229,255,0.10);--ev-glow:rgba(0,229,255,0.22);
+  --text:#cdd5e0;--t2:rgba(205,213,224,0.52);--t3:rgba(205,213,224,0.28);
+  --green:#00e676;--yellow:#ffd740;--red:#ff5252;--purple:#ce93d8;--orange:#ffab40;
+  --r:10px;--r2:16px;
+  --mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);font-size:16px;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;line-height:1.55}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(rgba(255,255,255,0.016) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.016) 1px,transparent 1px);
+  background-size:52px 52px}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 55% 35% at 8% 5%,rgba(255,87,34,0.055) 0%,transparent 70%),
+             radial-gradient(ellipse 45% 35% at 92% 92%,rgba(0,229,255,0.055) 0%,transparent 70%)}
+.wrap{max-width:1620px;margin:0 auto;padding:0 22px;position:relative;z-index:1}
+
+/* ── DISCLAIMER BANNER ── */
+.disc-banner{background:rgba(255,171,64,0.09);border:1px solid rgba(255,171,64,0.25);border-left:3px solid var(--orange);border-radius:var(--r);padding:12px 16px;margin-bottom:20px;font-size:.88rem;color:var(--t2);line-height:1.6}
+.disc-banner strong{color:var(--orange)}
+.disc-banner a{color:var(--orange);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+.disc-banner a:hover{color:var(--yellow)}
+.disc-title{font-family:var(--mono);font-size:.62rem;letter-spacing:1.8px;text-transform:uppercase;color:var(--orange);margin-bottom:6px}
+
+/* ── HEADER ── */
+header{padding:24px 0 20px;border-bottom:1px solid var(--border);margin-bottom:22px}
+.hdr{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.hdr-l h1{font-size:1.45rem;font-weight:800;letter-spacing:-0.5px;color:var(--text);margin-bottom:5px}
+.hdr-l h1 .ice{color:var(--ice)}.hdr-l h1 .ev{color:var(--ev)}
+.tagline{font-family:var(--mono);font-size:.8rem;color:var(--text);background:var(--bg1);border:1px solid var(--border);border-left:3px solid var(--yellow);padding:9px 15px;border-radius:0 var(--r) var(--r) 0;margin-top:10px;max-width:640px;line-height:1.6}
+.tagline strong{color:var(--yellow)}
+.hdr-btns{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start}
+.btn{padding:9px 18px;border-radius:var(--r);border:1px solid var(--border2);background:var(--surface);color:var(--text);font-family:var(--sans);font-size:.9rem;font-weight:700;cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:hover{background:var(--surface2);transform:translateY(-1px)}
+.btn-sw{border-color:var(--ev);color:var(--ev)}.btn-sw:hover,.btn-sw.on{background:var(--ev-dim);box-shadow:0 0 12px var(--ev-glow)}
+.btn-rst{color:var(--t2)}
+
+/* ── HERO TABLE ── */
+.hero-wrap{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px}
+@media(max-width:700px){.hero-wrap{grid-template-columns:1fr}}
+.hero-card{background:var(--bg1);border:1px solid var(--border);border-radius:var(--r2);padding:20px 22px;position:relative;overflow:hidden}
+.hero-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.hc-ice::before{background:linear-gradient(90deg,var(--ice),var(--ice-lt))}
+.hc-ev::before{background:linear-gradient(90deg,var(--ev),var(--ev-lt))}
+.hero-card-title{font-family:var(--mono);font-size:.64rem;letter-spacing:1.8px;text-transform:uppercase;color:var(--t2);margin-bottom:14px}
+.hero-rows{display:flex;flex-direction:column}
+.hero-row{display:flex;justify-content:space-between;align-items:baseline;padding:8px 0;border-bottom:1px solid var(--border)}
+.hero-row:last-child{border-bottom:none}
+.hero-row-label{font-size:.9rem;color:var(--t2)}
+.hero-row-val{font-family:var(--mono);font-weight:700;font-size:1.05rem}
+.hero-row-val.big{font-size:1.55rem;letter-spacing:-0.5px}
+.hero-row-val.ice{color:var(--ice)}.hero-row-val.ev{color:var(--ev)}.hero-row-val.yellow{color:var(--yellow)}
+.hero-note{font-family:var(--mono);font-size:.68rem;color:var(--t3);margin-top:10px;line-height:1.5}
+.hero-note a{color:var(--yellow);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+.hero-wow{background:rgba(255,215,64,0.07);border:1px solid rgba(255,215,64,0.18);border-radius:var(--r);padding:12px 15px;margin-top:10px;font-size:.9rem;color:var(--t2);line-height:1.6}
+.hero-wow strong{color:var(--yellow)}
+
+/* ── LAYOUT ── */
+.main{display:grid;grid-template-columns:292px 1fr;gap:20px;align-items:start}
+@media(max-width:1080px){.main{grid-template-columns:1fr}}
+.right-col{display:flex;flex-direction:column;gap:22px}
+
+/* ── SIDEBAR ── */
+.sidebar{background:var(--bg1);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;position:sticky;top:20px}
+.stabs{display:flex;border-bottom:1px solid var(--border)}
+.stab{flex:1;padding:13px 8px;text-align:center;font-family:var(--sans);font-size:.88rem;font-weight:700;cursor:pointer;transition:all .18s;border:none;background:transparent;color:var(--t2)}
+.stab.on-ice{background:var(--ice-dim);color:var(--ice);border-bottom:2px solid var(--ice)}
+.stab.on-ev{background:var(--ev-dim);color:var(--ev);border-bottom:2px solid var(--ev)}
+.sb-body{display:none;padding:18px}.sb-body.show{display:block}
+.sdiv{font-family:var(--mono);font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--t3);padding:11px 0 7px;margin-top:4px;border-top:1px solid var(--border)}
+.sdiv:first-child{border-top:none;padding-top:0}
+.pg{margin-bottom:11px}
+.pl{font-family:var(--mono);font-size:.72rem;color:var(--t2);margin-bottom:4px;display:flex;justify-content:space-between}
+.pl span{color:var(--text);font-weight:600}
+.pi{width:100%;padding:7px 10px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:var(--mono);font-size:.82rem;outline:none;transition:border-color .18s,box-shadow .18s}
+.pi:focus{border-color:var(--yellow);box-shadow:0 0 0 2px rgba(255,215,64,0.1)}
+.gg{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.gstrip{display:flex;gap:5px;align-items:center;margin-top:14px;flex-wrap:wrap}
+.gstrip-l{font-family:var(--mono);font-size:.65rem;color:var(--t2);margin-right:2px}
+.gbtn{width:34px;height:34px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--t2);font-family:var(--mono);font-size:.82rem;font-weight:700;cursor:pointer;transition:all .18s;display:grid;place-items:center}
+.gbtn.on{background:var(--ice-dim);border-color:var(--ice);color:var(--ice);box-shadow:0 0 9px var(--ice-glow)}
+.s-warn{background:rgba(255,82,82,0.08);border:1px solid rgba(255,82,82,0.2);border-radius:var(--r);padding:9px 12px;margin-top:8px;font-size:.82rem;color:var(--t2);line-height:1.55}
+.s-warn strong{color:var(--red)}
+.s-note{background:var(--ev-dim);border:1px solid rgba(0,229,255,0.18);border-radius:var(--r);padding:9px 12px;margin-top:8px;font-size:.82rem;color:var(--t2);line-height:1.55}
+.s-note strong{color:var(--ev)}
+.s-assume{background:rgba(255,215,64,0.06);border:1px solid rgba(255,215,64,0.15);border-radius:var(--r);padding:9px 12px;margin-top:8px;font-size:.8rem;color:var(--t2);line-height:1.6}
+.s-assume strong{color:var(--yellow)}
+details.cd summary{list-style:none;cursor:pointer;font-family:var(--mono);font-size:.6rem;letter-spacing:1.8px;text-transform:uppercase;color:var(--t3);padding:11px 0 4px;display:flex;align-items:center;gap:7px;border-top:1px solid var(--border);margin-top:8px}
+details.cd summary::before{content:'▶';font-size:.55rem;color:var(--yellow);transition:transform .2s}
+details.cd[open] summary::before{transform:rotate(90deg)}
+.cd-body{background:rgba(0,0,0,0.28);border-radius:8px;padding:13px;margin-top:6px;font-family:var(--mono);font-size:.72rem;line-height:1.9;color:var(--t3)}
+.cd-body .eq{color:var(--yellow);font-weight:600}
+.cd-body a{color:var(--yellow);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+
+/* ── SECTION HEADER ── */
+.sh{font-family:var(--mono);font-size:.65rem;letter-spacing:2.5px;text-transform:uppercase;color:var(--t2);margin-bottom:13px;display:flex;align-items:center;gap:10px}
+.sh::after{content:'';flex:1;height:1px;background:var(--border)}
+.assume-chip{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:.6rem;letter-spacing:.8px;text-transform:uppercase;background:rgba(255,215,64,0.07);border:1px solid rgba(255,215,64,0.15);color:var(--yellow);border-radius:5px;padding:3px 8px;margin-left:8px;vertical-align:middle;cursor:help}
+
+/* ── THROTTLE SIM ── */
+.throttle-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;background:var(--bg1);border:1px solid var(--border);border-radius:var(--r2);padding:18px 20px}
+@media(max-width:640px){.throttle-row{grid-template-columns:1fr}}
+.th-block{display:flex;flex-direction:column;gap:7px}
+.th-label{font-family:var(--mono);font-size:.66rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--t2);display:flex;align-items:center;gap:6px}
+.th-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.th-dot-ice{background:var(--ice);box-shadow:0 0 6px var(--ice)}.th-dot-ev{background:var(--ev);box-shadow:0 0 6px var(--ev)}
+input[type=range]{-webkit-appearance:none;width:100%;height:8px;border-radius:4px;outline:none;cursor:pointer;background:linear-gradient(90deg,var(--ice) var(--pct,0%),rgba(255,255,255,0.08) var(--pct,0%))}
+input[type=range].ev-r{background:linear-gradient(90deg,var(--ev) var(--pct,0%),rgba(255,255,255,0.08) var(--pct,0%))}
+input[type=range].demo-r{background:linear-gradient(90deg,var(--yellow) var(--pct,0%),rgba(255,255,255,0.08) var(--pct,0%))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--ice);box-shadow:0 0 8px var(--ice-glow);transition:transform .12s}
+input[type=range].ev-r::-webkit-slider-thumb{background:var(--ev);box-shadow:0 0 8px var(--ev-glow)}
+input[type=range].demo-r::-webkit-slider-thumb{background:var(--yellow);box-shadow:0 0 8px rgba(255,215,64,0.4)}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.18)}
+.th-rpm{font-family:var(--mono);font-size:1.9rem;font-weight:700;color:var(--ice);line-height:1;letter-spacing:-1px;transition:color .2s}
+.th-rpm.ev{color:var(--ev)}
+.th-readout{display:flex;align-items:baseline;gap:8px}
+.th-rpm-lbl{font-family:var(--mono);font-size:.72rem;color:var(--t3)}
+.tach-wrap{display:flex;flex-direction:column;gap:3px}
+.tach-zones{display:flex;height:6px;border-radius:3px;overflow:hidden;gap:1px}
+.tz{flex:1;background:rgba(255,255,255,0.06);border-radius:2px;transition:background .08s}
+.tz.lit-ice{background:var(--ice)}.tz.lit-ev{background:var(--ev)}
+.tach-lbl{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.58rem;color:var(--t3)}
+.th-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:4px}
+.th-stat{background:rgba(0,0,0,0.2);border-radius:7px;padding:7px 9px}
+.th-stat-l{font-family:var(--mono);font-size:.58rem;color:var(--t3);letter-spacing:.8px;text-transform:uppercase}
+.th-stat-v{font-family:var(--mono);font-size:.88rem;font-weight:700;color:var(--text);margin-top:2px}
+.th-stat-v.ice{color:var(--ice)}.th-stat-v.ev{color:var(--ev)}
+.th-warn{font-family:var(--mono);font-size:.62rem;color:var(--t3);margin-top:6px;background:rgba(255,215,64,0.05);border:1px solid rgba(255,215,64,0.12);border-radius:6px;padding:5px 9px}
+
+/* ── METRICS ── */
+.metrics-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+@media(max-width:1200px){.metrics-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:640px){.metrics-grid{grid-template-columns:repeat(2,1fr)}}
+.mc{background:var(--bg1);border:1px solid var(--border);border-radius:var(--r);padding:13px 14px;position:relative;overflow:hidden;transition:border-color .2s}
+.mc:hover{border-color:var(--border2)}
+.mc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.mc.ice::before{background:linear-gradient(90deg,transparent,var(--ice),transparent)}
+.mc.ev::before{background:linear-gradient(90deg,transparent,var(--ev),transparent)}
+.mc-l{font-family:var(--mono);font-size:.6rem;letter-spacing:1.2px;text-transform:uppercase;color:var(--t3);margin-bottom:5px}
+.mc-v{font-size:1.5rem;font-weight:800;line-height:1;letter-spacing:-0.5px}
+.mc.ice .mc-v{color:var(--ice)}.mc.ev .mc-v{color:var(--ev)}
+.mc-u{font-family:var(--mono);font-size:.63rem;color:var(--t3);margin-top:3px}
+.mc-s{font-family:var(--mono);font-size:.57rem;color:var(--t3);margin-top:2px}
+
+/* ── ADVERTISED TORQUE CARDS ── */
+.adv-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+@media(max-width:640px){.adv-grid{grid-template-columns:1fr}}
+.adv-card{border-radius:var(--r2);padding:18px 20px;position:relative;overflow:hidden}
+.adv-card-ev{background:linear-gradient(135deg,rgba(0,229,255,0.07),rgba(0,0,0,0));border:1px solid rgba(0,229,255,0.22)}
+.adv-card-ice{background:linear-gradient(135deg,rgba(255,87,34,0.07),rgba(0,0,0,0));border:1px solid rgba(255,87,34,0.22)}
+.adv-label{font-family:var(--mono);font-size:.62rem;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
+.adv-label-ev{color:var(--ev)}.adv-label-ice{color:var(--orange)}
+.adv-num{font-size:3.2rem;font-weight:800;letter-spacing:-2px;line-height:1}
+.adv-num-ev{color:var(--ev)}.adv-num-ice{color:var(--ice)}
+.adv-unit{font-family:var(--mono);font-size:.85rem;color:var(--t2)}
+.adv-motor-row{display:flex;align-items:baseline;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.adv-motor-label{font-family:var(--mono);font-size:.68rem;color:var(--t3);text-transform:uppercase;letter-spacing:1px}
+.adv-motor-num{font-family:var(--mono);font-size:1.1rem;font-weight:700}
+.adv-warn{font-family:var(--mono);font-size:.64rem;color:var(--t3);margin-top:8px;line-height:1.5}
+
+/* ── CHARTS ── */
+.chart-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:860px){.chart-grid-2{grid-template-columns:1fr}}
+.cp{background:var(--bg1);border:1px solid var(--border);border-radius:var(--r2);padding:16px 18px}
+.cp-title{font-family:var(--mono);font-size:.67rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--t2);margin-bottom:5px;display:flex;align-items:center;flex-wrap:wrap;gap:6px}
+.cp-assume{font-family:var(--mono);font-size:.58rem;background:rgba(255,215,64,0.07);border:1px solid rgba(255,215,64,0.14);color:var(--yellow);padding:2px 7px;border-radius:4px}
+.cw{position:relative;height:200px;margin-top:8px}
+.cw-lg{position:relative;height:240px;margin-top:8px}
+.chart-ref{font-family:var(--mono);font-size:.6rem;color:var(--t3);margin-top:6px;line-height:1.5}
+.chart-ref a{color:var(--yellow);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+
+/* ── DEMO ── */
+.demo-wrap{background:var(--bg1);border:1px solid rgba(255,215,64,0.18);border-top:2px solid var(--yellow);border-radius:0 0 var(--r2) var(--r2);padding:22px 24px}
+.demo-title{font-size:1rem;font-weight:800;color:var(--yellow);margin-bottom:5px}
+.demo-sub{font-size:.9rem;color:var(--t2);line-height:1.6;margin-bottom:8px;max-width:640px}
+.demo-sub strong{color:var(--text)}
+.demo-lesson{background:rgba(0,230,118,0.06);border:1px solid rgba(0,230,118,0.18);border-radius:var(--r);padding:10px 14px;margin-bottom:18px;font-size:.88rem;color:var(--t2);line-height:1.6}
+.demo-lesson strong{color:var(--green)}
+.demo-main{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start}
+@media(max-width:800px){.demo-main{grid-template-columns:1fr}}
+.demo-sl-lbl{font-family:var(--mono);font-size:.76rem;color:var(--t2);display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.demo-sl-lbl .big{font-size:1.5rem;font-weight:800;color:var(--yellow);line-height:1}
+.demo-sl-lbl .unit{font-size:.7rem;color:var(--t3)}
+.demo-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media(max-width:640px){.demo-cards{grid-template-columns:1fr}}
+.dcard{background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:var(--r);padding:14px;text-align:center}
+.dcard-l{font-family:var(--mono);font-size:.6rem;letter-spacing:1.2px;text-transform:uppercase;color:var(--t3);margin-bottom:7px}
+.dcard-v{font-size:1.65rem;font-weight:800;line-height:1;letter-spacing:-0.5px}
+.dcard-u{font-family:var(--mono);font-size:.63rem;color:var(--t3);margin-top:3px}
+.badge{display:inline-block;margin-top:8px;font-family:var(--mono);font-size:.57rem;padding:3px 8px;border-radius:5px;letter-spacing:.8px;text-transform:uppercase}
+.b-same{background:rgba(0,230,118,0.1);color:var(--green);border:1px solid rgba(0,230,118,0.22)}
+.b-up{background:var(--ice-dim);color:var(--ice);border:1px solid rgba(255,87,34,0.22)}
+.b-const{background:rgba(255,215,64,0.1);color:var(--yellow);border:1px solid rgba(255,215,64,0.22)}
+.power-note{background:rgba(255,215,64,0.06);border:1px solid rgba(255,215,64,0.14);border-radius:var(--r);padding:10px 13px;margin-top:12px;font-family:var(--mono);font-size:.72rem;color:var(--t2);line-height:1.6}
+.power-note strong{color:var(--yellow)}
+
+/* ── COMPARISON TABLE ── */
+.comp-tbl{width:100%;border-collapse:collapse;font-size:.9rem}
+.comp-tbl th{font-family:var(--mono);font-size:.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--t2);padding:10px 14px;text-align:left;border-bottom:1px solid var(--border2);background:var(--bg1)}
+.comp-tbl td{padding:11px 14px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:.84rem}
+.comp-tbl tr:last-child td{border:none}
+.comp-tbl td.v-ice{color:var(--ice);font-weight:700}.comp-tbl td.v-ev{color:var(--ev);font-weight:700}
+.wb{font-family:var(--mono);font-size:.57rem;padding:3px 8px;border-radius:5px;letter-spacing:.8px;text-transform:uppercase}
+.wb-ice{background:var(--ice-dim);color:var(--ice);border:1px solid rgba(255,87,34,0.2)}
+.wb-ev{background:var(--ev-dim);color:var(--ev);border:1px solid rgba(0,229,255,0.2)}
+.wb-tie{background:rgba(255,215,64,0.08);color:var(--yellow);border:1px solid rgba(255,215,64,0.18)}
+
+/* ── INSIGHTS ── */
+.ins-list{display:flex;flex-direction:column;gap:9px}
+.ins{display:flex;gap:12px;align-items:flex-start;background:var(--bg1);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px;font-size:.9rem;line-height:1.6}
+.ins-i{font-size:1.05rem;flex-shrink:0;margin-top:2px}.ins-t{color:var(--t2)}.ins-t strong{color:var(--text)}
+.ins.a-ice{border-left:2px solid var(--ice)}.ins.a-ev{border-left:2px solid var(--ev)}
+.ins.a-key{border-left:2px solid var(--green)}.ins.a-warn{border-left:2px solid var(--yellow)}.ins.a-info{border-left:2px solid var(--purple)}
+
+/* ── REFERENCES ── */
+.refs-section{background:var(--bg1);border:1px solid var(--border);border-radius:var(--r2);padding:20px 22px;margin-bottom:22px}
+.refs-title{font-family:var(--mono);font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--t2);margin-bottom:14px}
+.refs-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(max-width:640px){.refs-grid{grid-template-columns:1fr}}
+.ref-item{background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:8px;padding:10px 13px}
+.ref-num{font-family:var(--mono);font-size:.6rem;color:var(--t3);margin-bottom:3px}
+.ref-title{font-size:.88rem;color:var(--text);margin-bottom:4px;font-weight:600}
+.ref-link a{font-family:var(--mono);font-size:.72rem;color:var(--yellow);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+.ref-link a:hover{color:var(--orange)}
+
+/* ── FOOTER DISCLAIMER ── */
+.footer-disc{background:rgba(255,82,82,0.06);border:1px solid rgba(255,82,82,0.15);border-radius:var(--r2);padding:18px 22px;margin-bottom:30px;font-size:.88rem;color:var(--t2);line-height:1.7}
+.footer-disc-title{font-family:var(--mono);font-size:.62rem;letter-spacing:1.8px;text-transform:uppercase;color:var(--red);margin-bottom:8px}
+.footer-disc ul{padding-left:18px;display:flex;flex-direction:column;gap:5px}
+.footer-disc li{color:var(--t2)}.footer-disc strong{color:var(--text)}
+
+@keyframes pop{0%{transform:scale(1.04)}100%{transform:scale(1)}}
+.pop{animation:pop .2s ease}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ── TOP DISCLAIMER ── -->
+<div class="disc-banner" style="margin-top:18px">
+  <div class="disc-title">⚠ Educational Tool — Read Before Using</div>
+  This visualizer is for <strong>educational purposes only</strong>. Physics is idealised — <strong>air drag, rolling resistance, tyre slip, thermal derating, and battery sag are not modelled.</strong>
+  The "Generic EV" is a <strong>hypothetical model</strong> — it does not represent any specific product or brand.
+  Apache RTR 160 4V specs sourced from the
+  <a onclick="gsearch('TVS Apache RTR 160 4V service manual gear ratios ManualsLib')" >TVS Apache RTR 160 4V Service Manual</a> and
+  <a onclick="gsearch('TVS Apache RTR 160 4V specifications BikeWale')">BikeWale</a>.
+  <strong>Do not use for engineering design or purchasing decisions.</strong>
+</div>
+
+<!-- ── HEADER ── -->
+<header>
+  <div class="hdr">
+    <div class="hdr-l">
+      <h1><span class="ice">ICE</span> vs <span class="ev">EV</span> — Powertrain Physics Visualizer</h1>
+      <div class="tagline"><strong>"Torque tells you how hard you're twisting.<br>Power tells you how fast you can keep doing it."</strong></div>
+    </div>
+    <div class="hdr-btns">
+      <button class="btn btn-sw" id="btnSw" onclick="toggleSweep()">▶ Auto Sweep</button>
+      <button class="btn btn-rst" onclick="resetAll()">↺ Reset</button>
+    </div>
+  </div>
+</header>
+
+<!-- ── HERO TABLE ── -->
+<div class="sh" style="margin-bottom:12px">The "Hold On" Moment — Same Multiplication, Different Labels</div>
+<div class="hero-wrap">
+  <div class="hero-card hc-ice">
+    <div class="hero-card-title">🔥 TVS Apache RTR 160 4V — Torque measured at the crank</div>
+    <div class="hero-rows">
+      <div class="hero-row"><span class="hero-row-label">Engine torque (crankshaft)</span><span class="hero-row-val ice" id="h_iEng">14.73 Nm</span></div>
+      <div class="hero-row"><span class="hero-row-label">Total drivetrain ratio (1st gear)</span><span class="hero-row-val yellow" id="h_iRatio">—</span></div>
+      <div class="hero-row"><span class="hero-row-label">Wheel torque (1st gear, peak)</span><span class="hero-row-val big ice" id="h_iWheel">— Nm</span></div>
+    </div>
+    <div class="hero-note">
+      τ_wheel = τ_crank × G_primary × G_1st × G_final_sprocket × η(0.92)<br>
+      Primary 3.095 × 1st gear 2.917 × final sprocket 3.461 = total <span id="h_iRatioCalc">—</span>:1<br>
+      Source: <a onclick="gsearch('TVS Apache RTR 160 4V service manual gear ratios primary final drive ManualsLib')">TVS Apache RTR 160 4V Service Manual (ManualsLib)</a>
+    </div>
+  </div>
+  <div class="hero-card hc-ev">
+    <div class="hero-card-title">⚡ Generic EV — Torque measured at the motor shaft</div>
+    <div class="hero-rows">
+      <div class="hero-row"><span class="hero-row-label">Motor torque (shaft)</span><span class="hero-row-val ev" id="h_eMotor">30 Nm</span></div>
+      <div class="hero-row"><span class="hero-row-label">Single-stage reduction ratio</span><span class="hero-row-val yellow" id="h_eRatio">9.0:1</span></div>
+      <div class="hero-row"><span class="hero-row-label">"Advertised" wheel torque</span><span class="hero-row-val big ev" id="h_eWheel">— Nm</span></div>
+    </div>
+    <div class="hero-note">
+      τ_wheel = τ_motor × G_reduction × η(0.92)<br>
+      Both numbers are real. <strong style="color:var(--yellow)">The mistake is comparing them directly — they're measured at different drivetrain points.</strong><br>
+      Source: <a onclick="gsearch('EV motor torque vs wheel torque gear reduction drivetrain')">EV drivetrain reduction explained</a>
+    </div>
+  </div>
+</div>
+<div class="hero-wow">
+  <strong>The key insight:</strong> The Apache's engine torque is only 14.73 Nm — yet its <em>wheel</em> torque in 1st gear is
+  <strong id="wow_ice">~423 Nm</strong>, far higher than the EV's advertised <strong id="wow_ev">~248 Nm</strong>.
+  This is not a trick. It's gear multiplication. The mistake is comparing a crankshaft number (ICE marketing) with a wheel number (EV marketing) as if they mean the same thing.
+</div>
+
+<!-- ── MAIN LAYOUT ── -->
+<div class="main" style="margin-top:22px">
+
+<!-- ── SIDEBAR ── -->
+<div class="sidebar">
+  <div class="stabs">
+    <button class="stab on-ice" id="st0" onclick="showSTab('ice')">🔥 Apache 160</button>
+    <button class="stab"        id="st1" onclick="showSTab('ev')">⚡ Generic EV</button>
+  </div>
+
+  <!-- ICE PARAMS -->
+  <div class="sb-body show" id="sb-ice">
+    <div class="sdiv">Engine (verified specs)</div>
+    <div class="pg"><div class="pl">Peak Torque (Nm) <span id="l_iT">14.73</span></div><input class="pi" type="number" id="iT" value="14.73" step="0.1" oninput="sync('iT');update()"></div>
+    <div class="pg"><div class="pl">Peak Power (kW) <span id="l_iP">12.91</span></div><input class="pi" type="number" id="iP" value="12.91" step="0.1" oninput="sync('iP');update()"></div>
+    <div class="pg"><div class="pl">Torque Peak (RPM) <span id="l_iTr">7500</span></div><input class="pi" type="number" id="iTr" value="7500" step="100" oninput="sync('iTr');update()"></div>
+    <div class="pg"><div class="pl">Power Peak (RPM) <span id="l_iPr">9250</span></div><input class="pi" type="number" id="iPr" value="9250" step="100" oninput="sync('iPr');update()"></div>
+    <div class="pg"><div class="pl">Idle (RPM) <span id="l_iId">1400</span></div><input class="pi" type="number" id="iId" value="1400" step="50" oninput="sync('iId');update()"></div>
+    <div class="pg"><div class="pl">Redline (RPM) <span id="l_iRl">10000</span></div><input class="pi" type="number" id="iRl" value="10000" step="100" oninput="sync('iRl');update()"></div>
+    <div class="s-warn"><strong>⚠ Torque curve is modelled</strong> — smooth spline through anchor points. Real dyno curves vary with temperature, fuel, altitude, wear, and ride mode (Sport vs Urban vs Rain).</div>
+    <div class="sdiv">Gearbox (from service manual)</div>
+    <div class="gg">
+      <div class="pg"><div class="pl">1st <span id="l_g1">2.917</span></div><input class="pi" type="number" id="g1" value="2.917" step="0.001" oninput="sync('g1');update()"></div>
+      <div class="pg"><div class="pl">2nd <span id="l_g2">1.857</span></div><input class="pi" type="number" id="g2" value="1.857" step="0.001" oninput="sync('g2');update()"></div>
+      <div class="pg"><div class="pl">3rd <span id="l_g3">1.333</span></div><input class="pi" type="number" id="g3" value="1.333" step="0.001" oninput="sync('g3');update()"></div>
+      <div class="pg"><div class="pl">4th <span id="l_g4">1.050</span></div><input class="pi" type="number" id="g4" value="1.050" step="0.001" oninput="sync('g4');update()"></div>
+      <div class="pg"><div class="pl">5th <span id="l_g5">0.880</span></div><input class="pi" type="number" id="g5" value="0.880" step="0.001" oninput="sync('g5');update()"></div>
+      <div class="pg"><div class="pl">6th <span id="l_g6" style="color:var(--t3)">(N/A)</span></div><input class="pi" type="number" id="g6" value="0.880" step="0.001" oninput="sync('g6');update()" style="opacity:0.35;pointer-events:none"></div>
+    </div>
+    <div class="pg"><div class="pl">Primary Drive Ratio <span id="l_iPri">3.095</span></div><input class="pi" type="number" id="iPri" value="3.095" step="0.001" oninput="sync('iPri');update()"></div>
+    <div class="pg"><div class="pl">Final Sprocket Ratio <span id="l_iFd">3.461</span></div><input class="pi" type="number" id="iFd" value="3.461" step="0.001" oninput="sync('iFd');update()"></div>
+    <div class="s-note"><strong>Sprocket note:</strong> Final drive = 3.461 (from service manual). Primary drive = 3.095. Total 1st gear ratio = 3.095 × 2.917 × 3.461 = <strong id="totalRatioG1">—</strong>:1. <strong>Apache is 5-speed</strong> — G6 button mirrors G5.</div>
+    <div class="sdiv">Vehicle</div>
+    <div class="pg"><div class="pl">Wheel Radius (m) <span id="l_iWr">0.307</span></div><input class="pi" type="number" id="iWr" value="0.307" step="0.001" oninput="sync('iWr');update()"></div>
+    <div class="pg"><div class="pl">Mass (kg) <span id="l_iMa">144</span></div><input class="pi" type="number" id="iMa" value="144" step="1" oninput="sync('iMa');update()"></div>
+    <div class="s-assume"><strong>Assumptions:</strong> η = 0.92 (fixed). No tyre slip. No aero drag. No rolling resistance. Rider mass not included (~70 kg would reduce acceleration ~33%). Gear shifts instantaneous.</div>
+    <div class="gstrip">
+      <span class="gstrip-l">Gear:</span>
+      <button class="gbtn on" id="gb1" onclick="setGear(1)">1</button>
+      <button class="gbtn"    id="gb2" onclick="setGear(2)">2</button>
+      <button class="gbtn"    id="gb3" onclick="setGear(3)">3</button>
+      <button class="gbtn"    id="gb4" onclick="setGear(4)">4</button>
+      <button class="gbtn"    id="gb5" onclick="setGear(5)">5</button>
+      <button class="gbtn"    id="gb6" onclick="setGear(6)" style="opacity:0.35" title="Apache is 5-speed — mirrors G5">5*</button>
+    </div>
+    <details class="cd">
+      <summary>Equations & Sources</summary>
+      <div class="cd-body">
+        <span class="eq">── ICE Torque Curve ──</span><br>
+        Hermite spline through 4 anchors:<br>
+        (idle, 0.5T) → (T_rpm, T_peak) →<br>
+        (P_rpm, P_peak/ω) → (redline, 0.68T)<br><br>
+        <span class="eq">── Total ICE Ratio ──</span><br>
+        G = G_primary × G_gear × G_sprocket<br>
+        (all three stages included)<br><br>
+        <span class="eq">── Wheel Torque ──</span><br>
+        τ_w = τ_crank × G × η(0.92)<br><br>
+        <span class="eq">── Sources ──</span><br>
+        <a onclick="gsearch('TVS Apache RTR 160 4V service manual gear ratios ManualsLib')">TVS Apache RTR 160 4V Service Manual — ManualsLib</a><br>
+        <a onclick="gsearch('TVS Apache RTR 160 4V specifications BikeWale')">BikeWale — Apache RTR 160 4V Specs</a><br>
+        <a onclick="gsearch('TVS Apache RTR 160 4V specifications zigwheels')">Zigwheels — Apache RTR 160 4V Specs</a>
+      </div>
+    </details>
+  </div>
+
+  <!-- EV PARAMS -->
+  <div class="sb-body" id="sb-ev">
+    <div class="sdiv">Motor (hypothetical PMSM model)</div>
+    <div class="pg"><div class="pl">Motor Torque (Nm) <span id="l_eT">30</span></div><input class="pi" type="number" id="eT" value="30" step="1" oninput="sync('eT');update()"></div>
+    <div class="pg"><div class="pl">Peak Power (kW) <span id="l_eP">8.5</span></div><input class="pi" type="number" id="eP" value="8.5" step="0.5" oninput="sync('eP');update()"></div>
+    <div class="pg"><div class="pl">Max Motor RPM <span id="l_eMx">9000</span></div><input class="pi" type="number" id="eMx" value="9000" step="100" oninput="sync('eMx');update()"></div>
+    <div class="s-note">Base speed (end of flat torque) is <strong>auto-calculated</strong>:<br>
+    ω = P/T → RPM = (P×1000/T) × 60/(2π) = <strong id="evBaseDisplay">—</strong> RPM<br>
+    Above this, constant-power law applies (hyperbolic drop). This is correct idealised PMSM behaviour.</div>
+    <div class="sdiv">Drivetrain</div>
+    <div class="pg"><div class="pl">Reduction Ratio <span id="l_eR">9.0</span></div><input class="pi" type="number" id="eR" value="9.0" step="0.1" oninput="sync('eR');update()"></div>
+    <div class="sdiv">Vehicle</div>
+    <div class="pg"><div class="pl">Wheel Radius (m) <span id="l_eWr">0.292</span></div><input class="pi" type="number" id="eWr" value="0.292" step="0.001" oninput="sync('eWr');update()"></div>
+    <div class="pg"><div class="pl">Mass (kg) <span id="l_eMa">125</span></div><input class="pi" type="number" id="eMa" value="125" step="1" oninput="sync('eMa');update()"></div>
+    <div class="s-warn"><strong>⚠ Hypothetical vehicle.</strong> Does not represent any specific brand or product. Specs chosen to match real-world class performance characteristics (0–40 ~3s, ~250 Nm wheel torque, ~110 km/h top speed) without naming a vehicle.</div>
+    <div class="s-assume"><strong>Assumptions:</strong> Same η = 0.92. No battery derating. No thermal limits. No regen braking. Ideal PMSM curve — real motors derate at high RPM from voltage sag and thermal load.</div>
+    <details class="cd">
+      <summary>Equations & Notes</summary>
+      <div class="cd-body">
+        <span class="eq">── EV Torque (ideal PMSM) ──</span><br>
+        rpm ≤ base: τ = T_motor (constant)<br>
+        rpm > base: τ = P×1000/ω (hyperbolic)<br>
+        base RPM = (P×1000/T) × 60/(2π)<br><br>
+        <span class="eq">── EV Wheel Torque ──</span><br>
+        τ_w = τ_motor × G_reduction × 0.92<br><br>
+        <span class="eq">── Top Speed ──</span><br>
+        v = 2π×RPM_max×r/(60×ratio) × 3.6<br><br>
+        <span class="eq">── References ──</span><br>
+        <a onclick="gsearch('PMSM permanent magnet motor torque speed curve constant power region')">PMSM torque-speed curve theory</a><br>
+        <a onclick="gsearch('NREL electric drivetrain efficiency report 2011')">NREL — EV Drivetrain Efficiency</a><br>
+        <a onclick="gsearch('EV motor shaft torque vs wheel torque reduction gear ratio explained')">EV shaft vs wheel torque explained</a>
+      </div>
+    </details>
+  </div>
+</div><!-- /sidebar -->
+
+<!-- ── RIGHT COLUMN ── -->
+<div class="right-col">
+
+  <!-- THROTTLE SIM -->
+  <div>
+    <div class="sh">Throttle Simulation — push it <span class="assume-chip" title="No drag, no slip, no rider mass. Low-speed values are realistic. High-speed values are overstated.">⚠ Idealised</span></div>
+    <div class="throttle-row">
+      <div class="th-block">
+        <div class="th-label"><span class="th-dot th-dot-ice"></span>TVS Apache RTR 160 4V (ICE)</div>
+        <input type="range" id="tICE" min="0" max="100" value="0" oninput="onThrottle()">
+        <div class="tach-wrap">
+          <div class="tach-zones" id="tachICE"></div>
+          <div class="tach-lbl"><span id="tl_iIdle">1400</span><span id="tl_iRed">10000</span></div>
+        </div>
+        <div class="th-readout"><div class="th-rpm" id="rpmICE">1400</div><div class="th-rpm-lbl">RPM</div></div>
+        <div class="th-stats">
+          <div class="th-stat"><div class="th-stat-l">Eng. Torque</div><div class="th-stat-v ice" id="ts_iT">–</div></div>
+          <div class="th-stat"><div class="th-stat-l">Speed</div><div class="th-stat-v ice" id="ts_iV">–</div></div>
+          <div class="th-stat"><div class="th-stat-l">Accel</div><div class="th-stat-v ice" id="ts_iA">–</div></div>
+        </div>
+        <div class="th-warn">⚠ Accel = F/m only. No drag. Real values at speed will be significantly lower. Sport mode torque curve shown.</div>
+      </div>
+      <div class="th-block">
+        <div class="th-label"><span class="th-dot th-dot-ev"></span>Generic EV Sportbike (hypothetical)</div>
+        <input type="range" class="ev-r" id="tEV" min="0" max="100" value="0" oninput="onThrottle()">
+        <div class="tach-wrap">
+          <div class="tach-zones" id="tachEV"></div>
+          <div class="tach-lbl"><span>0</span><span id="tl_eMx">9000</span></div>
+        </div>
+        <div class="th-readout"><div class="th-rpm ev" id="rpmEV">0</div><div class="th-rpm-lbl">RPM</div></div>
+        <div class="th-stats">
+          <div class="th-stat"><div class="th-stat-l">Mot. Torque</div><div class="th-stat-v ev" id="ts_eT">–</div></div>
+          <div class="th-stat"><div class="th-stat-l">Speed</div><div class="th-stat-v ev" id="ts_eV">–</div></div>
+          <div class="th-stat"><div class="th-stat-l">Accel</div><div class="th-stat-v ev" id="ts_eA">–</div></div>
+        </div>
+        <div class="th-warn">⚠ Hypothetical model. No thermal limits or battery sag modelled.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIVE METRICS -->
+  <div>
+    <div class="sh">Live Metrics <span class="assume-chip" title="All values at current throttle position and selected gear">At current throttle</span></div>
+    <div class="metrics-grid">
+      <div class="mc ice"><div class="mc-l">Engine Torque</div><div class="mc-v" id="m_iT">–</div><div class="mc-u">Nm (crank)</div></div>
+      <div class="mc ice"><div class="mc-l">Wheel Torque</div><div class="mc-v" id="m_iWt">–</div><div class="mc-u">Nm</div><div class="mc-s" id="m_iGl">Gear 1</div></div>
+      <div class="mc ice"><div class="mc-l">Tractive Force</div><div class="mc-v" id="m_iF">–</div><div class="mc-u">N</div></div>
+      <div class="mc ice"><div class="mc-l">Accel (no drag)</div><div class="mc-v" id="m_iA">–</div><div class="mc-u">m/s²</div></div>
+      <div class="mc ice"><div class="mc-l">Speed</div><div class="mc-v" id="m_iV">–</div><div class="mc-u">km/h</div></div>
+      <div class="mc ice"><div class="mc-l">Peak Power</div><div class="mc-v" id="m_iPk">12.91</div><div class="mc-u">kW</div></div>
+      <div class="mc ev"><div class="mc-l">Motor Torque</div><div class="mc-v" id="m_eT">–</div><div class="mc-u">Nm (shaft)</div></div>
+      <div class="mc ev"><div class="mc-l">Wheel Torque</div><div class="mc-v" id="m_eWt">–</div><div class="mc-u">Nm</div><div class="mc-s" id="m_eGl">×9.0 reduction</div></div>
+      <div class="mc ev"><div class="mc-l">Tractive Force</div><div class="mc-v" id="m_eF">–</div><div class="mc-u">N</div></div>
+      <div class="mc ev"><div class="mc-l">Accel (no drag)</div><div class="mc-v" id="m_eA">–</div><div class="mc-u">m/s²</div></div>
+      <div class="mc ev"><div class="mc-l">Speed</div><div class="mc-v" id="m_eV">–</div><div class="mc-u">km/h</div></div>
+      <div class="mc ev"><div class="mc-l">Peak Power</div><div class="mc-v" id="m_ePk">8.5</div><div class="mc-u">kW</div></div>
+    </div>
+
+    <!-- ADVERTISED TORQUE CARDS -->
+    <div class="adv-grid">
+      <div class="adv-card adv-card-ev">
+        <div class="adv-label adv-label-ev">📢 EV — "Advertised" Wheel Torque</div>
+        <div class="adv-num adv-num-ev" id="adv_wt">248</div>
+        <div class="adv-unit">Nm at the wheel</div>
+        <div class="adv-motor-row">
+          <span class="adv-motor-label">Actual motor shaft:</span>
+          <span class="adv-motor-num" style="color:var(--ev)" id="adv_mt">30 Nm</span>
+        </div>
+        <div class="adv-warn">⚠ Both numbers are real. Wheel torque = motor torque × reduction × efficiency. The issue is quoting wheel torque without context and comparing it to a crank torque figure.</div>
+      </div>
+      <div class="adv-card adv-card-ice">
+        <div class="adv-label adv-label-ice">🔥 Apache RTR 160 4V — Wheel Torque (Gear <span id="adv_gear">1</span>)</div>
+        <div class="adv-num adv-num-ice" id="adv_iwt">337</div>
+        <div class="adv-unit">Nm at the wheel</div>
+        <div class="adv-motor-row">
+          <span class="adv-motor-label">Engine crank:</span>
+          <span class="adv-motor-num" style="color:var(--ice-lt)" id="adv_imt">14.73 Nm</span>
+        </div>
+        <div class="adv-warn">Apache wheel torque in 1st gear far exceeds the EV's advertised number — yet nobody markets the Apache as a "423 Nm motorcycle." Same physics, different convention.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHARTS: Torque & Power vs RPM -->
+  <div>
+    <div class="sh">Engine & Motor Characteristics</div>
+    <div class="chart-grid-2">
+      <div class="cp">
+        <div class="cp-title">Torque vs RPM <span class="cp-assume">⚠ Idealised curves</span></div>
+        <div class="cw"><canvas id="cTq"></canvas></div>
+        <div class="chart-ref">ICE: spline fit anchored to service manual values. EV: ideal PMSM (flat torque → constant power hyperbolic region). Real curves differ due to temperature, load, and VVA. Ref: <a onclick="gsearch('Yamaha R15 V4 dyno curve torque power RPM')">R15 V4 dyno data</a></div>
+      </div>
+      <div class="cp">
+        <div class="cp-title">Power vs RPM <span class="cp-assume">P = τ × ω / 1000</span></div>
+        <div class="cw"><canvas id="cPw"></canvas></div>
+        <div class="chart-ref">Power is derived from the torque curve — not an independent input. EV power is capped at rated peak. Note the EV maintains near-peak power across a wide RPM range — this is the real advantage, not the torque number. Ref: <a onclick="gsearch('PMSM motor constant power region electric vehicle')">PMSM constant power region</a></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHARTS: Wheel & Force vs Speed -->
+  <div>
+    <div class="sh">At the Rear Wheel <span class="assume-chip" title="η=0.92, no tyre slip, no aerodynamic drag">η=0.92, no drag</span></div>
+    <div class="chart-grid-2">
+      <div class="cp">
+        <div class="cp-title">Wheel Torque vs Speed (km/h) <span class="cp-assume">Per gear</span></div>
+        <div class="cw"><canvas id="cWt"></canvas></div>
+        <div class="chart-ref">Each coloured ICE curve = one gear across its RPM range. EV is a single continuous curve. Gear overlap is intentional — a skilled rider holds each gear to the ideal shift point. Wheel torque = drivetrain torque × efficiency.</div>
+      </div>
+      <div class="cp">
+        <div class="cp-title">Tractive Force vs Speed (km/h) <span class="cp-assume">F = τ_w / r</span></div>
+        <div class="cw"><canvas id="cFt"></canvas></div>
+        <div class="chart-ref">F = wheel torque ÷ wheel radius. Does NOT include aerodynamic drag (∝ v²). At highway speeds, real tractive force available for acceleration is far lower than shown — drag consumes most of it. Ref: <a onclick="gsearch('tractive effort motorcycle aerodynamic drag force speed')">Tractive effort vs drag at speed</a></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHART: Acceleration -->
+  <div>
+    <div class="sh">Acceleration Potential <span class="assume-chip" title="a = F/m only. Severely overstated above 60 km/h due to ignored aerodynamic drag.">⚠ Drag ignored — overstated at speed</span></div>
+    <div class="cp">
+      <div class="cp-title">Acceleration (m/s²) vs Speed (km/h) <span class="cp-assume">a = F/m, no aero drag</span></div>
+      <div class="cw-lg"><canvas id="cAc"></canvas></div>
+      <div class="chart-ref">⚠ This chart is most accurate below ~40 km/h. Above that, aerodynamic drag force (F_drag = ½ × ρ × Cd × A × v²) becomes significant and grows rapidly with speed. A realistic model would require frontal area, drag coefficient, and air density — not included here. Low-speed EV advantage is genuine; high-speed values are idealised. Ref: <a onclick="gsearch('motorcycle aerodynamic drag coefficient frontal area speed')">Motorcycle drag coefficients</a></div>
+    </div>
+  </div>
+
+  <!-- CHART: Power-Limited Force -->
+  <div>
+    <div class="sh">Power-Limited Force — the real constraint at speed <span class="assume-chip" title="F = P/v — shows maximum sustainable force from power alone">F = P / v</span></div>
+    <div class="cp">
+      <div class="cp-title">Max Sustainable Force = P/v vs Speed (km/h) <span class="cp-assume">No drag</span></div>
+      <div class="cw-lg"><canvas id="cPlf"></canvas></div>
+      <div class="chart-ref">At any speed v, the maximum force a vehicle can sustain is F = P/v — regardless of wheel torque. This is why wheel torque alone doesn't predict high-speed performance. Two vehicles with equal power produce equal force at equal speed. High wheel torque only matters during low-speed acceleration from rest. Beyond ~60–80 km/h, it's almost entirely a power story. Ref: <a onclick="gsearch('tractive force power limited vehicle speed F=P/v equation')">F = P/v tractive force theory</a></div>
+    </div>
+  </div>
+
+  <!-- DEMO -->
+  <div>
+    <div class="sh">The Torque Number Illusion — Interactive Demo</div>
+    <div style="background:var(--bg1);border:1px solid rgba(255,215,64,0.18);border-top:2px solid var(--yellow);border-radius:0 0 var(--r2) var(--r2)">
+      <div class="demo-wrap">
+        <div class="demo-title">📢 What happens when you only change the gear ratio?</div>
+        <div class="demo-sub">Move the slider. The motor doesn't change. The power doesn't change. Only the reduction ratio changes — and the "advertised wheel torque" climbs to whatever you want.</div>
+        <div class="demo-lesson">
+          <strong>The correct takeaway:</strong> Wheel torque is real and matters — it's the actual force multiplier at the tyre contact patch.
+          Motor torque is also real. Engine torque is also real.
+          <strong>The mistake is comparing numbers measured at different drivetrain points without context.</strong>
+          Increasing reduction ratio gives more wheel torque AND less top speed — there is no free lunch.
+          Power is the physical ceiling that cannot be gamed with gearing.
+        </div>
+        <div class="demo-main">
+          <div>
+            <div class="demo-sl-lbl"><span>Reduction Ratio</span><div><span class="big" id="dRv">9.0</span><span class="unit"> : 1</span></div></div>
+            <input type="range" class="demo-r" id="dR" min="1" max="20" step="0.1" value="9.0" oninput="updateDemo()">
+            <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:.68rem;color:var(--t3);margin-top:3px"><span>1:1 — no multiplication</span><span>20:1 — extreme</span></div>
+            <div class="power-note" style="margin-top:12px">
+              <strong>Power stays fixed at <span id="demo_pw_val">8.5</span> kW.</strong><br>
+              Higher ratio → more wheel torque AND lower top speed.<br>
+              Est. top speed at current ratio: <strong id="demo_topspd">—</strong> km/h<br>
+              You can always trade top speed for a bigger torque number. It's a gearing decision, not a performance upgrade.
+            </div>
+          </div>
+          <div>
+            <div class="demo-cards">
+              <div class="dcard">
+                <div class="dcard-l">Motor Torque</div>
+                <div class="dcard-v" id="d_mt" style="color:var(--ev)">–</div>
+                <div class="dcard-u">Nm (shaft)</div>
+                <span class="badge b-same">Unchanged</span>
+              </div>
+              <div class="dcard">
+                <div class="dcard-l">Wheel Torque</div>
+                <div class="dcard-v" id="d_wt" style="color:var(--ice)">–</div>
+                <div class="dcard-u">Nm (at wheel)</div>
+                <span class="badge b-up">↑ ratio × motor</span>
+              </div>
+              <div class="dcard">
+                <div class="dcard-l">Peak Power</div>
+                <div class="dcard-v" id="d_pw" style="color:var(--yellow)">–</div>
+                <div class="dcard-u">kW</div>
+                <span class="badge b-const">= Constant</span>
+              </div>
+            </div>
+            <div class="cp" style="margin-top:12px;padding:13px 15px">
+              <div class="cp-title">Motor Torque · Wheel Torque · Power — as ratio changes</div>
+              <div style="position:relative;height:148px"><canvas id="cDemo"></canvas></div>
+              <div class="chart-ref">Motor torque (flat line) and peak power (flat line) are invariant to ratio. Wheel torque grows linearly. Notice this also means top speed shrinks as ratio increases — same axis, inverse relationship.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPARISON TABLE -->
+  <div>
+    <div class="sh">Comparison Table <span class="assume-chip" title="Peak values, idealised no-drag conditions">Peak / no drag</span></div>
+    <div style="background:var(--bg1);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden">
+      <table class="comp-tbl">
+        <thead><tr><th>Parameter</th><th>🔥 TVS Apache RTR 160 4V</th><th>⚡ Generic EV</th><th>Edge</th></tr></thead>
+        <tbody id="ctBody"></tbody>
+      </table>
+    </div>
+    <div style="font-family:var(--mono);font-size:.64rem;color:var(--t3);margin-top:8px;line-height:1.6">
+      ⚠ "Edge" = higher numerical value under idealised conditions only. Does not account for: rider mass (+70 kg reduces acceleration ~33–50%), aerodynamic drag (dominant above 80 km/h), tyre grip limits (G1 ICE forces likely exceed traction), real-world power curves, or battery state of charge. Power-to-weight and top speed are the most reliable real-world discriminators.
+    </div>
+  </div>
+
+  <!-- INSIGHTS -->
+  <div>
+    <div class="sh">Physics Insights</div>
+    <div class="ins-list" id="insList"></div>
+  </div>
+
+  <!-- REFERENCES -->
+  <div class="refs-section">
+    <div class="refs-title">References & Sources — click to search</div>
+    <div class="refs-grid">
+      <div class="ref-item">
+        <div class="ref-num">[1] Apache RTR 160 4V Service Manual — Gear Ratios</div>
+        <div class="ref-title">TVS Apache RTR 160 4V Owner's Manual p.102 — ManualsLib</div>
+        <div class="ref-link"><a onclick="gsearch('TVS Apache RTR 160 4V service manual gear ratios primary final drive ManualsLib page 102')">Search: TVS Apache RTR 160 4V Service Manual ManualsLib gear ratios</a></div>
+      </div>
+      <div class="ref-item">
+        <div class="ref-num">[2] Apache RTR 160 4V Technical Specs</div>
+        <div class="ref-title">BikeWale — TVS Apache RTR 160 4V Specifications</div>
+        <div class="ref-link"><a onclick="gsearch('TVS Apache RTR 160 4V specifications BikeWale power torque RPM weight')">Search: TVS Apache RTR 160 4V BikeWale specs</a></div>
+      </div>
+      <div class="ref-item">
+        <div class="ref-num">[3] Apache RTR 160 4V Specs (secondary)</div>
+        <div class="ref-title">Zigwheels — TVS Apache RTR 160 4V Specifications</div>
+        <div class="ref-link"><a onclick="gsearch('TVS Apache RTR 160 4V specifications zigwheels torque power weight tyre')">Search: TVS Apache RTR 160 4V zigwheels specifications</a></div>
+      </div>
+      <div class="ref-item">
+        <div class="ref-num">[4] EV Motor Physics</div>
+        <div class="ref-title">NREL — Electric Drivetrain Efficiency Study</div>
+        <div class="ref-link"><a onclick="gsearch('NREL electric vehicle drivetrain efficiency report NREL 49252')">Search: NREL electric drivetrain efficiency 49252</a></div>
+      </div>
+      <div class="ref-item">
+        <div class="ref-num">[5] Tractive Force Theory</div>
+        <div class="ref-title">Engineering Toolbox — Tractive Effort & F=P/v</div>
+        <div class="ref-link"><a onclick="gsearch('tractive effort engineering toolbox F equals P divided v vehicle speed force')">Search: tractive effort F=P/v engineering toolbox</a></div>
+      </div>
+      <div class="ref-item">
+        <div class="ref-num">[6] PMSM Motor Torque-Speed Curve</div>
+        <div class="ref-title">Constant torque / constant power region theory</div>
+        <div class="ref-link"><a onclick="gsearch('PMSM permanent magnet synchronous motor torque speed curve constant power region field weakening')">Search: PMSM torque speed curve constant power region</a></div>
+      </div>
+      <div class="ref-item">
+        <div class="ref-num">[7] Tyre Spec — Wheel Radius</div>
+        <div class="ref-title">Apache RTR 160 4V rear tyre: 130/70-17 → r = 307 mm</div>
+        <div class="ref-link"><a onclick="gsearch('TVS Apache RTR 160 4V tyre size 130 70 17 rear wheel radius')">Search: TVS Apache RTR 160 4V tyre size 130/70-17</a></div>
+      </div>
+      <div class="ref-item">
+        <div class="ref-num">[8] Gear Ratio Theory</div>
+        <div class="ref-title">Motorcycle drivetrain gear multiplication explained</div>
+        <div class="ref-link"><a onclick="gsearch('motorcycle gear ratio wheel torque multiplication drivetrain primary secondary final drive')">Search: motorcycle gear ratio wheel torque multiplication explained</a></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER DISCLAIMER -->
+  <div class="footer-disc">
+    <div class="footer-disc-title">⚠ Full Assumptions & Limitations</div>
+    <ul>
+      <li><strong>No aerodynamic drag modelled.</strong> Drag force = ½ρCdAv². For a motorcycle at 100 km/h, this is ~100–150 N — comparable to available tractive force. All acceleration values above ~60 km/h are significantly overstated.</li>
+      <li><strong>No rolling resistance.</strong> Typically ~0.013–0.02 × mg for road tyres. Small at low speed, non-trivial at high speed.</li>
+      <li><strong>Drivetrain efficiency fixed at 0.92.</strong> Real efficiency varies with RPM, load, temperature, and lubrication. Chain drives achieve ~96–98% at optimal conditions; this model uses a conservative combined-losses value.</li>
+      <li><strong>No tyre slip modelled.</strong> In 1st gear, calculated forces almost certainly exceed traction limits on most surfaces (~0.8–1.0 × mg for dry road). Real motorcycles wheelie or spin the tyre before reaching these forces.</li>
+      <li><strong>Rider mass excluded.</strong> A 70 kg rider on a 144 kg bike increases total mass by ~49% → reduces acceleration proportionally. This is the single biggest real-world correction to these numbers.</li>
+      <li><strong>ICE torque curve is a mathematical approximation.</strong> Real dyno curves vary with ride mode (Sport vs Urban vs Rain reduce peak output by ~10%), intake resonance, exhaust tuning, and fuelling artefacts not captured by a smooth spline.</li>
+      <li><strong>EV model is an idealised PMSM.</strong> Real motors derate under thermal load, exhibit voltage sag at high RPM, and have current limits that round off the torque-speed transition. Battery state-of-charge also affects peak power.</li>
+      <li><strong>The Generic EV is hypothetical.</strong> Engineered to match published performance class characteristics without representing any specific product.</li>
+      <li><strong>Top speed estimates ignore drag.</strong> Real top speed = speed where tractive force equals drag force. RPM-limited top speed (shown here) is always higher than real top speed. TVS claims 114 km/h — consistent with aero-drag limiting at ~9,290 RPM in 5th gear.</li>
+      <li><strong>Primary drive included in ICE ratio.</strong> Total ICE ratio = G_primary (3.095) × G_gear × G_final (3.461) × η(0.92). All three stages are included in every calculation.</li>
+      <li><strong>Apache RTR 160 4V is 5-speed.</strong> The G6 button mirrors G5. No sixth gear exists — top speed is achieved in 5th.</li>
+    </ul>
+  </div>
+
+</div><!-- /right-col -->
+</div><!-- /main -->
+</div><!-- /wrap -->
+
+<script>
+// ════════════════════════════════════════════
+// GOOGLE SEARCH LINK HELPER
+// ════════════════════════════════════════════
+function gsearch(q){
+  window.open('https://www.google.com/search?q='+encodeURIComponent(q),'_blank','noopener,noreferrer');
+}
+
+// ════════════════════════════════════════════
+// CONSTANTS & DEFAULTS
+// ════════════════════════════════════════════
+const EFF=0.92, NP=160, TSEGS=20;
+const GCOLS=['#ff5722','#ff9800','#cddc39','#00e5ff','#7c4dff','#f06292'];
+const DEFS={
+  iT:14.73,iP:12.91,iTr:7500,iPr:9250,iId:1400,iRl:10000,
+  g1:2.917,g2:1.857,g3:1.333,g4:1.050,g5:0.880,g6:0.880,
+  iPri:3.095,iFd:3.461,iWr:0.307,iMa:144,
+  eT:30,eP:8.5,eMx:9000,eR:9.0,eWr:0.292,eMa:125
+};
+let gear=1,sweepOn=false,sweepRAF=null,sweepDir=1,sweepV=0;
+
+// ════════════════════════════════════════════
+// UTILS
+// ════════════════════════════════════════════
+const P   = id => parseFloat(document.getElementById(id).value)||0;
+const gs  = ()  => [P('g1'),P('g2'),P('g3'),P('g4'),P('g5'),P('g6')];
+const lin = (a,b,n) => Array.from({length:n},(_,i)=>a+(b-a)*i/(n-1));
+const xy  = (xs,ys) => xs.map((x,i)=>({x:+x.toFixed(2),y:+ys[i].toFixed(3)}));
+function setEl(id,val,dec=1){
+  const el=document.getElementById(id);if(!el)return;
+  const s=(val===null||isNaN(val))?'–':val.toFixed(dec);
+  if(el.textContent!==s){el.textContent=s;el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop')}
+}
+function sync(id){const l=document.getElementById('l_'+id);if(l)l.textContent=document.getElementById(id).value}
+
+// ════════════════════════════════════════════
+// PHYSICS
+// ════════════════════════════════════════════
+function iceTq(rpm){
+  const T=P('iT'),idle=P('iId'),Trpm=P('iTr'),Prpm=P('iPr'),red=P('iRl');
+  if(rpm<0)return 0;
+  if(rpm<idle)return T*0.5*(rpm/idle);
+  const omP=2*Math.PI*Prpm/60,Tp=P('iP')*1000/omP;
+  const span=red-idle,r=(rpm-idle)/span;
+  const rT=(Trpm-idle)/span,rP=(Prpm-idle)/span;
+  const anch=[[0,T*0.5],[rT,T],[rP,Tp],[1,T*0.68]];
+  let lo=0,hi=anch.length-1;
+  for(let i=0;i<anch.length-1;i++){if(r>=anch[i][0]&&r<=anch[i+1][0]){lo=i;hi=i+1;break}}
+  const [x0,y0]=anch[lo],[x1,y1]=anch[hi];
+  const t=(r-x0)/(x1-x0+1e-9),sm=t*t*(3-2*t);
+  return Math.max(0,y0+(y1-y0)*sm);
+}
+function icePw(rpm){return iceTq(rpm)*(2*Math.PI*rpm/60)/1000}
+
+function evBaseRpm(){return(P('eP')*1000/P('eT'))*60/(2*Math.PI)}
+function evTq(rpm){
+  const Tm=P('eT'),Pm=P('eP'),bs=evBaseRpm();
+  if(rpm<=0)return Tm;
+  if(rpm<=bs)return Tm;
+  return Math.min(Tm,Pm*1000/(2*Math.PI*rpm/60));
+}
+function evPw(rpm){return Math.min(evTq(rpm)*(2*Math.PI*rpm/60)/1000,P('eP'))}
+
+function iceWt(rpm,gr){return iceTq(rpm)*P('iPri')*gr*P('iFd')*EFF}
+function evWt(rpm){return evTq(rpm)*P('eR')*EFF}
+function iceSpd(rpm,gr){return(2*Math.PI*rpm*P('iWr'))/(60*P('iPri')*gr*P('iFd'))*3.6}
+function evSpd(rpm){return(2*Math.PI*rpm*P('eWr'))/(60*P('eR'))*3.6}
+
+// ════════════════════════════════════════════
+// CHARTS — zero point markers
+// ════════════════════════════════════════════
+Chart.defaults.color='rgba(180,195,215,0.42)';
+Chart.defaults.borderColor='rgba(255,255,255,0.05)';
+Chart.defaults.font.family="'IBM Plex Mono',monospace";
+Chart.defaults.font.size=11;
+
+const baseOpts=(xL,yL)=>({
+  responsive:true,maintainAspectRatio:false,
+  animation:{duration:300},
+  parsing:{xAxisKey:'x',yAxisKey:'y'},
+  elements:{point:{radius:0,hitRadius:0,hoverRadius:0}},
+  plugins:{
+    legend:{display:true,position:'top',labels:{color:'rgba(200,215,230,0.52)',boxWidth:9,padding:10,font:{size:10},usePointStyle:false}},
+    tooltip:{backgroundColor:'rgba(8,11,16,0.96)',borderColor:'rgba(255,255,255,0.09)',borderWidth:1,titleColor:'#cdd5e0',bodyColor:'rgba(205,213,224,0.62)',padding:10,mode:'index',intersect:false}
+  },
+  scales:{
+    x:{type:'linear',title:{display:true,text:xL,color:'rgba(200,215,230,0.32)',font:{size:10}},grid:{color:'rgba(255,255,255,0.038)'},ticks:{color:'rgba(200,215,230,0.36)',maxTicksLimit:7}},
+    y:{title:{display:true,text:yL,color:'rgba(200,215,230,0.32)',font:{size:10}},grid:{color:'rgba(255,255,255,0.038)'},ticks:{color:'rgba(200,215,230,0.36)',maxTicksLimit:6},beginAtZero:true}
+  }
+});
+const mkC=(id,xL,yL)=>new Chart(document.getElementById(id),{type:'line',data:{datasets:[]},options:baseOpts(xL,yL)});
+
+const cTq=mkC('cTq','RPM','Torque (Nm)');
+const cPw=mkC('cPw','RPM','Power (kW)');
+const cWt=mkC('cWt','Speed (km/h)','Wheel Torque (Nm)');
+const cFt=mkC('cFt','Speed (km/h)','Force (N)');
+const cAc=mkC('cAc','Speed (km/h)','Accel (m/s²)');
+const cPlf=mkC('cPlf','Speed (km/h)','Max Force (N)');
+const cDemo=mkC('cDemo','Ratio (X:1)','Value');
+
+function ds(label,data,color,w=2){
+  return{label,data,borderColor:color,backgroundColor:'transparent',borderWidth:w,
+    pointRadius:0,pointHoverRadius:0,tension:0.4,fill:false}
+}
+function cssVar(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
+
+// ════════════════════════════════════════════
+// UPDATE CHARTS
+// ════════════════════════════════════════════
+function updateCharts(){
+  const idle=P('iId'),red=P('iRl'),eMx=P('eMx');
+  const iRpms=lin(idle,red,NP),eRpms=lin(0,eMx,NP);
+
+  cTq.data.datasets=[
+    ds('Apache RTR 160 4V Engine Torque',xy(iRpms,iRpms.map(iceTq)),cssVar('--ice'),2.5),
+    ds('EV Motor Torque',xy(eRpms,eRpms.map(evTq)),cssVar('--ev'),2.5)
+  ];cTq.update('active');
+
+  cPw.data.datasets=[
+    ds('Apache RTR 160 4V Power',xy(iRpms,iRpms.map(icePw)),'#ff9800',2.5),
+    ds('EV Power',xy(eRpms,eRpms.map(evPw)),'#00ffcc',2.5)
+  ];cPw.update('active');
+
+  const wtDS=[],ftDS=[],acDS=[];
+  gs().forEach((gr,i)=>{
+    const rpms=lin(idle,red,NP);
+    const spds=rpms.map(r=>iceSpd(r,gr));
+    const wts=rpms.map(r=>iceWt(r,gr));
+    const fts=wts.map(w=>w/P('iWr'));
+    const acs=fts.map(f=>f/P('iMa'));
+    wtDS.push(ds(`G${i+1}`,xy(spds,wts),GCOLS[i],1.8));
+    ftDS.push(ds(`G${i+1}`,xy(spds,fts),GCOLS[i],1.8));
+    acDS.push(ds(`G${i+1}`,xy(spds,acs),GCOLS[i],1.8));
+  });
+  const eSpds=eRpms.map(r=>evSpd(r));
+  const eWts=eRpms.map(r=>evWt(r));
+  const eFts=eWts.map(w=>w/P('eWr'));
+  const eAcs=eFts.map(f=>f/P('eMa'));
+  wtDS.push(ds('EV',xy(eSpds,eWts),cssVar('--ev'),2.8));
+  ftDS.push(ds('EV',xy(eSpds,eFts),cssVar('--ev'),2.8));
+  acDS.push(ds('EV',xy(eSpds,eAcs),cssVar('--ev'),2.8));
+  cWt.data.datasets=wtDS;cWt.update('active');
+  cFt.data.datasets=ftDS;cFt.update('active');
+  cAc.data.datasets=acDS;cAc.update('active');
+
+  // Power-limited force F = P/v
+  const vRange=lin(1,200,NP);
+  const plfI=vRange.map(v=>P('iP')*1000/(v/3.6));
+  const plfE=vRange.map(v=>P('eP')*1000/(v/3.6));
+  cPlf.data.datasets=[
+    ds('Apache RTR 160 4V (F=P/v)',xy(vRange,plfI),cssVar('--ice'),2.5),
+    ds('Generic EV (F=P/v)',xy(vRange,plfE),cssVar('--ev'),2.5)
+  ];cPlf.update('active');
+}
+
+// ════════════════════════════════════════════
+// DEMO
+// ════════════════════════════════════════════
+function updateDemo(){
+  const r=parseFloat(document.getElementById('dR').value);
+  const pct=((r-1)/19*100).toFixed(1);
+  document.getElementById('dR').style.setProperty('--pct',pct+'%');
+  document.getElementById('dRv').textContent=r.toFixed(1);
+  const Tm=P('eT'),Pm=P('eP');
+  const wt=Tm*r*EFF;
+  document.getElementById('d_mt').textContent=Tm.toFixed(0);
+  document.getElementById('d_wt').textContent=wt.toFixed(0);
+  document.getElementById('d_pw').textContent=Pm.toFixed(1);
+  document.getElementById('demo_pw_val').textContent=Pm.toFixed(1);
+  // estimated top speed at this demo ratio
+  const topSpd=(2*Math.PI*P('eMx')*P('eWr'))/(60*r)*3.6;
+  document.getElementById('demo_topspd').textContent=topSpd.toFixed(0);
+  const ratios=lin(1,20,80);
+  cDemo.data.datasets=[
+    ds('Motor Torque (Nm)',xy(ratios,ratios.map(()=>Tm)),cssVar('--ev'),2),
+    ds('Wheel Torque (Nm)',xy(ratios,ratios.map(x=>Tm*x*EFF)),cssVar('--ice'),2),
+    ds('Power (kW)',xy(ratios,ratios.map(()=>Pm)),cssVar('--yellow'),1.8)
+  ];cDemo.update('active');
+}
+
+// ════════════════════════════════════════════
+// HERO + ADVERTISED CARDS
+// ════════════════════════════════════════════
+function updateHero(){
+  const g1ratio=P('iPri')*gs()[0]*P('iFd');
+  const iWh1=P('iT')*g1ratio*EFF;
+  const eWh=P('eT')*P('eR')*EFF;
+
+  document.getElementById('h_iEng').textContent=P('iT').toFixed(1)+' Nm';
+  document.getElementById('h_iRatio').textContent=g1ratio.toFixed(2)+':1';
+  document.getElementById('h_iWheel').textContent=iWh1.toFixed(0)+' Nm';
+  document.getElementById('h_iRatioCalc').textContent=g1ratio.toFixed(2);
+  document.getElementById('h_eMotor').textContent=P('eT').toFixed(0)+' Nm';
+  document.getElementById('h_eRatio').textContent=P('eR').toFixed(1)+':1';
+  document.getElementById('h_eWheel').textContent=eWh.toFixed(0)+' Nm';
+  document.getElementById('wow_ice').textContent='~'+iWh1.toFixed(0)+' Nm';
+  document.getElementById('wow_ev').textContent='~'+eWh.toFixed(0)+' Nm';
+
+  // Advertised cards (use peak torque RPM for ICE gear)
+  const gr=gs()[gear-1];
+  const iWg=iceWt(P('iTr'),gr);
+  document.getElementById('adv_wt').textContent=eWh.toFixed(0);
+  document.getElementById('adv_mt').textContent=P('eT').toFixed(0)+' Nm';
+  document.getElementById('adv_iwt').textContent=iWg.toFixed(0);
+  document.getElementById('adv_imt').textContent=P('iT').toFixed(1)+' Nm';
+  document.getElementById('adv_gear').textContent=gear;
+
+  // Sidebar notes
+  const totalR1=(P('iPri')*gs()[0]*P('iFd')).toFixed(2);
+  const trEl=document.getElementById('totalRatioG1');
+  if(trEl)trEl.textContent=totalR1;
+  const brEl=document.getElementById('evBaseDisplay');
+  if(brEl)brEl.textContent=evBaseRpm().toFixed(0);
+}
+
+// ════════════════════════════════════════════
+// THROTTLE
+// ════════════════════════════════════════════
+function buildTach(id,lit,isEv){
+  const el=document.getElementById(id);if(!el)return;
+  el.innerHTML='';
+  for(let i=0;i<TSEGS;i++){
+    const d=document.createElement('div');
+    d.className='tz'+(i<lit?(isEv?' lit-ev':' lit-ice'):'');
+    el.appendChild(d);
+  }
+}
+function onThrottle(){
+  const tI=P('tICE')/100,tE=P('tEV')/100;
+  document.getElementById('tICE').style.setProperty('--pct',(tI*100).toFixed(0)+'%');
+  document.getElementById('tEV') .style.setProperty('--pct',(tE*100).toFixed(0)+'%');
+  const idle=P('iId'),red=P('iRl'),eMx=P('eMx');
+  const rI=idle+tI*(red-idle),rE=tE*eMx;
+  buildTach('tachICE',Math.round(tI*TSEGS),false);
+  buildTach('tachEV', Math.round(tE*TSEGS),true);
+  document.getElementById('rpmICE').textContent=Math.round(rI);
+  document.getElementById('rpmEV') .textContent=Math.round(rE);
+  document.getElementById('tl_iIdle').textContent=Math.round(idle);
+  document.getElementById('tl_iRed') .textContent=Math.round(red);
+  document.getElementById('tl_eMx')  .textContent=Math.round(eMx);
+  const gr=gs()[gear-1];
+  const vI=iceSpd(rI,gr),vE=evSpd(rE);
+  const wtI=iceWt(rI,gr),wtE=evWt(rE);
+  const fI=wtI/P('iWr'),aI=fI/P('iMa');
+  const fE=wtE/P('eWr'),aE=fE/P('eMa');
+  const tI2=iceTq(rI),tE2=evTq(rE);
+  document.getElementById('ts_iT').textContent=tI2.toFixed(1)+' Nm';
+  document.getElementById('ts_iV').textContent=vI.toFixed(1)+' km/h';
+  document.getElementById('ts_iA').textContent=aI.toFixed(2)+' m/s²';
+  document.getElementById('ts_eT').textContent=tE2.toFixed(1)+' Nm';
+  document.getElementById('ts_eV').textContent=vE.toFixed(1)+' km/h';
+  document.getElementById('ts_eA').textContent=aE.toFixed(2)+' m/s²';
+  setEl('m_iT',tI2,2);setEl('m_iWt',wtI,1);setEl('m_iF',fI,0);setEl('m_iA',aI,2);setEl('m_iV',vI,1);
+  setEl('m_eT',tE2,1);setEl('m_eWt',wtE,1);setEl('m_eF',fE,0);setEl('m_eA',aE,2);setEl('m_eV',vE,1);
+  document.getElementById('m_iGl').textContent=`Gear ${gear} · G=${(P('iPri')*gr*P('iFd')).toFixed(2)}`;
+  document.getElementById('m_eGl').textContent=`×${P('eR').toFixed(1)} reduction`;
+  document.getElementById('m_iPk').textContent=P('iP').toFixed(1);
+  document.getElementById('m_ePk').textContent=P('eP').toFixed(1);
+}
+
+// ════════════════════════════════════════════
+// COMPARISON TABLE
+// ════════════════════════════════════════════
+function updateTable(){
+  const gr=gs()[gear-1];
+  const iWpk=iceWt(P('iTr'),gr),eWpk=evWt(0);
+  const iFpk=iWpk/P('iWr'),eFpk=eWpk/P('eWr');
+  const iApk=iFpk/P('iMa'),eApk=eFpk/P('eMa');
+  const topVI=iceSpd(P('iRl'),gs()[5]),topVE=evSpd(P('eMx'));
+  const iPtw=P('iP')*1000/P('iMa'),ePtw=P('eP')*1000/P('eMa');
+  // G1 wheel torque at launch-equivalent (idle for ICE, 0 RPM for EV)
+  const iWlaunch=iceWt(P('iId'),gs()[0]),eWlaunch=evWt(0);
+  // G1 peak wheel torque (peak-torque RPM, not current gear)
+  const iWg1pk=iceWt(P('iTr'),gs()[0]);
+  const row=(label,iv,ev,win,id=1,ed=1,u='',note='')=>{
+    const b=win==='ice'?'<span class="wb wb-ice">Apache ▲</span>':win==='ev'?'<span class="wb wb-ev">EV ▲</span>':'<span class="wb wb-tie">Equal</span>';
+    const noteHtml=note?`<br><span style="font-size:.62rem;color:var(--t3);letter-spacing:.3px">${note}</span>`:'';
+    return`<tr><td>${label}${noteHtml}</td><td class="v-ice">${iv.toFixed(id)}${u}</td><td class="v-ev">${ev.toFixed(ed)}${u}</td><td>${b}</td></tr>`;
+  };
+  const rowStr=(label,iv,ev,win,u='',note='')=>{
+    const b=win==='ice'?'<span class="wb wb-ice">Apache ▲</span>':win==='ev'?'<span class="wb wb-ev">EV ▲</span>':'<span class="wb wb-tie">Equal</span>';
+    const noteHtml=note?`<br><span style="font-size:.62rem;color:var(--t3);letter-spacing:.3px">${note}</span>`:'';
+    return`<tr><td>${label}${noteHtml}</td><td class="v-ice">${iv}</td><td class="v-ev">${ev}</td><td>${b}</td></tr>`;
+  };
+  document.getElementById('ctBody').innerHTML=[
+    // ── Power & Torque ──
+    `<tr><td colspan="4" style="font-family:var(--mono);font-size:.58rem;letter-spacing:2px;text-transform:uppercase;color:var(--t3);padding:10px 14px 5px;background:rgba(0,0,0,0.18)">Power & Torque</td></tr>`,
+    row('Peak Power',P('iP'),P('eP'),P('iP')>P('eP')?'ice':'ev',1,1,' kW','Power = physical ceiling that gearing cannot change'),
+    row('Power / Weight',iPtw,ePtw,iPtw>ePtw?'ice':'ev',1,1,' W/kg','Determines real-world acceleration capacity at speed'),
+    row('Engine / Motor Torque (shaft / crank)',P('iT'),P('eT'),P('eT')>P('iT')?'ev':'ice',1,0,' Nm','⚠ Measured at different drivetrain points — not directly comparable'),
+    // ── Wheel-level ──
+    `<tr><td colspan="4" style="font-family:var(--mono);font-size:.58rem;letter-spacing:2px;text-transform:uppercase;color:var(--t3);padding:10px 14px 5px;background:rgba(0,0,0,0.18)">At the Wheel — G1</td></tr>`,
+    rowStr('G1 Wheel Torque at launch (0 km/h)',iWlaunch.toFixed(0)+' Nm',eWlaunch.toFixed(0)+' Nm',eWlaunch>iWlaunch?'ev':'ice','','ICE at idle RPM vs EV at 0 RPM — EV has full torque instantly'),
+    rowStr('G1 Wheel Torque at peak-torque RPM',iWg1pk.toFixed(0)+' Nm',eWlaunch.toFixed(0)+' Nm',iWg1pk>eWlaunch?'ice':'ev','','Apache peaks here; EV maintains same value throughout low-speed range'),
+    row('Tractive Force at Tyre (peak)',iFpk,eFpk,eFpk>iFpk?'ev':'ice',0,0,' N','F = τ_wheel ÷ r_tyre — proportional to wheel torque at same radius'),
+    // ── Acceleration ──
+    `<tr><td colspan="4" style="font-family:var(--mono);font-size:.58rem;letter-spacing:2px;text-transform:uppercase;color:var(--t3);padding:10px 14px 5px;background:rgba(0,0,0,0.18)">Acceleration (idealised — no drag, no rider)</td></tr>`,
+    row(`Peak Accel in G${gear} (no drag)`,iApk,eApk,iApk>eApk?'ice':'ev',2,2,' m/s²','Rider +70 kg reduces both by ~33%; traction limit often hit first in G1'),
+    // ── Vehicle ──
+    `<tr><td colspan="4" style="font-family:var(--mono);font-size:.58rem;letter-spacing:2px;text-transform:uppercase;color:var(--t3);padding:10px 14px 5px;background:rgba(0,0,0,0.18)">Vehicle</td></tr>`,
+    row('Vehicle Mass (kerb, no rider)',P('iMa'),P('eMa'),P('iMa')<P('eMa')?'ice':'ev',0,0,' kg','Lower mass = better acceleration & handling'),
+    // ── Engine characteristics ──
+    `<tr><td colspan="4" style="font-family:var(--mono);font-size:.58rem;letter-spacing:2px;text-transform:uppercase;color:var(--t3);padding:10px 14px 5px;background:rgba(0,0,0,0.18)">Engine / Motor Characteristics</td></tr>`,
+    rowStr('RPM at Peak Torque',P('iTr').toFixed(0)+' RPM','0 RPM (flat from 0)','ev','','EV advantage: full torque from standstill with no powerband to find'),
+    rowStr('Redline / Max RPM',P('iRl').toFixed(0)+' RPM',P('eMx').toFixed(0)+' RPM','ice','','Higher Apache redline enables wider gear speed overlap & top-speed headroom'),
+    rowStr('Gear Count','6 (manual)','1 (single-stage)','ice','','6-speed gearbox: more ratio flexibility, better efficiency matching across speed range'),
+    row('Top Speed (RPM-limited, no drag)',topVI,topVE,topVI>topVE?'ice':'ev',0,0,' km/h','Theoretical max; real aero-limited speed is 15–30% lower for both'),
+  ].join('');
+}
+
+// ════════════════════════════════════════════
+// INSIGHTS
+// ════════════════════════════════════════════
+function updateInsights(){
+  const gr=gs()[gear-1],Gtot=P('iPri')*gr*P('iFd');
+  const iWpk=iceWt(P('iTr'),gr),eWpk=evWt(0);
+  const eA=(eWpk/P('eWr'))/P('eMa'),iA=(iWpk/P('iWr'))/P('iMa');
+  const topVI=iceSpd(P('iRl'),gs()[5]),topVE=evSpd(P('eMx'));
+  const br=evBaseRpm();
+  const flatPct=(br/P('eMx')*100).toFixed(0);
+  const f80I=P('iP')*1000/(80/3.6),f80E=P('eP')*1000/(80/3.6);
+
+  const I=[
+    {c:'a-warn',i:'📐',t:`The comparison "14.73 Nm vs ${P('eT').toFixed(0)} Nm" mixes crankshaft torque (ICE) with motor shaft torque (EV). Apache wheel torque in G${gear} = <strong>${iWpk.toFixed(0)} Nm</strong>. EV wheel torque = <strong>${eWpk.toFixed(0)} Nm</strong>. Both are real. The lesson: <strong>always ask where the torque was measured.</strong>`},
+    {c:'a-ice',i:'⚙',t:`Apache Gear ${gear} total ratio: ${P('iPri').toFixed(3)} (primary) × ${gr.toFixed(3)} (gear) × ${P('iFd').toFixed(3)} (final) = <strong>${Gtot.toFixed(2)}:1</strong>. With η=0.92: ${P('iT').toFixed(2)} × ${Gtot.toFixed(2)} × 0.92 = <strong>${iWpk.toFixed(0)} Nm</strong> at the wheel. This is never quoted in ICE marketing — which is also a form of selective communication.`},
+    {c:'a-ev',i:'⚡',t:`EV flat torque band extends 0 to <strong>${br.toFixed(0)} RPM</strong> (${flatPct}% of its rev range). This is genuine — lower motor torque with higher power means the constant-torque region is wider. This wide band matters for real-world driveability, not the peak number.`},
+    {c:eA>iA?'a-ev':'a-ice',i:eA>iA?'🚀':'🏁',t:eA>iA
+      ?`Low-speed acceleration: EV <strong>${eA.toFixed(2)} m/s²</strong> vs Apache G${gear} <strong>${iA.toFixed(2)} m/s²</strong>. EV wins here — full torque from 0 RPM, no clutch, no powerband to find. ⚠ Both values ignore rider mass (~70 kg) and drag.`
+      :`Apache in Gear ${gear} peaks at <strong>${iA.toFixed(2)} m/s²</strong> vs EV <strong>${eA.toFixed(2)} m/s²</strong>. Higher power-to-weight compensates for ICE's narrower torque band in this gear.`},
+    {c:'a-key',i:'✓',t:`At 80 km/h, max sustainable force from power (F=P/v): Apache = <strong>${f80I.toFixed(0)} N</strong>, EV = <strong>${f80E.toFixed(0)} N</strong>. At this speed, wheel torque is irrelevant — <strong>only power matters.</strong> The gap mirrors the power difference (${P('iP').toFixed(2)} kW vs ${P('eP').toFixed(1)} kW), not the torque difference.`},
+    {c:'a-info',i:'📊',t:`Top speed (RPM-limited, no drag): Apache ≈ <strong>${topVI.toFixed(0)} km/h</strong>, EV ≈ <strong>${topVE.toFixed(0)} km/h</strong>. ⚠ TVS claims 114 km/h for the Apache — this matches ~9,290 RPM in 5th, consistent with the aero-drag limit kicking in near peak power RPM.`},
+  ];
+  document.getElementById('insList').innerHTML=I.map(x=>`<div class="ins ${x.c}"><span class="ins-i">${x.i}</span><span class="ins-t">${x.t}</span></div>`).join('');
+}
+
+// ════════════════════════════════════════════
+// MASTER UPDATE
+// ════════════════════════════════════════════
+function update(){
+  updateCharts();updateTable();updateInsights();updateHero();updateDemo();onThrottle();
+}
+
+// ════════════════════════════════════════════
+// CONTROLS
+// ════════════════════════════════════════════
+function setGear(g){
+  gear=g;
+  for(let i=1;i<=6;i++)document.getElementById('gb'+i).classList.toggle('on',i===g);
+  update();
+}
+function showSTab(t){
+  document.getElementById('sb-ice').classList.toggle('show',t==='ice');
+  document.getElementById('sb-ev') .classList.toggle('show',t==='ev');
+  document.getElementById('st0').className='stab'+(t==='ice'?' on-ice':'');
+  document.getElementById('st1').className='stab'+(t==='ev' ?' on-ev':'');
+}
+function toggleSweep(){
+  sweepOn=!sweepOn;
+  const b=document.getElementById('btnSw');
+  if(sweepOn){b.textContent='⏸ Pause';b.classList.add('on');doSweep()}
+  else{b.textContent='▶ Auto Sweep';b.classList.remove('on');cancelAnimationFrame(sweepRAF)}
+}
+function doSweep(){
+  if(!sweepOn)return;
+  sweepV+=0.5*sweepDir;
+  if(sweepV>=100){sweepV=100;sweepDir=-1}
+  if(sweepV<=0){sweepV=0;sweepDir=1}
+  document.getElementById('tICE').value=sweepV;
+  document.getElementById('tEV') .value=sweepV;
+  onThrottle();
+  sweepRAF=requestAnimationFrame(doSweep);
+}
+function resetAll(){
+  Object.entries(DEFS).forEach(([k,v])=>{const el=document.getElementById(k);if(el){el.value=v;sync(k)}});
+  document.getElementById('tICE').value=0;document.getElementById('tEV').value=0;
+  document.getElementById('tICE').style.setProperty('--pct','0%');
+  document.getElementById('tEV') .style.setProperty('--pct','0%');
+  document.getElementById('dR').value=9.0;
+  gear=1;setGear(1);
+}
+
+// ════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded',()=>{
+  Object.keys(DEFS).forEach(k=>sync(k));
+  document.getElementById('tICE').style.setProperty('--pct','0%');
+  document.getElementById('tEV') .style.setProperty('--pct','0%');
+  document.getElementById('dR').style.setProperty('--pct','42%');
+  update();
+  document.querySelectorAll('.mc').forEach((el,i)=>{
+    el.style.opacity='0';el.style.transform='translateY(7px)';
+    setTimeout(()=>{el.style.transition='opacity .3s,transform .3s';el.style.opacity='1';el.style.transform='none'},35+i*22);
+  });
+});
+</script>
+</body>
+</html>
