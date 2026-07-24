@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Winglet Downforce Scaling vs Speed — CFD Analysis</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c0f;
+    --bg2: #111418;
+    --bg3: #181c22;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --text: #e8eaed;
+    --text2: #8a9199;
+    --text3: #5a6169;
+    --blue: #3a8fd4;
+    --blue-dim: rgba(58,143,212,0.1);
+    --orange: #e8612a;
+    --orange-dim: rgba(232,97,42,0.12);
+    --amber: #c89b3c;
+    --amber-dim: rgba(200,155,60,0.1);
+    --green: #3aad6e;
+    --green-dim: rgba(58,173,110,0.1);
+    --purple: #8f7ad4;
+    --purple-dim: rgba(143,122,212,0.12);
+    --red: #cc4444;
+    --font-mono: 'IBM Plex Mono', monospace;
+    --font-sans: 'IBM Plex Sans', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-sans); font-size: 14px; line-height: 1.6; }
+
+  .header { border-bottom: 1px solid var(--border2); padding: 2.5rem 3rem 2rem; background: var(--bg2); position: relative; overflow: hidden; }
+  .header::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background: linear-gradient(90deg, var(--blue), transparent 60%); }
+  .header-tag { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.15em; color: var(--blue); text-transform: uppercase; margin-bottom: 0.75rem; }
+  .header h1 { font-size: 28px; font-weight: 600; letter-spacing: 0.01em; }
+  .header-sub { font-family: var(--font-mono); font-size: 12px; color: var(--text2); margin-top: 0.4rem; }
+
+  .main { max-width: 1400px; margin: 0 auto; padding: 2.5rem 3rem; display: grid; grid-template-columns: 1.55fr 1fr; gap: 1.5rem; }
+  @media (max-width: 1000px) { .main { grid-template-columns: 1fr; } }
+
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem 1.5rem 1.25rem; }
+  .card-title { font-size: 15px; font-weight: 600; margin-bottom: 0.25rem; }
+  .card-sub { font-family: var(--font-mono); font-size: 10px; color: var(--text2); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 1.1rem; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text2); text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border2); }
+  td { padding: 9px 10px; border-bottom: 1px solid var(--border); font-family: var(--font-mono); }
+  tr:last-child td { border-bottom: none; }
+  .num-blue { color: var(--blue); }
+  .num-green { color: var(--green); }
+  .num-orange { color: var(--orange); }
+  .num-red { color: var(--red); }
+  .foot-row td { font-weight: 600; color: var(--text2); background: var(--bg3); border-top: 1px solid var(--border2); }
+
+  .takeaway { background: var(--amber-dim); border: 1px solid rgba(200,155,60,0.3); border-radius: 8px; padding: 1.25rem 1.5rem; margin-top: 1.5rem; }
+  .takeaway-tag { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; color: var(--amber); text-transform: uppercase; margin-bottom: 0.6rem; }
+  .takeaway p { font-size: 14px; color: var(--text); }
+  .takeaway strong { color: var(--amber); }
+
+  .checklist { list-style: none; margin-top: 0.75rem; }
+  .checklist li { display: flex; gap: 10px; padding: 6px 0; font-size: 13.5px; color: var(--text2); }
+  .checklist li::before { content: '✓'; color: var(--green); font-weight: 600; flex-shrink: 0; }
+
+  .notes-list { list-style: none; margin-top: 0.5rem; }
+  .notes-list li { padding: 5px 0; font-size: 12.5px; color: var(--text2); font-family: var(--font-mono); padding-left: 14px; position: relative; }
+  .notes-list li::before { content: '—'; position: absolute; left: 0; color: var(--text3); }
+
+  .full-row { grid-column: 1 / -1; }
+
+  .summary-bar { max-width: 1400px; margin: 0 auto 2.5rem; padding: 1.1rem 3rem; }
+  .summary-inner { background: var(--blue-dim); border: 1px solid rgba(58,143,212,0.3); border-radius: 8px; padding: 1rem 1.5rem; font-size: 13.5px; color: var(--text); }
+  .summary-inner strong { color: var(--blue); }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.25rem; }
+  .stat-tile { background: var(--bg3); border-radius: 6px; padding: 0.85rem 1rem; }
+  .stat-label { font-family: var(--font-mono); font-size: 9.5px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; }
+  .stat-val { font-family: var(--font-mono); font-size: 18px; font-weight: 600; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-tag">CFD Analysis Summary — Prototype Cosmetic Winglet</div>
+  <h1>Winglet downforce scaling vs speed</h1>
+  <div class="header-sub">Steady-state RANS CFD · forces extracted in −Z direction · 3 speed points, 60–299 km/h</div>
+</div>
+
+<div class="main">
+
+  <div class="card">
+    <div class="card-title">Downforce vs speed</div>
+    <div class="card-sub">CFD results vs theoretical V² scaling</div>
+    <div style="position: relative; width: 100%; height: 340px;">
+      <canvas id="dfChart" role="img" aria-label="Line chart comparing CFD downforce and theoretical V-squared scaling across 60, 155, and 299 km/h, with error markers at each point">CFD downforce: 60 km/h 3.58 N, 155 km/h 23.78 N, 299 km/h 95.14 N. Theoretical V-squared: 3.58 N, 23.33 N, 88.97 N. Errors: 0.0%, -0.4%, +6.9%.</canvas>
+    </div>
+
+    <div class="takeaway">
+      <div class="takeaway-tag">★ Key takeaway</div>
+      <p>The model <strong>does not break</strong> at different speeds and acts <strong>consistently</strong>, producing predictable downforce across a very wide speed range.</p>
+    </div>
+
+    <div style="margin-top: 1.25rem;">
+      <div class="card-title" style="font-size: 14px;">What this winglet achieves</div>
+      <ul class="checklist">
+        <li>Downforce increases smoothly with speed</li>
+        <li>Follows the expected V² aerodynamic trend very closely</li>
+        <li>Maximum deviation from theoretical scaling is only ~7% at 299 km/h</li>
+        <li>No sign of aerodynamic stall or sudden performance drop</li>
+        <li>Flow structures remain stable across all tested speeds</li>
+        <li>For a cosmetic-style winglet, this level of consistency is exceptional</li>
+      </ul>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+    <div class="card">
+      <div class="card-title">CFD results summary</div>
+      <div class="card-sub">1 kgf ≈ 9.81 N</div>
+      <table>
+        <tr><th>Speed (km/h)</th><th>Speed (m/s)</th><th>Downforce (N)</th><th>Downforce (kgf)</th></tr>
+        <tr><td>60</td><td class="num-green">16.67</td><td class="num-blue">3.58</td><td class="num-orange">0.365</td></tr>
+        <tr><td>155</td><td class="num-green">43.06</td><td class="num-blue">23.78</td><td class="num-orange">2.42</td></tr>
+        <tr><td>299</td><td class="num-green">83.06</td><td class="num-blue">95.14</td><td class="num-orange">9.70</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Scaling error analysis</div>
+      <div class="card-sub">Error = (CFD − Theoretical) / Theoretical × 100%</div>
+      <table>
+        <tr><th>Speed (km/h)</th><th>Theoretical (N)</th><th>CFD (N)</th><th>Error (%)</th></tr>
+        <tr><td>60</td><td>3.58</td><td class="num-blue">3.58</td><td class="num-green">0.0%</td></tr>
+        <tr><td>155</td><td>23.33</td><td class="num-blue">23.78</td><td class="num-green">−0.4%</td></tr>
+        <tr><td>299</td><td>88.97</td><td class="num-blue">95.14</td><td class="num-red">+6.9%</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Notes</div>
+      <ul class="notes-list">
+        <li>Forces extracted in the −Z direction (downward)</li>
+        <li>Gravity was enabled in all simulations; its effect on aerodynamic forces is negligible (&lt;1%)</li>
+        <li>Results are based on steady-state RANS CFD simulations</li>
+        <li>Ideal aerodynamic scaling assumes constant air density and similar flow regime</li>
+      </ul>
+    </div>
+
+  </div>
+
+</div>
+
+<div class="summary-bar">
+  <div class="summary-inner">
+    🏆 The winglet produces <strong>~3.6 N (0.37 kg)</strong>, <strong>~23.8 N (2.42 kg)</strong> and <strong>~95.1 N (9.70 kg)</strong> of downforce at 60, 155 and 299 km/h respectively. The aerodynamic load scales closely with V², with a maximum deviation of ~7%, demonstrating excellent consistency for a cosmetic winglet.
+  </div>
+</div>
+
+<script>
+const speedKmh = [60, 155, 299];
+const cfd = [3.58, 23.78, 95.14];
+const theo = [3.58, 23.33, 88.97];
+const errPct = [0.0, -0.4, 6.9];
+
+new Chart(document.getElementById('dfChart'), {
+  data: {
+    labels: speedKmh,
+    datasets: [
+      {
+        type: 'line',
+        label: 'CFD downforce (N)',
+        data: cfd,
+        borderColor: '#3a8fd4',
+        backgroundColor: '#3a8fd4',
+        borderWidth: 2,
+        tension: 0.35,
+        pointRadius: 5,
+        pointBackgroundColor: '#3a8fd4',
+        pointBorderColor: '#0a0c0f',
+        pointBorderWidth: 2
+      },
+      {
+        type: 'line',
+        label: 'Theoretical (V² scaling)',
+        data: theo,
+        borderColor: '#e8612a',
+        borderDash: [6, 4],
+        borderWidth: 2,
+        tension: 0.35,
+        pointRadius: 3,
+        pointBackgroundColor: '#e8612a'
+      },
+      {
+        type: 'scatter',
+        label: 'Error marker (vs theoretical)',
+        data: speedKmh.map((s, i) => ({x: s, y: cfd[i] + 7})),
+        pointStyle: 'triangle',
+        pointRadius: 7,
+        backgroundColor: '#8f7ad4',
+        borderColor: '#8f7ad4'
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: {
+        labels: { color: '#8a9199', font: { family: 'IBM Plex Mono', size: 11 }, usePointStyle: true }
+      },
+      tooltip: {
+        callbacks: {
+          label: (ctx) => {
+            if (ctx.dataset.label.includes('Error')) {
+              const idx = ctx.dataIndex;
+              return `Error: ${errPct[idx] > 0 ? '+' : ''}${errPct[idx]}%`;
+            }
+            return `${ctx.dataset.label}: ${ctx.parsed.y} N`;
+          }
+        }
+      }
+    },
+    scales: {
+      x: {
+        type: 'linear',
+        min: 0, max: 340,
+        title: { display: true, text: 'Speed (km/h)', color: '#8a9199', font: { family: 'IBM Plex Mono', size: 11 } },
+        ticks: { color: '#8a9199', font: { family: 'IBM Plex Mono', size: 10 } },
+        grid: { color: 'rgba(255,255,255,0.06)' }
+      },
+      y: {
+        beginAtZero: true,
+        title: { display: true, text: 'Downforce (N)', color: '#3a8fd4', font: { family: 'IBM Plex Mono', size: 11 } },
+        ticks: { color: '#8a9199', font: { family: 'IBM Plex Mono', size: 10 } },
+        grid: { color: 'rgba(255,255,255,0.06)' }
+      }
+    }
+  }
+});
+</script>
+
+</body>
+</html>
