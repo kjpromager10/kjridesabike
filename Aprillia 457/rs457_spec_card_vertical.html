@@ -1,88 +1,181 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aprilia RS 457 — Spec Card</title>
+    <style>
+      .spec-card {
+        background: var(--color-background-primary);
+        border: 0.5px solid var(--color-border-tertiary);
+        border-radius: 16px;
+        width: 320px;
+        margin: 1rem auto;
+        overflow: hidden;
+        font-family: var(--font-sans, sans-serif);
+      }
+      .card-header {
+        background: #0a0a0a;
+        padding: 20px 20px 16px;
+      }
+      .badge {
+        display: inline-block;
+        font-size: 10px;
+        font-weight: 500;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        background: #222;
+        color: #888;
+        border-radius: 4px;
+        padding: 3px 8px;
+        margin-bottom: 10px;
+      }
+      .bike-name {
+        font-size: 22px;
+        font-weight: 500;
+        color: #fff;
+        margin: 0 0 2px;
+      }
+      .bike-sub {
+        font-size: 12px;
+        color: #666;
+        margin: 0;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 13px 20px;
+        border-bottom: 0.5px solid var(--color-border-tertiary);
+      }
+      .row:last-child {
+        border-bottom: none;
+      }
+      .row-label {
+        font-size: 12px;
+        color: var(--color-text-secondary);
+      }
+      .row-val {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--color-text-primary);
+        text-align: right;
+      }
+      .row-val span {
+        font-size: 11px;
+        font-weight: 400;
+        color: var(--color-text-secondary);
+        margin-left: 3px;
+      }
+      .highlight-row {
+        background: var(--color-background-secondary);
+      }
+      .big-stat {
+        display: flex;
+        gap: 0;
+        border-bottom: 0.5px solid var(--color-border-tertiary);
+      }
+      .big-stat-item {
+        flex: 1;
+        padding: 16px 20px;
+      }
+      .big-stat-item:first-child {
+        border-right: 0.5px solid var(--color-border-tertiary);
+      }
+      .big-stat-label {
+        font-size: 11px;
+        color: var(--color-text-secondary);
+        margin: 0 0 3px;
+      }
+      .big-stat-num {
+        font-size: 26px;
+        font-weight: 500;
+        color: var(--color-text-primary);
+        margin: 0;
+        line-height: 1;
+      }
+      .big-stat-unit {
+        font-size: 12px;
+        color: var(--color-text-secondary);
+        margin: 2px 0 0;
+      }
+      .section-divider {
+        font-size: 10px;
+        font-weight: 500;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--color-text-tertiary);
+        padding: 10px 20px 4px;
+        border-bottom: 0.5px solid var(--color-border-tertiary);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="spec-card">
+      <div class="card-header">
+        <div class="badge">457cc parallel twin</div>
+        <p class="bike-name">Aprilia RS 457</p>
+        <p class="bike-sub">270° crank · DOHC · liquid cooled</p>
+      </div>
 
-<style>
-  .spec-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: 16px; width: 320px; margin: 1rem auto; overflow: hidden; font-family: var(--font-sans, sans-serif); }
-  .card-header { background: #0a0a0a; padding: 20px 20px 16px; }
-  .badge { display: inline-block; font-size: 10px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; background: #222; color: #888; border-radius: 4px; padding: 3px 8px; margin-bottom: 10px; }
-  .bike-name { font-size: 22px; font-weight: 500; color: #fff; margin: 0 0 2px; }
-  .bike-sub { font-size: 12px; color: #666; margin: 0; }
-  .row { display: flex; align-items: center; justify-content: space-between; padding: 13px 20px; border-bottom: 0.5px solid var(--color-border-tertiary); }
-  .row:last-child { border-bottom: none; }
-  .row-label { font-size: 12px; color: var(--color-text-secondary); }
-  .row-val { font-size: 14px; font-weight: 500; color: var(--color-text-primary); text-align: right; }
-  .row-val span { font-size: 11px; font-weight: 400; color: var(--color-text-secondary); margin-left: 3px; }
-  .highlight-row { background: var(--color-background-secondary); }
-  .big-stat { display: flex; gap: 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
-  .big-stat-item { flex: 1; padding: 16px 20px; }
-  .big-stat-item:first-child { border-right: 0.5px solid var(--color-border-tertiary); }
-  .big-stat-label { font-size: 11px; color: var(--color-text-secondary); margin: 0 0 3px; }
-  .big-stat-num { font-size: 26px; font-weight: 500; color: var(--color-text-primary); margin: 0; line-height: 1; }
-  .big-stat-unit { font-size: 12px; color: var(--color-text-secondary); margin: 2px 0 0; }
-  .section-divider { font-size: 10px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-tertiary); padding: 10px 20px 4px; border-bottom: 0.5px solid var(--color-border-tertiary); }
-</style>
+      <div class="big-stat">
+        <div class="big-stat-item">
+          <p class="big-stat-label">Max power</p>
+          <p class="big-stat-num">47.6</p>
+          <p class="big-stat-unit">hp @ 9400 rpm</p>
+        </div>
+        <div class="big-stat-item">
+          <p class="big-stat-label">Peak torque</p>
+          <p class="big-stat-num">43.5</p>
+          <p class="big-stat-unit">Nm @ 6700 rpm</p>
+        </div>
+      </div>
 
-<div class="spec-card">
-  <div class="card-header">
-    <div class="badge">457cc parallel twin</div>
-    <p class="bike-name">Aprilia RS 457</p>
-    <p class="bike-sub">270° crank · DOHC · liquid cooled</p>
-  </div>
+      <div class="section-divider">Engine</div>
 
-  <div class="big-stat">
-    <div class="big-stat-item">
-      <p class="big-stat-label">Max power</p>
-      <p class="big-stat-num">47.6</p>
-      <p class="big-stat-unit">hp @ 9400 rpm</p>
+      <div class="row">
+        <span class="row-label">Displacement</span>
+        <span class="row-val">457 <span>cc</span></span>
+      </div>
+      <div class="row">
+        <span class="row-label">Bore × stroke</span>
+        <span class="row-val">69 × 61.1 <span>mm</span></span>
+      </div>
+      <div class="row">
+        <span class="row-label">Compression</span>
+        <span class="row-val">10.5 <span>:1</span></span>
+      </div>
+      <div class="row">
+        <span class="row-label">Redline</span>
+        <span class="row-val">10,700 <span>rpm</span></span>
+      </div>
+      <div class="row highlight-row">
+        <span class="row-label">Low-rpm torque</span>
+        <span class="row-val">82% <span>@ 3000 rpm</span></span>
+      </div>
+
+      <div class="section-divider">Platform</div>
+
+      <div class="row">
+        <span class="row-label">Segment</span>
+        <span class="row-val">A2 entry supersport</span>
+      </div>
+      <div class="row">
+        <span class="row-label">Frame</span>
+        <span class="row-val">Aluminium</span>
+      </div>
+      <div class="row">
+        <span class="row-label">Kerb weight</span>
+        <span class="row-val">175 <span>kg</span></span>
+      </div>
+      <div class="row">
+        <span class="row-label">Power-to-weight</span>
+        <span class="row-val">272 <span>hp/tonne</span></span>
+      </div>
+      <div class="row">
+        <span class="row-label">Gearbox</span>
+        <span class="row-val">6-speed <span>+ slipper</span></span>
+      </div>
     </div>
-    <div class="big-stat-item">
-      <p class="big-stat-label">Peak torque</p>
-      <p class="big-stat-num">43.5</p>
-      <p class="big-stat-unit">Nm @ 6700 rpm</p>
-    </div>
-  </div>
-
-  <div class="section-divider">Engine</div>
-
-  <div class="row">
-    <span class="row-label">Displacement</span>
-    <span class="row-val">457 <span>cc</span></span>
-  </div>
-  <div class="row">
-    <span class="row-label">Bore × stroke</span>
-    <span class="row-val">69 × 61.1 <span>mm</span></span>
-  </div>
-  <div class="row">
-    <span class="row-label">Compression</span>
-    <span class="row-val">10.5 <span>:1</span></span>
-  </div>
-  <div class="row">
-    <span class="row-label">Redline</span>
-    <span class="row-val">10,700 <span>rpm</span></span>
-  </div>
-  <div class="row highlight-row">
-    <span class="row-label">Low-rpm torque</span>
-    <span class="row-val">82% <span>@ 3000 rpm</span></span>
-  </div>
-
-  <div class="section-divider">Platform</div>
-
-  <div class="row">
-    <span class="row-label">Segment</span>
-    <span class="row-val">A2 entry supersport</span>
-  </div>
-  <div class="row">
-    <span class="row-label">Frame</span>
-    <span class="row-val">Aluminium</span>
-  </div>
-  <div class="row">
-    <span class="row-label">Kerb weight</span>
-    <span class="row-val">175 <span>kg</span></span>
-  </div>
-  <div class="row">
-    <span class="row-label">Power-to-weight</span>
-    <span class="row-val">272 <span>hp/tonne</span></span>
-  </div>
-  <div class="row">
-    <span class="row-label">Gearbox</span>
-    <span class="row-val">6-speed <span>+ slipper</span></span>
-  </div>
-</div>
+  </body>
+</html>

@@ -1,538 +1,1639 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Triumph TR-Series Engine Issues — Speed 400 & Scrambler 400X</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
-<style>
-:root {
-  --bg: #0a0f0a;
-  --surface: #101510;
-  --card: #141a14;
-  --border: #243024;
-  --accent: #22c55e;
-  --accent-dark: #15803d;
-  --accent2: #f0a500;
-  --accent3: #4a9eff;
-  --text: #e8eee8;
-  --muted: #7a9078;
-  --danger: #ff4444;
-  --warn: #f0a500;
-  --good: #22c55e;
-  --triumph: #22c55e;
-}
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
-body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Sans', sans-serif; font-size: 15px; line-height: 1.7; min-height: 100vh; }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Triumph TR-Series Engine Issues — Speed 400 & Scrambler 400X</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0a0f0a;
+        --surface: #101510;
+        --card: #141a14;
+        --border: #243024;
+        --accent: #22c55e;
+        --accent-dark: #15803d;
+        --accent2: #f0a500;
+        --accent3: #4a9eff;
+        --text: #e8eee8;
+        --muted: #7a9078;
+        --danger: #ff4444;
+        --warn: #f0a500;
+        --good: #22c55e;
+        --triumph: #22c55e;
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: "IBM Plex Sans", sans-serif;
+        font-size: 15px;
+        line-height: 1.7;
+        min-height: 100vh;
+      }
 
-.site-header {
-  background: linear-gradient(135deg, #0a0f0a 0%, #0a1a0e 50%, #0a0f0a 100%);
-  border-bottom: 2px solid var(--triumph);
-  padding: 40px 24px 32px;
-  position: relative; overflow: hidden;
-}
-.site-header::before {
-  content: ''; position: absolute; top: -40px; right: -40px;
-  width: 300px; height: 300px;
-  background: radial-gradient(circle, rgba(34,197,94,0.12) 0%, transparent 70%);
-  pointer-events: none;
-}
-.header-inner { max-width: 960px; margin: 0 auto; }
-.header-label { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 3px; color: var(--triumph); text-transform: uppercase; margin-bottom: 12px; }
-.site-header h1 { font-family: 'Syne', sans-serif; font-size: clamp(26px, 5vw, 48px); font-weight: 800; line-height: 1.1; margin-bottom: 12px; }
-.site-header h1 span { color: var(--triumph); }
-.header-meta { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 20px; }
-.header-meta span { display: flex; align-items: center; gap: 6px; }
-.dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+      .site-header {
+        background: linear-gradient(
+          135deg,
+          #0a0f0a 0%,
+          #0a1a0e 50%,
+          #0a0f0a 100%
+        );
+        border-bottom: 2px solid var(--triumph);
+        padding: 40px 24px 32px;
+        position: relative;
+        overflow: hidden;
+      }
+      .site-header::before {
+        content: "";
+        position: absolute;
+        top: -40px;
+        right: -40px;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(
+          circle,
+          rgba(34, 197, 94, 0.12) 0%,
+          transparent 70%
+        );
+        pointer-events: none;
+      }
+      .header-inner {
+        max-width: 960px;
+        margin: 0 auto;
+      }
+      .header-label {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        letter-spacing: 3px;
+        color: var(--triumph);
+        text-transform: uppercase;
+        margin-bottom: 12px;
+      }
+      .site-header h1 {
+        font-family: "Syne", sans-serif;
+        font-size: clamp(26px, 5vw, 48px);
+        font-weight: 800;
+        line-height: 1.1;
+        margin-bottom: 12px;
+      }
+      .site-header h1 span {
+        color: var(--triumph);
+      }
+      .header-meta {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 12px;
+        color: var(--muted);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+      }
+      .header-meta span {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        display: inline-block;
+      }
 
-.nav-wrap { background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
-.nav-tabs { max-width: 960px; margin: 0 auto; display: flex; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-.nav-tabs::-webkit-scrollbar { display: none; }
-.tab-btn { flex-shrink: 0; background: none; border: none; padding: 14px 20px; font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; }
-.tab-btn:hover { color: var(--text); }
-.tab-btn.active { color: var(--triumph); border-bottom-color: var(--triumph); }
+      .nav-wrap {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+      .nav-tabs {
+        max-width: 960px;
+        margin: 0 auto;
+        display: flex;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .nav-tabs::-webkit-scrollbar {
+        display: none;
+      }
+      .tab-btn {
+        flex-shrink: 0;
+        background: none;
+        border: none;
+        padding: 14px 20px;
+        font-family: "Syne", sans-serif;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--muted);
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s;
+        white-space: nowrap;
+      }
+      .tab-btn:hover {
+        color: var(--text);
+      }
+      .tab-btn.active {
+        color: var(--triumph);
+        border-bottom-color: var(--triumph);
+      }
 
-.main { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
-.tab-panel { display: none; }
-.tab-panel.active { display: block; animation: fadeIn 0.3s ease; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+      .main {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 32px 24px;
+      }
+      .tab-panel {
+        display: none;
+      }
+      .tab-panel.active {
+        display: block;
+        animation: fadeIn 0.3s ease;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
 
-.section-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; margin-bottom: 6px; }
-.section-sub { color: var(--muted); font-size: 13px; margin-bottom: 28px; font-family: 'IBM Plex Mono', monospace; }
+      .section-title {
+        font-family: "Syne", sans-serif;
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+      .section-sub {
+        color: var(--muted);
+        font-size: 13px;
+        margin-bottom: 28px;
+        font-family: "IBM Plex Mono", monospace;
+      }
 
-.verdict-box { background: linear-gradient(135deg, #0a1a0a, #0a1a0a); border: 1px solid var(--triumph); border-left: 4px solid var(--triumph); border-radius: 8px; padding: 20px 24px; margin-bottom: 32px; }
-.verdict-box h3 { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--triumph); margin-bottom: 8px; }
-.verdict-box p { font-size: 14px; line-height: 1.8; color: #b8d0b8; }
+      .verdict-box {
+        background: linear-gradient(135deg, #0a1a0a, #0a1a0a);
+        border: 1px solid var(--triumph);
+        border-left: 4px solid var(--triumph);
+        border-radius: 8px;
+        padding: 20px 24px;
+        margin-bottom: 32px;
+      }
+      .verdict-box h3 {
+        font-family: "Syne", sans-serif;
+        font-size: 14px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: var(--triumph);
+        margin-bottom: 8px;
+      }
+      .verdict-box p {
+        font-size: 14px;
+        line-height: 1.8;
+        color: #b8d0b8;
+      }
 
-.engine-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 24px; margin-bottom: 28px; }
-.badge { font-family: 'IBM Plex Mono', monospace; font-size: 11px; padding: 3px 8px; border-radius: 4px; font-weight: 500; }
-.badge-triumph { background: rgba(34,197,94,0.15); color: var(--triumph); border: 1px solid rgba(34,197,94,0.4); }
-.spec-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; }
-.spec-label { color: var(--muted); }
-.spec-val { font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+      .engine-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 24px;
+        margin-bottom: 28px;
+      }
+      .badge {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-weight: 500;
+      }
+      .badge-triumph {
+        background: rgba(34, 197, 94, 0.15);
+        color: var(--triumph);
+        border: 1px solid rgba(34, 197, 94, 0.4);
+      }
+      .spec-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 13px;
+      }
+      .spec-label {
+        color: var(--muted);
+      }
+      .spec-val {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 12px;
+      }
 
-.issue-list { display: flex; flex-direction: column; gap: 20px; }
-.issue-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
-.issue-header { display: flex; align-items: flex-start; gap: 16px; padding: 20px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.2s; }
-.issue-header:hover { background: rgba(255,255,255,0.015); }
-.issue-num { font-family: 'IBM Plex Mono', monospace; font-size: 11px; background: rgba(34,197,94,0.12); color: var(--triumph); padding: 3px 8px; border-radius: 4px; flex-shrink: 0; margin-top: 2px; }
-.issue-title-wrap { flex: 1; }
-.issue-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 17px; margin-bottom: 6px; }
-.issue-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip { font-family: 'IBM Plex Mono', monospace; font-size: 10px; padding: 2px 7px; border-radius: 3px; font-weight: 500; }
-.chip-high { background: rgba(255,68,68,0.15); color: #ff7070; border: 1px solid rgba(255,68,68,0.3); }
-.chip-med { background: rgba(240,165,0,0.15); color: var(--accent2); border: 1px solid rgba(240,165,0,0.3); }
-.chip-low { background: rgba(34,197,94,0.12); color: #4ade80; border: 1px solid rgba(34,197,94,0.25); }
-.chip-triumph { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
-.severity-bar { width: 64px; text-align: center; flex-shrink: 0; }
-.severity-circle { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; margin: 0 auto 4px; }
-.sev-high { background: rgba(255,68,68,0.2); border: 2px solid #ff4444; color: #ff7070; }
-.sev-med { background: rgba(240,165,0,0.15); border: 2px solid var(--accent2); color: var(--accent2); }
-.sev-low { background: rgba(34,197,94,0.1); border: 2px solid #22c55e; color: #4ade80; }
-.severity-label { font-size: 10px; color: var(--muted); font-family: 'IBM Plex Mono', monospace; }
-.issue-body { padding: 0 20px; max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.3s; }
-.issue-body.open { max-height: 2000px; padding: 20px; }
-.issue-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
-@media (max-width: 600px) { .issue-grid { grid-template-columns: 1fr; } }
-.issue-col h4 { font-family: 'IBM Plex Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 8px; }
-.issue-col ul { list-style: none; }
-.issue-col ul li { font-size: 13px; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05); color: #c8d8c8; }
-.issue-col ul li::before { content: '↳ '; color: var(--triumph); font-size: 12px; }
-.user-reports { background: rgba(74,158,255,0.05); border: 1px solid rgba(74,158,255,0.18); border-radius: 6px; padding: 14px; margin-top: 12px; }
-.user-reports h4 { font-family: 'IBM Plex Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--accent3); margin-bottom: 10px; }
-.quote-block { font-size: 12px; color: #a8b8a8; border-left: 2px solid var(--accent3); padding-left: 12px; margin-bottom: 8px; font-style: italic; line-height: 1.6; }
-.quote-source { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 2px; display: block; }
-.fault-table-note { background: rgba(34,197,94,0.06); border: 1px solid rgba(34,197,94,0.2); border-radius: 6px; padding: 12px 14px; margin-top: 12px; font-size: 13px; color: #a8c8a0; }
-.fault-note-warn { background: rgba(240,165,0,0.07); border: 1px solid rgba(240,165,0,0.25); border-radius: 6px; padding: 12px 14px; margin-top: 12px; font-size: 13px; color: #c8b888; }
-.expand-icon { color: var(--muted); font-size: 20px; line-height: 1; flex-shrink: 0; margin-top: 6px; transition: transform 0.3s; }
-.issue-header.open .expand-icon { transform: rotate(45deg); }
+      .issue-list {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .issue-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      .issue-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        padding: 20px;
+        border-bottom: 1px solid var(--border);
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      .issue-header:hover {
+        background: rgba(255, 255, 255, 0.015);
+      }
+      .issue-num {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        background: rgba(34, 197, 94, 0.12);
+        color: var(--triumph);
+        padding: 3px 8px;
+        border-radius: 4px;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+      .issue-title-wrap {
+        flex: 1;
+      }
+      .issue-title {
+        font-family: "Syne", sans-serif;
+        font-weight: 700;
+        font-size: 17px;
+        margin-bottom: 6px;
+      }
+      .issue-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .chip {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px;
+        padding: 2px 7px;
+        border-radius: 3px;
+        font-weight: 500;
+      }
+      .chip-high {
+        background: rgba(255, 68, 68, 0.15);
+        color: #ff7070;
+        border: 1px solid rgba(255, 68, 68, 0.3);
+      }
+      .chip-med {
+        background: rgba(240, 165, 0, 0.15);
+        color: var(--accent2);
+        border: 1px solid rgba(240, 165, 0, 0.3);
+      }
+      .chip-low {
+        background: rgba(34, 197, 94, 0.12);
+        color: #4ade80;
+        border: 1px solid rgba(34, 197, 94, 0.25);
+      }
+      .chip-triumph {
+        background: rgba(34, 197, 94, 0.15);
+        color: #4ade80;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+      }
+      .severity-bar {
+        width: 64px;
+        text-align: center;
+        flex-shrink: 0;
+      }
+      .severity-circle {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: "Syne", sans-serif;
+        font-size: 12px;
+        font-weight: 700;
+        margin: 0 auto 4px;
+      }
+      .sev-high {
+        background: rgba(255, 68, 68, 0.2);
+        border: 2px solid #ff4444;
+        color: #ff7070;
+      }
+      .sev-med {
+        background: rgba(240, 165, 0, 0.15);
+        border: 2px solid var(--accent2);
+        color: var(--accent2);
+      }
+      .sev-low {
+        background: rgba(34, 197, 94, 0.1);
+        border: 2px solid #22c55e;
+        color: #4ade80;
+      }
+      .severity-label {
+        font-size: 10px;
+        color: var(--muted);
+        font-family: "IBM Plex Mono", monospace;
+      }
+      .issue-body {
+        padding: 0 20px;
+        max-height: 0;
+        overflow: hidden;
+        transition:
+          max-height 0.4s ease,
+          padding 0.3s;
+      }
+      .issue-body.open {
+        max-height: 2000px;
+        padding: 20px;
+      }
+      .issue-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 16px;
+      }
+      @media (max-width: 600px) {
+        .issue-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .issue-col h4 {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: var(--muted);
+        margin-bottom: 8px;
+      }
+      .issue-col ul {
+        list-style: none;
+      }
+      .issue-col ul li {
+        font-size: 13px;
+        padding: 4px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        color: #c8d8c8;
+      }
+      .issue-col ul li::before {
+        content: "↳ ";
+        color: var(--triumph);
+        font-size: 12px;
+      }
+      .user-reports {
+        background: rgba(74, 158, 255, 0.05);
+        border: 1px solid rgba(74, 158, 255, 0.18);
+        border-radius: 6px;
+        padding: 14px;
+        margin-top: 12px;
+      }
+      .user-reports h4 {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: var(--accent3);
+        margin-bottom: 10px;
+      }
+      .quote-block {
+        font-size: 12px;
+        color: #a8b8a8;
+        border-left: 2px solid var(--accent3);
+        padding-left: 12px;
+        margin-bottom: 8px;
+        font-style: italic;
+        line-height: 1.6;
+      }
+      .quote-source {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px;
+        color: var(--muted);
+        margin-top: 2px;
+        display: block;
+      }
+      .fault-table-note {
+        background: rgba(34, 197, 94, 0.06);
+        border: 1px solid rgba(34, 197, 94, 0.2);
+        border-radius: 6px;
+        padding: 12px 14px;
+        margin-top: 12px;
+        font-size: 13px;
+        color: #a8c8a0;
+      }
+      .fault-note-warn {
+        background: rgba(240, 165, 0, 0.07);
+        border: 1px solid rgba(240, 165, 0, 0.25);
+        border-radius: 6px;
+        padding: 12px 14px;
+        margin-top: 12px;
+        font-size: 13px;
+        color: #c8b888;
+      }
+      .expand-icon {
+        color: var(--muted);
+        font-size: 20px;
+        line-height: 1;
+        flex-shrink: 0;
+        margin-top: 6px;
+        transition: transform 0.3s;
+      }
+      .issue-header.open .expand-icon {
+        transform: rotate(45deg);
+      }
 
-/* vs KTM comparison table */
-.comp-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 20px; }
-.comp-table th { background: rgba(255,255,255,0.04); font-family: 'IBM Plex Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; padding: 12px 14px; text-align: left; color: var(--muted); border-bottom: 1px solid var(--border); }
-.comp-table td { padding: 11px 14px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: top; font-size: 13px; color: #c8d8c8; }
-.comp-table tr:hover td { background: rgba(255,255,255,0.015); }
-.tag { display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 10px; padding: 2px 7px; border-radius: 3px; font-weight: 500; margin: 2px; }
-.tag-triumph { background: rgba(34,197,94,0.15); color: #4ade80; }
-.tag-ktm { background: rgba(232,83,10,0.15); color: #ff8855; }
-.tag-shared { background: rgba(240,165,0,0.12); color: var(--accent2); }
+      /* vs KTM comparison table */
+      .comp-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+        margin-top: 20px;
+      }
+      .comp-table th {
+        background: rgba(255, 255, 255, 0.04);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 12px 14px;
+        text-align: left;
+        color: var(--muted);
+        border-bottom: 1px solid var(--border);
+      }
+      .comp-table td {
+        padding: 11px 14px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        vertical-align: top;
+        font-size: 13px;
+        color: #c8d8c8;
+      }
+      .comp-table tr:hover td {
+        background: rgba(255, 255, 255, 0.015);
+      }
+      .tag {
+        display: inline-block;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px;
+        padding: 2px 7px;
+        border-radius: 3px;
+        font-weight: 500;
+        margin: 2px;
+      }
+      .tag-triumph {
+        background: rgba(34, 197, 94, 0.15);
+        color: #4ade80;
+      }
+      .tag-ktm {
+        background: rgba(232, 83, 10, 0.15);
+        color: #ff8855;
+      }
+      .tag-shared {
+        background: rgba(240, 165, 0, 0.12);
+        color: var(--accent2);
+      }
 
-/* SOURCES */
-.source-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
-.source-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 16px; text-decoration: none; color: inherit; transition: border-color 0.2s, background 0.2s; display: block; }
-.source-card:hover { border-color: var(--triumph); background: rgba(34,197,94,0.04); }
-.source-type { font-family: 'IBM Plex Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
-.st-forum { color: var(--accent3); }
-.st-wiki { color: var(--accent2); }
-.st-official { color: var(--good); }
-.st-user { color: #cc88ff; }
-.source-card h4 { font-size: 13px; font-weight: 600; margin-bottom: 4px; line-height: 1.4; }
-.source-card p { font-size: 12px; color: var(--muted); }
+      /* SOURCES */
+      .source-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 14px;
+      }
+      .source-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 16px;
+        text-decoration: none;
+        color: inherit;
+        transition:
+          border-color 0.2s,
+          background 0.2s;
+        display: block;
+      }
+      .source-card:hover {
+        border-color: var(--triumph);
+        background: rgba(34, 197, 94, 0.04);
+      }
+      .source-type {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 6px;
+      }
+      .st-forum {
+        color: var(--accent3);
+      }
+      .st-wiki {
+        color: var(--accent2);
+      }
+      .st-official {
+        color: var(--good);
+      }
+      .st-user {
+        color: #cc88ff;
+      }
+      .source-card h4 {
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 4px;
+        line-height: 1.4;
+      }
+      .source-card p {
+        font-size: 12px;
+        color: var(--muted);
+      }
 
-.doc-footer { border-top: 1px solid var(--border); padding: 28px 24px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); margin-top: 48px; }
-</style>
-</head>
-<body>
+      .doc-footer {
+        border-top: 1px solid var(--border);
+        padding: 28px 24px;
+        text-align: center;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 48px;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="header-inner">
+        <div class="header-label">Engine Issue Reference · File 2 of 3</div>
+        <h1>Triumph TR-Series<br /><span>Engine Fault Compendium</span></h1>
+        <div class="header-meta">
+          <span
+            ><span class="dot" style="background: var(--triumph)"></span>
+            Triumph Speed 400</span
+          >
+          <span
+            ><span class="dot" style="background: var(--triumph)"></span>
+            Triumph Scrambler 400 X</span
+          >
+          <span
+            ><span class="dot" style="background: var(--accent2)"></span>
+            398.15cc TR-Series · 2023 Onwards</span
+          >
+          <span
+            ><span class="dot" style="background: var(--accent2)"></span>
+            Verified April 2026</span
+          >
+        </div>
+      </div>
+    </header>
 
-<header class="site-header">
-  <div class="header-inner">
-    <div class="header-label">Engine Issue Reference · File 2 of 3</div>
-    <h1>Triumph TR-Series<br><span>Engine Fault Compendium</span></h1>
-    <div class="header-meta">
-      <span><span class="dot" style="background:var(--triumph)"></span> Triumph Speed 400</span>
-      <span><span class="dot" style="background:var(--triumph)"></span> Triumph Scrambler 400 X</span>
-      <span><span class="dot" style="background:var(--accent2)"></span> 398.15cc TR-Series · 2023 Onwards</span>
-      <span><span class="dot" style="background:var(--accent2)"></span> Verified April 2026</span>
-    </div>
-  </div>
-</header>
+    <nav class="nav-wrap">
+      <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('overview')">
+          Overview
+        </button>
+        <button class="tab-btn" onclick="switchTab('issues')">
+          TR-Series Issues (5)
+        </button>
+        <button class="tab-btn" onclick="switchTab('vsktm')">
+          Triumph vs KTM
+        </button>
+        <button class="tab-btn" onclick="switchTab('sources')">Sources</button>
+      </div>
+    </nav>
 
-<nav class="nav-wrap">
-  <div class="nav-tabs">
-    <button class="tab-btn active" onclick="switchTab('overview')">Overview</button>
-    <button class="tab-btn" onclick="switchTab('issues')">TR-Series Issues (5)</button>
-    <button class="tab-btn" onclick="switchTab('vsktm')">Triumph vs KTM</button>
-    <button class="tab-btn" onclick="switchTab('sources')">Sources</button>
-  </div>
-</nav>
+    <main class="main">
+      <!-- OVERVIEW -->
+      <section class="tab-panel active" id="panel-overview">
+        <div class="section-title">Platform Overview</div>
+        <div class="section-sub">
+          TRIUMPH TR-SERIES 398.15cc ENGINE · CO-DEVELOPED BY TRIUMPH & BAJAJ ·
+          SEPARATE ARCHITECTURE FROM KTM
+        </div>
 
-<main class="main">
+        <div class="verdict-box">
+          <h3>⚡ Platform Context</h3>
+          <p>
+            The Triumph TR-Series 398cc engine was co-developed by Triumph
+            Motorcycles (Hinckley, UK) and Bajaj Auto (Pune, India) as a
+            distinct platform from the KTM 373cc/399cc engines — though both are
+            manufactured at the Bajaj Chakan plant, with some components (e.g.
+            fork seals) reportedly shared at the parts level. Technical
+            highlights include a finger-follower valvetrain with DLC coatings,
+            ride-by-wire throttle, and a standard 2-year unlimited mileage
+            warranty extendable to 5 years (2 yr standard + 3 yr/45,000 km). A
+            limited 5+5 yr / 10-year bundled warranty promo was offered at no
+            extra cost until 30 Jun 2025 (now expired). The 10,000-mile/16,000
+            km service interval is Triumph's official claim but is disputed by
+            experienced Indian riders for local conditions. Despite the premium
+            engineering brief, user reports from 2023–2025 have documented
+            several recurring issues — primarily ECU/stalling, assembly quality
+            control, and coolant/oil sealing faults.
+          </p>
+        </div>
 
-<!-- OVERVIEW -->
-<section class="tab-panel active" id="panel-overview">
-  <div class="section-title">Platform Overview</div>
-  <div class="section-sub">TRIUMPH TR-SERIES 398.15cc ENGINE · CO-DEVELOPED BY TRIUMPH & BAJAJ · SEPARATE ARCHITECTURE FROM KTM</div>
-
-  <div class="verdict-box">
-    <h3>⚡ Platform Context</h3>
-    <p>The Triumph TR-Series 398cc engine was co-developed by Triumph Motorcycles (Hinckley, UK) and Bajaj Auto (Pune, India) as a distinct platform from the KTM 373cc/399cc engines — though both are manufactured at the Bajaj Chakan plant, with some components (e.g. fork seals) reportedly shared at the parts level. Technical highlights include a finger-follower valvetrain with DLC coatings, ride-by-wire throttle, and a standard 2-year unlimited mileage warranty extendable to 5 years (2 yr standard + 3 yr/45,000 km). A limited 5+5 yr / 10-year bundled warranty promo was offered at no extra cost until 30 Jun 2025 (now expired). The 10,000-mile/16,000 km service interval is Triumph's official claim but is disputed by experienced Indian riders for local conditions. Despite the premium engineering brief, user reports from 2023–2025 have documented several recurring issues — primarily ECU/stalling, assembly quality control, and coolant/oil sealing faults.</p>
-  </div>
-
-  <div class="engine-card">
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border)">
-      <div><div class="badge badge-triumph" style="margin-bottom:6px">TRIUMPH — TR-SERIES</div><h3 style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700">Triumph Speed 400 / Scrambler 400 X</h3></div>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">
-      <div class="spec-row"><span class="spec-label">Displacement</span><span class="spec-val">398.15 cc</span></div>
-      <div class="spec-row"><span class="spec-label">Configuration</span><span class="spec-val">Single-cyl, LC, DOHC, 4-valve</span></div>
-      <div class="spec-row"><span class="spec-label">Power</span><span class="spec-val">39.5 bhp @ 8,000 rpm</span></div>
-      <div class="spec-row"><span class="spec-label">Torque</span><span class="spec-val">37.5 Nm @ 6,500 rpm</span></div>
-      <div class="spec-row"><span class="spec-label">Valvetrain</span><span class="spec-val">Finger-follower, DLC coated</span></div>
-      <div class="spec-row"><span class="spec-label">Oil capacity</span><span class="spec-val">~2.0 L (larger than KTM)</span></div>
-      <div class="spec-row"><span class="spec-label">Service interval</span><span class="spec-val">16,000 km (disputed for India)</span></div>
-      <div class="spec-row"><span class="spec-label">Warranty</span><span class="spec-val">2 yr unlimited km standard + 3 yr/45,000 km extended = 5 yr total · <span style="color:var(--muted)">5+5 yr / 10 yr promo ran until 30 Jun 2025 (expired)</span></span></div>
-      <div class="spec-row"><span class="spec-label">Designed by</span><span class="spec-val">Triumph Hinckley + Bajaj Pune</span></div>
-      <div class="spec-row"><span class="spec-label">Manufactured by</span><span class="spec-val">Bajaj Auto — Chakan, Pune</span></div>
-      <div class="spec-row"><span class="spec-label">Issue profile</span><span class="spec-val" style="color:var(--warn)">ECU/QC focused — not thermal</span></div>
-    </div>
-  </div>
-</section>
-
-<!-- ISSUES -->
-<section class="tab-panel" id="panel-issues">
-  <div class="section-title">Triumph TR-Series — Known Issues</div>
-  <div class="section-sub">TRIUMPH SPEED 400 & SCRAMBLER 400 X · 398.15cc TR-SERIES ENGINE · 2023 ONWARDS</div>
-
-  <div class="issue-list">
-
-    <div class="issue-card">
-      <div class="issue-header" onclick="toggleIssue(this)">
-        <div class="issue-num">T1</div>
-        <div class="issue-title-wrap">
-          <div class="issue-title">Engine Stalling During Deceleration / Low-Speed Riding</div>
-          <div class="issue-chips">
-            <span class="chip chip-high">HIGH SEVERITY</span>
-            <span class="chip chip-triumph">SPEED 400 + SCRAMBLER 400X</span>
-            <span class="chip chip-med">ECU UPDATES ISSUED — PERSISTS FOR SOME</span>
+        <div class="engine-card">
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: 12px;
+              margin-bottom: 20px;
+              padding-bottom: 16px;
+              border-bottom: 1px solid var(--border);
+            "
+          >
+            <div>
+              <div class="badge badge-triumph" style="margin-bottom: 6px">
+                TRIUMPH — TR-SERIES
+              </div>
+              <h3
+                style="
+                  font-family: &quot;Syne&quot;, sans-serif;
+                  font-size: 20px;
+                  font-weight: 700;
+                "
+              >
+                Triumph Speed 400 / Scrambler 400 X
+              </h3>
+            </div>
+          </div>
+          <div
+            style="
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+              gap: 8px;
+            "
+          >
+            <div class="spec-row">
+              <span class="spec-label">Displacement</span
+              ><span class="spec-val">398.15 cc</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-label">Configuration</span
+              ><span class="spec-val">Single-cyl, LC, DOHC, 4-valve</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-label">Power</span
+              ><span class="spec-val">39.5 bhp @ 8,000 rpm</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-label">Torque</span
+              ><span class="spec-val">37.5 Nm @ 6,500 rpm</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-label">Valvetrain</span
+              ><span class="spec-val">Finger-follower, DLC coated</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-label">Oil capacity</span
+              ><span class="spec-val">~2.0 L (larger than KTM)</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-label">Service interval</span
+              ><span class="spec-val">16,000 km (disputed for India)</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-label">Warranty</span
+              ><span class="spec-val"
+                >2 yr unlimited km standard + 3 yr/45,000 km extended = 5 yr
+                total ·
+                <span style="color: var(--muted)"
+                  >5+5 yr / 10 yr promo ran until 30 Jun 2025 (expired)</span
+                ></span
+              >
+            </div>
+            <div class="spec-row">
+              <span class="spec-label">Designed by</span
+              ><span class="spec-val">Triumph Hinckley + Bajaj Pune</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-label">Manufactured by</span
+              ><span class="spec-val">Bajaj Auto — Chakan, Pune</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-label">Issue profile</span
+              ><span class="spec-val" style="color: var(--warn)"
+                >ECU/QC focused — not thermal</span
+              >
+            </div>
           </div>
         </div>
-        <div class="severity-bar"><div class="severity-circle sev-high">H</div><div class="severity-label">SEVERITY</div></div>
-        <div class="expand-icon">+</div>
-      </div>
-      <div class="issue-body">
-        <div class="issue-grid">
-          <div class="issue-col"><h4>Root Causes</h4><ul>
-            <li>ECU fueling map edge case at low RPM transitions</li>
-            <li>Single-cylinder nature — less flywheel energy to maintain idle vs twins</li>
-            <li>Throttle-by-wire calibration sensitivity at low throttle inputs</li>
-            <li>Possible clutch or gear position sensor interaction</li>
-            <li>No bump-start capability (engine won't fire on clutch release during stall)</li>
-          </ul></div>
-          <div class="issue-col"><h4>Symptoms</h4><ul>
-            <li>Engine cuts out mid-gear change (2nd to 3rd, or 3rd to 2nd)</li>
-            <li>Oil light illuminates momentarily before shutdown</li>
-            <li>Stall without warning at slow speed / coming to a stop</li>
-            <li>Cannot bump-start — must use electric starter after stall</li>
-            <li>More common on early 2023–2024 model year bikes</li>
-          </ul></div>
-        </div>
-        <div class="issue-col" style="margin-bottom:12px"><h4>Status & Resolution</h4><ul>
-          <li>Two official ECU updates have been issued by Triumph (2023–2024)</li>
-          <li>MY2025 and later bikes are believed to have these updates pre-incorporated, though stalling reports persist from this period as well</li>
-          <li>Dealers in some markets unable to fix — "software is up to date, no further fix available"</li>
-          <li>US NHTSA complaints filed by Speed 400 owners after repeat stalling</li>
-          <li>Some India owners at 6,500 km still experiencing stalling post-multiple updates</li>
-        </ul></div>
-        <div class="fault-note-warn">⚠️ <strong>Safety concern:</strong> Stalling in traffic, during a U-turn, or while filtering carries real risk. Unlike the KTM, the Triumph 400 cannot be bump-started — riders are stranded mid-stall in traffic until the electric starter restarts the engine, which some users report takes several seconds.</div>
-        <div class="user-reports"><h4>📋 User-Reported Evidence</h4>
-          <div class="quote-block">"Bought a 400X in Sep 2024. Clocked 6,500 kms. Done a number of software updates — still facing stalling issue. SC guys have no clue. It's been 3 years since the bike launched and still no solution."<span class="quote-source">— Triumph 400 Forum (triumph400forum.com) India user, Aug 2025</span></div>
-          <div class="quote-block">"My Speed 400 stalled twice. I reported the issue to the US NHTSA after the second occurrence. The dealer told me the software was up to date and there was no fix for the issue."<span class="quote-source">— Triumph 400 Forum user (US), Aug 2025</span></div>
-          <div class="quote-block">"Clutch in, still moving, changing down 3rd to 2nd — engine cuts out. Oil light comes on and motor stops. Wouldn't bump start — had to stop and use the starter."<span class="quote-source">— Triumph 400 Forum (triumph400forum.com)</span></div>
-        </div>
-      </div>
-    </div>
+      </section>
 
-    <div class="issue-card">
-      <div class="issue-header" onclick="toggleIssue(this)">
-        <div class="issue-num">T2</div>
-        <div class="issue-title-wrap">
-          <div class="issue-title">Oil Leaks — Head Gasket, Clutch Cover & Countershaft Seals</div>
-          <div class="issue-chips">
-            <span class="chip chip-med">MEDIUM SEVERITY</span>
-            <span class="chip chip-triumph">SPEED 400 + SCRAMBLER 400X</span>
-            <span class="chip chip-med">QC INCONSISTENCY</span>
+      <!-- ISSUES -->
+      <section class="tab-panel" id="panel-issues">
+        <div class="section-title">Triumph TR-Series — Known Issues</div>
+        <div class="section-sub">
+          TRIUMPH SPEED 400 & SCRAMBLER 400 X · 398.15cc TR-SERIES ENGINE · 2023
+          ONWARDS
+        </div>
+
+        <div class="issue-list">
+          <div class="issue-card">
+            <div class="issue-header" onclick="toggleIssue(this)">
+              <div class="issue-num">T1</div>
+              <div class="issue-title-wrap">
+                <div class="issue-title">
+                  Engine Stalling During Deceleration / Low-Speed Riding
+                </div>
+                <div class="issue-chips">
+                  <span class="chip chip-high">HIGH SEVERITY</span>
+                  <span class="chip chip-triumph"
+                    >SPEED 400 + SCRAMBLER 400X</span
+                  >
+                  <span class="chip chip-med"
+                    >ECU UPDATES ISSUED — PERSISTS FOR SOME</span
+                  >
+                </div>
+              </div>
+              <div class="severity-bar">
+                <div class="severity-circle sev-high">H</div>
+                <div class="severity-label">SEVERITY</div>
+              </div>
+              <div class="expand-icon">+</div>
+            </div>
+            <div class="issue-body">
+              <div class="issue-grid">
+                <div class="issue-col">
+                  <h4>Root Causes</h4>
+                  <ul>
+                    <li>ECU fueling map edge case at low RPM transitions</li>
+                    <li>
+                      Single-cylinder nature — less flywheel energy to maintain
+                      idle vs twins
+                    </li>
+                    <li>
+                      Throttle-by-wire calibration sensitivity at low throttle
+                      inputs
+                    </li>
+                    <li>Possible clutch or gear position sensor interaction</li>
+                    <li>
+                      No bump-start capability (engine won't fire on clutch
+                      release during stall)
+                    </li>
+                  </ul>
+                </div>
+                <div class="issue-col">
+                  <h4>Symptoms</h4>
+                  <ul>
+                    <li>
+                      Engine cuts out mid-gear change (2nd to 3rd, or 3rd to
+                      2nd)
+                    </li>
+                    <li>Oil light illuminates momentarily before shutdown</li>
+                    <li>
+                      Stall without warning at slow speed / coming to a stop
+                    </li>
+                    <li>
+                      Cannot bump-start — must use electric starter after stall
+                    </li>
+                    <li>More common on early 2023–2024 model year bikes</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="issue-col" style="margin-bottom: 12px">
+                <h4>Status & Resolution</h4>
+                <ul>
+                  <li>
+                    Two official ECU updates have been issued by Triumph
+                    (2023–2024)
+                  </li>
+                  <li>
+                    MY2025 and later bikes are believed to have these updates
+                    pre-incorporated, though stalling reports persist from this
+                    period as well
+                  </li>
+                  <li>
+                    Dealers in some markets unable to fix — "software is up to
+                    date, no further fix available"
+                  </li>
+                  <li>
+                    US NHTSA complaints filed by Speed 400 owners after repeat
+                    stalling
+                  </li>
+                  <li>
+                    Some India owners at 6,500 km still experiencing stalling
+                    post-multiple updates
+                  </li>
+                </ul>
+              </div>
+              <div class="fault-note-warn">
+                ⚠️ <strong>Safety concern:</strong> Stalling in traffic, during
+                a U-turn, or while filtering carries real risk. Unlike the KTM,
+                the Triumph 400 cannot be bump-started — riders are stranded
+                mid-stall in traffic until the electric starter restarts the
+                engine, which some users report takes several seconds.
+              </div>
+              <div class="user-reports">
+                <h4>📋 User-Reported Evidence</h4>
+                <div class="quote-block">
+                  "Bought a 400X in Sep 2024. Clocked 6,500 kms. Done a number
+                  of software updates — still facing stalling issue. SC guys
+                  have no clue. It's been 3 years since the bike launched and
+                  still no solution."<span class="quote-source"
+                    >— Triumph 400 Forum (triumph400forum.com) India user, Aug
+                    2025</span
+                  >
+                </div>
+                <div class="quote-block">
+                  "My Speed 400 stalled twice. I reported the issue to the US
+                  NHTSA after the second occurrence. The dealer told me the
+                  software was up to date and there was no fix for the
+                  issue."<span class="quote-source"
+                    >— Triumph 400 Forum user (US), Aug 2025</span
+                  >
+                </div>
+                <div class="quote-block">
+                  "Clutch in, still moving, changing down 3rd to 2nd — engine
+                  cuts out. Oil light comes on and motor stops. Wouldn't bump
+                  start — had to stop and use the starter."<span
+                    class="quote-source"
+                    >— Triumph 400 Forum (triumph400forum.com)</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="issue-card">
+            <div class="issue-header" onclick="toggleIssue(this)">
+              <div class="issue-num">T2</div>
+              <div class="issue-title-wrap">
+                <div class="issue-title">
+                  Oil Leaks — Head Gasket, Clutch Cover & Countershaft Seals
+                </div>
+                <div class="issue-chips">
+                  <span class="chip chip-med">MEDIUM SEVERITY</span>
+                  <span class="chip chip-triumph"
+                    >SPEED 400 + SCRAMBLER 400X</span
+                  >
+                  <span class="chip chip-med">QC INCONSISTENCY</span>
+                </div>
+              </div>
+              <div class="severity-bar">
+                <div class="severity-circle sev-med">M</div>
+                <div class="severity-label">SEVERITY</div>
+              </div>
+              <div class="expand-icon">+</div>
+            </div>
+            <div class="issue-body">
+              <div class="issue-grid">
+                <div class="issue-col">
+                  <h4>Root Causes</h4>
+                  <ul>
+                    <li>
+                      Head gasket failure on some early units (cylinder-piston
+                      assembly replaced under warranty)
+                    </li>
+                    <li>
+                      Clutch spring oil seal — drops of oil visible under parked
+                      bike
+                    </li>
+                    <li>
+                      Front countershaft / crankcase cover oil seal — common on
+                      some batches
+                    </li>
+                    <li>Assembly QC inconsistency at Bajaj Pune plant</li>
+                    <li>
+                      USD fork oil seal rupture — exacerbated by Indian road
+                      debris
+                    </li>
+                  </ul>
+                </div>
+                <div class="issue-col">
+                  <h4>Symptoms</h4>
+                  <ul>
+                    <li>Oil puddle under bike after parking</li>
+                    <li>
+                      Oil smell on hot exhaust (valve cover / base gasket area)
+                    </li>
+                    <li>
+                      Blue smoke indicating oil entering combustion chamber
+                      (advanced)
+                    </li>
+                    <li>Front fork becomes soft rapidly (fork seal failure)</li>
+                    <li>Oily residue on exhaust headers</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="fault-table-note">
+                ⚠️ <strong>Pattern noted:</strong> Multiple Team-BHP and Triumph
+                400 Forum members have documented oil leaks from different
+                locations on the same bike. This pattern is consistent with
+                assembly-line QC inconsistency in seal installation, though it
+                could also reflect individual component variation or early-unit
+                tolerances — the root cause has not been officially confirmed by
+                Triumph. All documented repairs were covered under Triumph's
+                standard unlimited mileage warranty.
+              </div>
+              <div class="user-reports">
+                <h4>📋 User-Reported Evidence</h4>
+                <div class="quote-block">
+                  "Starting with coolant leakage from the engine head to now oil
+                  leakage from the front fork — I'm really starting to question
+                  the reliability of the bike."<span class="quote-source"
+                    >— Team-BHP (team-bhp.com), Speed 400 owner, May 2024</span
+                  >
+                </div>
+                <div class="quote-block">
+                  "The oil leakage comes from the head gasket. The bike has been
+                  in the workshop since July 12, waiting for parts. Not happy.
+                  They replaced the cylinder-piston assembly and all the
+                  gaskets. Put 2,000 km more since with no problems."<span
+                    class="quote-source"
+                    >— Triumph 400 Forum, European Speed 400 owner</span
+                  >
+                </div>
+                <div class="quote-block">
+                  "I've had 2 oil leaks in 600 miles — front sprocket
+                  countershaft and crankcase cover. Both sorted under warranty.
+                  Seems like a lack of consistency on the assembly line."<span
+                    class="quote-source"
+                    >— Triumph 400 Forum</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="issue-card">
+            <div class="issue-header" onclick="toggleIssue(this)">
+              <div class="issue-num">T3</div>
+              <div class="issue-title-wrap">
+                <div class="issue-title">
+                  Coolant Overflow / Leakage Under Heat (Traffic Conditions)
+                </div>
+                <div class="issue-chips">
+                  <span class="chip chip-med">MEDIUM SEVERITY</span>
+                  <span class="chip chip-triumph"
+                    >SPEED 400 + SCRAMBLER 400X</span
+                  >
+                </div>
+              </div>
+              <div class="severity-bar">
+                <div class="severity-circle sev-med">M</div>
+                <div class="severity-label">SEVERITY</div>
+              </div>
+              <div class="expand-icon">+</div>
+            </div>
+            <div class="issue-body">
+              <div class="issue-grid">
+                <div class="issue-col">
+                  <h4>Root Causes</h4>
+                  <ul>
+                    <li>
+                      Coolant expansion tank overfilled above MAX line at
+                      factory
+                    </li>
+                    <li>
+                      Overflow pipe routing causes pooling under bike — alarming
+                      but sometimes benign
+                    </li>
+                    <li>
+                      Pressure buildup during sustained city traffic / radiator
+                      fan cycling
+                    </li>
+                    <li>Possible head gasket involvement in some cases</li>
+                    <li>
+                      Coolant system sensitivity to sustained low-speed
+                      high-load operation
+                    </li>
+                  </ul>
+                </div>
+                <div class="issue-col">
+                  <h4>Symptoms</h4>
+                  <ul>
+                    <li>Pool of green liquid under the bike after hot ride</li>
+                    <li>Coolant reservoir emptied completely after hot day</li>
+                    <li>Fan running constantly in city traffic</li>
+                    <li>
+                      Coolant weeping from engine head (non-overflow source)
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              <div class="user-reports">
+                <h4>📋 User-Reported Evidence</h4>
+                <div class="quote-block">
+                  "After 500 km, I noticed a pool of green liquid under the
+                  bike. Found a pipe from the top of the coolant reservoir that
+                  just runs around the front — this is where the coolant was
+                  coming from."<span class="quote-source"
+                    >— Triumph 400 Forum (triumph400forum.com), Scrambler 400X
+                    owner</span
+                  >
+                </div>
+                <div class="quote-block">
+                  "After a hot day, the coolant in the expansion tank began to
+                  flow vigorously from the overflow. The entire expansion tank
+                  emptied. Is this common on the Scrambler 400X?"<span
+                    class="quote-source"
+                    >— Triumph 400 Forum, French owner (translated)</span
+                  >
+                </div>
+                <div class="quote-block">
+                  "Covered more than 2,500 kms. Today I noticed green liquid
+                  drops on the engine. This coolant leakage doesn't seem like an
+                  overflow — it looks like a gasket issue."<span
+                    class="quote-source"
+                    >— Team-BHP (team-bhp.com), Speed 400 owner, Dec 2023</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="issue-card">
+            <div class="issue-header" onclick="toggleIssue(this)">
+              <div class="issue-num">T4</div>
+              <div class="issue-title-wrap">
+                <div class="issue-title">
+                  Engine Ticking / Valve Noise at Idle
+                </div>
+                <div class="issue-chips">
+                  <span class="chip chip-med">MEDIUM SEVERITY</span>
+                  <span class="chip chip-triumph">SPEED 400</span>
+                  <span class="chip chip-low">SOME CASES NORMAL</span>
+                </div>
+              </div>
+              <div class="severity-bar">
+                <div class="severity-circle sev-med">M</div>
+                <div class="severity-label">SEVERITY</div>
+              </div>
+              <div class="expand-icon">+</div>
+            </div>
+            <div class="issue-body">
+              <div class="issue-grid">
+                <div class="issue-col">
+                  <h4>Root Causes</h4>
+                  <ul>
+                    <li>
+                      Valve clearance out of spec from factory on some units
+                    </li>
+                    <li>
+                      Timing / pre-detonation flutter between gear changes
+                    </li>
+                    <li>
+                      Upper cylinder oil starvation concern (early warm-up
+                      period)
+                    </li>
+                    <li>
+                      Finger-follower valvetrain audible by design — some noise
+                      is normal
+                    </li>
+                    <li>
+                      Low-octane fuel use triggering knocking (manual confirms
+                      higher octane may help)
+                    </li>
+                  </ul>
+                </div>
+                <div class="issue-col">
+                  <h4>Diagnostic Steps</h4>
+                  <ul>
+                    <li>
+                      Compare sound to a brand-new showroom unit — if
+                      significantly louder, escalate
+                    </li>
+                    <li>
+                      Try higher-octane fuel for one tank (manual explicitly
+                      mentions this as a remedy)
+                    </li>
+                    <li>Request valve clearance measurement at next service</li>
+                    <li>Document with audio recording and show dealer</li>
+                    <li>Insist on dealer getting a floor model to compare</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="fault-table-note">
+                ⚠️ <strong>Dealer pattern:</strong> Multiple owners report
+                dealers saying "that's just the way they sound." However, at
+                least one verified case showed that a brand-new showroom unit
+                did NOT produce the same noise — establishing this as a fault in
+                affected units, not a platform characteristic.
+              </div>
+              <div class="user-reports">
+                <h4>📋 User-Reported Evidence</h4>
+                <div class="quote-block">
+                  "Sounds like valve clearance is too loose on one of the
+                  valves. It was doing this the day I left the dealership with 1
+                  mile on the bike. The noise seems to be getting worse."<span
+                    class="quote-source"
+                    >— Triumph 400 Forum (triumph400forum.com), Speed 400 owner
+                    (US)</span
+                  >
+                </div>
+                <div class="quote-block">
+                  "We compared it to a brand-new one off the floor and the
+                  brand-new one does NOT sound like that. If it blows up over
+                  the next 2 years, they will have to fix or replace the engine
+                  under warranty."<span class="quote-source"
+                    >— Triumph 400 Forum (same thread as above)</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="issue-card">
+            <div class="issue-header" onclick="toggleIssue(this)">
+              <div class="issue-num">T5</div>
+              <div class="issue-title-wrap">
+                <div class="issue-title">
+                  Build Quality / Pre-Delivery Inspection Failures
+                </div>
+                <div class="issue-chips">
+                  <span class="chip chip-low">LOW SEVERITY</span>
+                  <span class="chip chip-triumph"
+                    >SPEED 400 + SCRAMBLER 400X</span
+                  >
+                  <span class="chip chip-med">QC — BAJAJ PLANT</span>
+                </div>
+              </div>
+              <div class="severity-bar">
+                <div class="severity-circle sev-low">L</div>
+                <div class="severity-label">SEVERITY</div>
+              </div>
+              <div class="expand-icon">+</div>
+            </div>
+            <div class="issue-body">
+              <div class="issue-grid">
+                <div class="issue-col">
+                  <h4>Reported PDI Failures</h4>
+                  <ul>
+                    <li>
+                      Suspension with no grease or lubricant at all (bearings
+                      dry from factory)
+                    </li>
+                    <li>
+                      Clutch cable very loose — nearly detached on delivery
+                    </li>
+                    <li>
+                      Suspension reported as very stiff due to lack of grease
+                    </li>
+                    <li>
+                      Fork seal shared with KTM 390 — some cross-contamination
+                      of wrong parts
+                    </li>
+                    <li>
+                      16,000 km oil change interval widely disputed in Indian
+                      conditions
+                    </li>
+                  </ul>
+                </div>
+                <div class="issue-col">
+                  <h4>Owner Mitigations</h4>
+                  <ul>
+                    <li>
+                      Multiple owners service at 4,500–5,000 km instead of
+                      Triumph's 16,000 km claim
+                    </li>
+                    <li>
+                      Motul 7100 10W50 used by many India owners (same oil as
+                      KTM users)
+                    </li>
+                    <li>
+                      Fork seals are shared with KTM — OEM parts available from
+                      KTM dealers
+                    </li>
+                    <li>
+                      Triumph service network in India still limited compared to
+                      Bajaj/KTM
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              <div class="fault-note-warn">
+                ⚠️ <strong>Service interval concern:</strong> Triumph claims a
+                16,000 km oil change interval — the longest of any bike in this
+                class. Multiple experienced Indian riders have explicitly
+                rejected this interval for Indian riding conditions (heat,
+                traffic, dust) and are servicing at 4,500–5,000 km as a
+                precaution. The 16,000 km figure is calibrated for European
+                riding conditions.
+              </div>
+              <div class="user-reports">
+                <h4>📋 User-Reported Evidence</h4>
+                <div class="quote-block">
+                  "Upon disassembly, the suspension had no lubricants or grease
+                  at all — even the bearings had no grease! The owner spent
+                  R$1,600 with the mechanic to fix this and said it made all the
+                  difference."<span class="quote-source"
+                    >— Triumph 400 Forum, Brazilian Scrambler 400X owner
+                    (2024)</span
+                  >
+                </div>
+                <div class="quote-block">
+                  "I have no faith in Triumph's claim of 16,000 km. I serviced
+                  my Speed 400 at 4,500 km. The right side fork seal was leaking
+                  due to rough usage. Still very satisfied with the ride quality
+                  overall."<span class="quote-source"
+                    >— Team-BHP (team-bhp.com), Speed 400 owner, Pune</span
+                  >
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="severity-bar"><div class="severity-circle sev-med">M</div><div class="severity-label">SEVERITY</div></div>
-        <div class="expand-icon">+</div>
-      </div>
-      <div class="issue-body">
-        <div class="issue-grid">
-          <div class="issue-col"><h4>Root Causes</h4><ul>
-            <li>Head gasket failure on some early units (cylinder-piston assembly replaced under warranty)</li>
-            <li>Clutch spring oil seal — drops of oil visible under parked bike</li>
-            <li>Front countershaft / crankcase cover oil seal — common on some batches</li>
-            <li>Assembly QC inconsistency at Bajaj Pune plant</li>
-            <li>USD fork oil seal rupture — exacerbated by Indian road debris</li>
-          </ul></div>
-          <div class="issue-col"><h4>Symptoms</h4><ul>
-            <li>Oil puddle under bike after parking</li>
-            <li>Oil smell on hot exhaust (valve cover / base gasket area)</li>
-            <li>Blue smoke indicating oil entering combustion chamber (advanced)</li>
-            <li>Front fork becomes soft rapidly (fork seal failure)</li>
-            <li>Oily residue on exhaust headers</li>
-          </ul></div>
+      </section>
+
+      <!-- TRIUMPH VS KTM -->
+      <section class="tab-panel" id="panel-vsktm">
+        <div class="section-title">Triumph TR-Series vs KTM 373cc / 399cc</div>
+        <div class="section-sub">
+          COMPARATIVE RELIABILITY ANALYSIS · ARCHITECTURE-LEVEL DIFFERENCES
         </div>
-        <div class="fault-table-note">⚠️ <strong>Pattern noted:</strong> Multiple Team-BHP and Triumph 400 Forum members have documented oil leaks from different locations on the same bike. This pattern is consistent with assembly-line QC inconsistency in seal installation, though it could also reflect individual component variation or early-unit tolerances — the root cause has not been officially confirmed by Triumph. All documented repairs were covered under Triumph's standard unlimited mileage warranty.</div>
-        <div class="user-reports"><h4>📋 User-Reported Evidence</h4>
-          <div class="quote-block">"Starting with coolant leakage from the engine head to now oil leakage from the front fork — I'm really starting to question the reliability of the bike."<span class="quote-source">— Team-BHP (team-bhp.com), Speed 400 owner, May 2024</span></div>
-          <div class="quote-block">"The oil leakage comes from the head gasket. The bike has been in the workshop since July 12, waiting for parts. Not happy. They replaced the cylinder-piston assembly and all the gaskets. Put 2,000 km more since with no problems."<span class="quote-source">— Triumph 400 Forum, European Speed 400 owner</span></div>
-          <div class="quote-block">"I've had 2 oil leaks in 600 miles — front sprocket countershaft and crankcase cover. Both sorted under warranty. Seems like a lack of consistency on the assembly line."<span class="quote-source">— Triumph 400 Forum</span></div>
+
+        <div class="verdict-box">
+          <h3>⚡ Core Finding</h3>
+          <p>
+            Based on available user reports and forum evidence, the Triumph
+            TR-series issues appear qualitatively different from the 373cc KTM
+            issues — though direct comparison is limited by the TR-series'
+            shorter production history (2023 onwards vs. KTM's longer track
+            record). The KTM platform's most serious reported problems —
+            coolant-oil mixing, water pump seal failure, elevated oil
+            consumption — are linked to thermal stress under aggressive tuning.
+            The Triumph's documented issues are primarily ECU calibration
+            (stalling) and assembly QC (seals, lubrication). Whether the
+            TR-series proves more reliable long-term remains an open question:
+            the stalling issue is unresolved for a subset of owners, the
+            evidence base is still growing, and Indian usage conditions add
+            variables not reflected in European forum data.
+          </p>
         </div>
-      </div>
-    </div>
 
-    <div class="issue-card">
-      <div class="issue-header" onclick="toggleIssue(this)">
-        <div class="issue-num">T3</div>
-        <div class="issue-title-wrap">
-          <div class="issue-title">Coolant Overflow / Leakage Under Heat (Traffic Conditions)</div>
-          <div class="issue-chips">
-            <span class="chip chip-med">MEDIUM SEVERITY</span>
-            <span class="chip chip-triumph">SPEED 400 + SCRAMBLER 400X</span>
-          </div>
+        <table class="comp-table">
+          <thead>
+            <tr>
+              <th>Dimension</th>
+              <th>Triumph TR-Series</th>
+              <th>KTM 373cc</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Worst Issue Type</strong></td>
+              <td>
+                ECU stalling (partially software-fixed); oil/coolant leaks (QC)
+              </td>
+              <td>
+                Coolant-oil mixing; water pump seal failure; oil consumption
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Root Cause of Issues</strong></td>
+              <td>
+                Bajaj assembly-line QC inconsistency; ECU calibration edge cases
+              </td>
+              <td>
+                Aggressive tuning pushing thermal limits; post-2019 piston
+                changes (suspected)
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Compression Ratio</strong></td>
+              <td>
+                <span class="tag tag-triumph">Lower (conservative tune)</span>
+              </td>
+              <td>
+                <span class="tag tag-ktm"
+                  >12.6:1 (high — creates thermal stress)</span
+                >
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Oil Consumption</strong></td>
+              <td>
+                <span class="tag tag-triumph"
+                  >LOW — user reports suggest low consumption; no independently
+                  verified baseline figure</span
+                >
+              </td>
+              <td>
+                <span class="tag tag-ktm"
+                  >HIGH — multiple reports of significant consumption; figures
+                  vary widely by unit and usage</span
+                >
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Oil Capacity</strong></td>
+              <td>
+                <span class="tag tag-triumph">~2.0 L (larger buffer)</span>
+              </td>
+              <td>
+                <span class="tag tag-ktm"
+                  >1.5–1.7 L (less buffer for consumption)</span
+                >
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Service Interval</strong></td>
+              <td>16,000 km (disputed for India conditions)</td>
+              <td>3,500 km (conservative interval required for health)</td>
+            </tr>
+            <tr>
+              <td><strong>Stalling Issue</strong></td>
+              <td>
+                <span class="tag tag-triumph"
+                  >Present — ECU-based, being addressed</span
+                >
+              </td>
+              <td>
+                <span class="tag tag-ktm"
+                  >Present — lean fueling, partially mitigated</span
+                >
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Water Pump Issues</strong></td>
+              <td>
+                <span class="tag tag-triumph"
+                  >Not documented in available user reports (platform too new
+                  for long-term data)</span
+                >
+              </td>
+              <td>
+                <span class="tag tag-ktm"
+                  >Major issue — multiple seal failures documented</span
+                >
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Valvetrain</strong></td>
+              <td>Finger-follower, DLC coated</td>
+              <td>Nearly same to Triumph</td>
+            </tr>
+            <tr>
+              <td><strong>Long-Term Reliability Outlook</strong></td>
+              <td>
+                <span class="tag tag-triumph"
+                  >Unclear — ECU issue unresolved for subset; platform too new
+                  for long-term mileage data</span
+                >
+              </td>
+              <td>
+                <span class="tag tag-ktm"
+                  >Mixed — thermal issues documented accumulating with high
+                  mileage</span
+                >
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Warranty Coverage</strong></td>
+              <td>
+                <span class="tag tag-triumph">Standard: 2 yr unlimited km</span>
+                <span class="tag tag-triumph"
+                  >Extended: +3 yr / 45,000 km = 5 yr total</span
+                >
+                <div
+                  style="
+                    font-size: 11px;
+                    color: var(--muted);
+                    margin-top: 6px;
+                    font-family: &quot;IBM Plex Mono&quot;, monospace;
+                  "
+                >
+                  ⚠️ 5+5 yr / 10-yr bundled promo (Speed 400, Scrambler 400X,
+                  Speed T4) was offered at no extra cost until 30 Jun 2025 — now
+                  expired. Fully transferable on resale while active.
+                </div>
+              </td>
+              <td>
+                <span class="tag tag-ktm"
+                  >Standard: 2 yr + 3 yr extended = 5 yr (from Apr 2024)</span
+                >
+                <div
+                  style="
+                    font-size: 11px;
+                    color: var(--muted);
+                    margin-top: 6px;
+                    font-family: &quot;IBM Plex Mono&quot;, monospace;
+                  "
+                >
+                  ⚠️ Same 5+5 yr / 10-yr promo applied to 390 Duke until 30 Jun
+                  2025 — now expired. Warranty disputes common for oil
+                  consumption claims.
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Manufacturing Location</strong></td>
+              <td>
+                <span class="tag tag-shared">Bajaj Auto, Chakan, Pune</span>
+              </td>
+              <td>
+                <span class="tag tag-shared">Bajaj Auto, Chakan, Pune</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- SOURCES -->
+      <section class="tab-panel" id="panel-sources">
+        <div class="section-title">Sources & References</div>
+        <div class="section-sub">
+          ALL CLAIMS IN THIS FILE ARE TRACEABLE TO THESE SOURCES
         </div>
-        <div class="severity-bar"><div class="severity-circle sev-med">M</div><div class="severity-label">SEVERITY</div></div>
-        <div class="expand-icon">+</div>
-      </div>
-      <div class="issue-body">
-        <div class="issue-grid">
-          <div class="issue-col"><h4>Root Causes</h4><ul>
-            <li>Coolant expansion tank overfilled above MAX line at factory</li>
-            <li>Overflow pipe routing causes pooling under bike — alarming but sometimes benign</li>
-            <li>Pressure buildup during sustained city traffic / radiator fan cycling</li>
-            <li>Possible head gasket involvement in some cases</li>
-            <li>Coolant system sensitivity to sustained low-speed high-load operation</li>
-          </ul></div>
-          <div class="issue-col"><h4>Symptoms</h4><ul>
-            <li>Pool of green liquid under the bike after hot ride</li>
-            <li>Coolant reservoir emptied completely after hot day</li>
-            <li>Fan running constantly in city traffic</li>
-            <li>Coolant weeping from engine head (non-overflow source)</li>
-          </ul></div>
+        <p style="font-size: 13px; color: var(--muted); margin-bottom: 24px">
+          Sources are categorized by type. User forum reports are treated as
+          primary evidence for issues that Triumph has not officially
+          acknowledged. The evidence base mixes reports from India, Europe, the
+          US, and Brazil — usage conditions, climate, fuel quality, and road
+          surfaces vary significantly across these contexts, and not all issues
+          apply equally to all markets. No claim relies on a single unverified
+          source, but frequency and severity data cannot be statistically
+          extrapolated from forum threads.
+        </p>
+
+        <div class="source-grid">
+          <a
+            class="source-card"
+            href="https://www.triumph400forum.com/threads/engine-stalling-problem.653/"
+            target="_blank"
+            ><div class="source-type st-forum">User Forum</div>
+            <h4>Triumph 400 Forum — Stalling Problem Thread</h4>
+            <p>
+              11,000+ post community; stalling reports from India, US, Europe;
+              ECU update history; NHTSA filings
+            </p></a
+          >
+          <a
+            class="source-card"
+            href="https://www.team-bhp.com/forum/motorbikes/283371-my-triumph-speed-400-problems-reviewers-brush-aside.html"
+            target="_blank"
+            ><div class="source-type st-user">Team-BHP</div>
+            <h4>Team-BHP — Triumph Speed 400 Problems</h4>
+            <p>
+              Real-world Indian owner issues; fork seals, overheating, service
+              concerns
+            </p></a
+          >
+          <a
+            class="source-card"
+            href="https://www.team-bhp.com/news/coolant-leakage-my-triumph-speed-400-what-could-be-cause"
+            target="_blank"
+            ><div class="source-type st-user">Team-BHP</div>
+            <h4>Team-BHP — Coolant Leakage Speed 400</h4>
+            <p>
+              Coolant leakage from unusual location; gasket involvement
+              suspected; community diagnosis
+            </p></a
+          >
+          <a
+            class="source-card"
+            href="https://www.triumph400forum.com/threads/oil-leak.149/"
+            target="_blank"
+            ><div class="source-type st-forum">User Forum</div>
+            <h4>Triumph 400 Forum — Oil Leak Thread</h4>
+            <p>
+              Head gasket failure confirmed; cylinder-piston assembly replaced;
+              2 separate oil leaks at 600 miles
+            </p></a
+          >
+          <a
+            class="source-card"
+            href="https://www.triumph400forum.com/threads/engine-ticking-loudly-at-idle-anyone-else-have-this-issue.101/"
+            target="_blank"
+            ><div class="source-type st-forum">User Forum</div>
+            <h4>Triumph 400 Forum — Engine Ticking</h4>
+            <p>
+              Valve clearance issue from delivery; new floor unit confirmed
+              different sound; lemon law discussion
+            </p></a
+          >
+          <a
+            class="source-card"
+            href="https://www.team-bhp.com/news/why-i-did-preventive-maintenance-my-triumph-speed-400-4500-km"
+            target="_blank"
+            ><div class="source-type st-user">Team-BHP</div>
+            <h4>Team-BHP — Speed 400 Service at 4,500 km</h4>
+            <p>
+              16,000 km interval dispute; fork seal leak; Motul 7100 10W50
+              usage; fork seals shared with KTM
+            </p></a
+          >
+          <a
+            class="source-card"
+            href="https://www.triumphmotorcycles.com/motorcycles/classic/speed-400/reasons-to-ride/engine"
+            target="_blank"
+            ><div class="source-type st-official">Official</div>
+            <h4>Triumph Motorcycles — Speed 400 Engine Page</h4>
+            <p>
+              TR-Series official specs; finger-follower DLC valvetrain;
+              ride-by-wire; 2-year unlimited warranty
+            </p></a
+          >
+          <a
+            class="source-card"
+            href="https://en.wikipedia.org/wiki/KTM_390_series"
+            target="_blank"
+            ><div class="source-type st-wiki">Wikipedia</div>
+            <h4>KTM 390 Series — Wikipedia</h4>
+            <p>
+              Cross-reference for 373cc/399cc comparison context; platform
+              production details
+            </p></a
+          >
+          <a
+            class="source-card"
+            href="https://www.bikedekho.com/news/ktm-390-duke-and-triumph-400cc-bikes-get-10-year-warranty-18069"
+            target="_blank"
+            ><div class="source-type st-official">Official / News</div>
+            <h4>BikeDekho — KTM 390 Duke & Triumph 400cc 10-Year Warranty</h4>
+            <p>
+              Confirms 5+5 yr / 10-yr bundled promo structure for Speed 400,
+              Scrambler 400X, Speed T4 and KTM 390 Duke; valid until 30 Jun
+              2025; fully transferable; no extra cost. Normal structure: 2 yr
+              unlimited km + 3 yr/45,000 km extended = 5 yr total.
+            </p></a
+          >
+          <a
+            class="source-card"
+            href="https://www.bajajauto.com/corporate/media-centre/press-releases/ktm-offers-5-year-warranty-and-roadside-assistance-free-with-all-its-models"
+            target="_blank"
+            ><div class="source-type st-official">
+              Official — Bajaj Press Release
+            </div>
+            <h4>Bajaj Auto — KTM 5-Year Warranty & Roadside Assistance</h4>
+            <p>
+              Confirms KTM and Husqvarna standard warranty upgraded to 5 years
+              (2 yr standard + 3 yr extended) from April 2024, plus 1-year
+              roadside assistance, at no extra cost across all models.
+            </p></a
+          >
         </div>
-        <div class="user-reports"><h4>📋 User-Reported Evidence</h4>
-          <div class="quote-block">"After 500 km, I noticed a pool of green liquid under the bike. Found a pipe from the top of the coolant reservoir that just runs around the front — this is where the coolant was coming from."<span class="quote-source">— Triumph 400 Forum (triumph400forum.com), Scrambler 400X owner</span></div>
-          <div class="quote-block">"After a hot day, the coolant in the expansion tank began to flow vigorously from the overflow. The entire expansion tank emptied. Is this common on the Scrambler 400X?"<span class="quote-source">— Triumph 400 Forum, French owner (translated)</span></div>
-          <div class="quote-block">"Covered more than 2,500 kms. Today I noticed green liquid drops on the engine. This coolant leakage doesn't seem like an overflow — it looks like a gasket issue."<span class="quote-source">— Team-BHP (team-bhp.com), Speed 400 owner, Dec 2023</span></div>
+
+        <div
+          class="verdict-box"
+          style="margin-top: 28px; border-color: var(--muted)"
+        >
+          <h3 style="color: var(--muted)">SOURCE QUALITY NOTE</h3>
+          <p>
+            The Triumph TR-Series has a shorter on-road history (2023 onwards)
+            than the KTM 373cc platform, which means the evidence base is still
+            growing and long-term mileage data is limited. User reports from
+            Team-BHP and Triumph 400 Forum are considered primary evidence given
+            the absence of official Triumph documentation on many of these
+            issues. Reports span India, Europe, the US, and Brazil — local
+            riding conditions (heat, traffic density, fuel quality, road
+            surface) affect which issues manifest and how severely.
+            Cross-geography comparisons should be interpreted with that
+            variation in mind. All sources were verified as of April 2026.
+          </p>
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
 
-    <div class="issue-card">
-      <div class="issue-header" onclick="toggleIssue(this)">
-        <div class="issue-num">T4</div>
-        <div class="issue-title-wrap">
-          <div class="issue-title">Engine Ticking / Valve Noise at Idle</div>
-          <div class="issue-chips">
-            <span class="chip chip-med">MEDIUM SEVERITY</span>
-            <span class="chip chip-triumph">SPEED 400</span>
-            <span class="chip chip-low">SOME CASES NORMAL</span>
-          </div>
-        </div>
-        <div class="severity-bar"><div class="severity-circle sev-med">M</div><div class="severity-label">SEVERITY</div></div>
-        <div class="expand-icon">+</div>
-      </div>
-      <div class="issue-body">
-        <div class="issue-grid">
-          <div class="issue-col"><h4>Root Causes</h4><ul>
-            <li>Valve clearance out of spec from factory on some units</li>
-            <li>Timing / pre-detonation flutter between gear changes</li>
-            <li>Upper cylinder oil starvation concern (early warm-up period)</li>
-            <li>Finger-follower valvetrain audible by design — some noise is normal</li>
-            <li>Low-octane fuel use triggering knocking (manual confirms higher octane may help)</li>
-          </ul></div>
-          <div class="issue-col"><h4>Diagnostic Steps</h4><ul>
-            <li>Compare sound to a brand-new showroom unit — if significantly louder, escalate</li>
-            <li>Try higher-octane fuel for one tank (manual explicitly mentions this as a remedy)</li>
-            <li>Request valve clearance measurement at next service</li>
-            <li>Document with audio recording and show dealer</li>
-            <li>Insist on dealer getting a floor model to compare</li>
-          </ul></div>
-        </div>
-        <div class="fault-table-note">⚠️ <strong>Dealer pattern:</strong> Multiple owners report dealers saying "that's just the way they sound." However, at least one verified case showed that a brand-new showroom unit did NOT produce the same noise — establishing this as a fault in affected units, not a platform characteristic.</div>
-        <div class="user-reports"><h4>📋 User-Reported Evidence</h4>
-          <div class="quote-block">"Sounds like valve clearance is too loose on one of the valves. It was doing this the day I left the dealership with 1 mile on the bike. The noise seems to be getting worse."<span class="quote-source">— Triumph 400 Forum (triumph400forum.com), Speed 400 owner (US)</span></div>
-          <div class="quote-block">"We compared it to a brand-new one off the floor and the brand-new one does NOT sound like that. If it blows up over the next 2 years, they will have to fix or replace the engine under warranty."<span class="quote-source">— Triumph 400 Forum (same thread as above)</span></div>
-        </div>
-      </div>
-    </div>
+    <footer class="doc-footer">
+      Triumph TR-Series Engine Issue Compendium — File 2 of 3 · Compiled April
+      2026<br />
+      Triumph Speed 400 · Triumph Scrambler 400 X · 398.15cc TR-Series Engine ·
+      2023 Onwards<br />
+      Not affiliated with Triumph Motorcycles Ltd. or Bajaj Auto Ltd. · For
+      informational and research use only, made by @kjridesabike
+    </footer>
 
-    <div class="issue-card">
-      <div class="issue-header" onclick="toggleIssue(this)">
-        <div class="issue-num">T5</div>
-        <div class="issue-title-wrap">
-          <div class="issue-title">Build Quality / Pre-Delivery Inspection Failures</div>
-          <div class="issue-chips">
-            <span class="chip chip-low">LOW SEVERITY</span>
-            <span class="chip chip-triumph">SPEED 400 + SCRAMBLER 400X</span>
-            <span class="chip chip-med">QC — BAJAJ PLANT</span>
-          </div>
-        </div>
-        <div class="severity-bar"><div class="severity-circle sev-low">L</div><div class="severity-label">SEVERITY</div></div>
-        <div class="expand-icon">+</div>
-      </div>
-      <div class="issue-body">
-        <div class="issue-grid">
-          <div class="issue-col"><h4>Reported PDI Failures</h4><ul>
-            <li>Suspension with no grease or lubricant at all (bearings dry from factory)</li>
-            <li>Clutch cable very loose — nearly detached on delivery</li>
-            <li>Suspension reported as very stiff due to lack of grease</li>
-            <li>Fork seal shared with KTM 390 — some cross-contamination of wrong parts</li>
-            <li>16,000 km oil change interval widely disputed in Indian conditions</li>
-          </ul></div>
-          <div class="issue-col"><h4>Owner Mitigations</h4><ul>
-            <li>Multiple owners service at 4,500–5,000 km instead of Triumph's 16,000 km claim</li>
-            <li>Motul 7100 10W50 used by many India owners (same oil as KTM users)</li>
-            <li>Fork seals are shared with KTM — OEM parts available from KTM dealers</li>
-            <li>Triumph service network in India still limited compared to Bajaj/KTM</li>
-          </ul></div>
-        </div>
-        <div class="fault-note-warn">⚠️ <strong>Service interval concern:</strong> Triumph claims a 16,000 km oil change interval — the longest of any bike in this class. Multiple experienced Indian riders have explicitly rejected this interval for Indian riding conditions (heat, traffic, dust) and are servicing at 4,500–5,000 km as a precaution. The 16,000 km figure is calibrated for European riding conditions.</div>
-        <div class="user-reports"><h4>📋 User-Reported Evidence</h4>
-          <div class="quote-block">"Upon disassembly, the suspension had no lubricants or grease at all — even the bearings had no grease! The owner spent R$1,600 with the mechanic to fix this and said it made all the difference."<span class="quote-source">— Triumph 400 Forum, Brazilian Scrambler 400X owner (2024)</span></div>
-          <div class="quote-block">"I have no faith in Triumph's claim of 16,000 km. I serviced my Speed 400 at 4,500 km. The right side fork seal was leaking due to rough usage. Still very satisfied with the ride quality overall."<span class="quote-source">— Team-BHP (team-bhp.com), Speed 400 owner, Pune</span></div>
-        </div>
-      </div>
-    </div>
-
-  </div>
-</section>
-
-<!-- TRIUMPH VS KTM -->
-<section class="tab-panel" id="panel-vsktm">
-  <div class="section-title">Triumph TR-Series vs KTM 373cc / 399cc</div>
-  <div class="section-sub">COMPARATIVE RELIABILITY ANALYSIS · ARCHITECTURE-LEVEL DIFFERENCES</div>
-
-  <div class="verdict-box">
-    <h3>⚡ Core Finding</h3>
-    <p>Based on available user reports and forum evidence, the Triumph TR-series issues appear qualitatively different from the 373cc KTM issues — though direct comparison is limited by the TR-series' shorter production history (2023 onwards vs. KTM's longer track record). The KTM platform's most serious reported problems — coolant-oil mixing, water pump seal failure, elevated oil consumption — are linked to thermal stress under aggressive tuning. The Triumph's documented issues are primarily ECU calibration (stalling) and assembly QC (seals, lubrication). Whether the TR-series proves more reliable long-term remains an open question: the stalling issue is unresolved for a subset of owners, the evidence base is still growing, and Indian usage conditions add variables not reflected in European forum data.</p>
-  </div>
-
-  <table class="comp-table">
-    <thead>
-      <tr><th>Dimension</th><th>Triumph TR-Series</th><th>KTM 373cc</th></tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><strong>Worst Issue Type</strong></td>
-        <td>ECU stalling (partially software-fixed); oil/coolant leaks (QC)</td>
-        <td>Coolant-oil mixing; water pump seal failure; oil consumption</td>
-      </tr>
-      <tr>
-        <td><strong>Root Cause of Issues</strong></td>
-        <td>Bajaj assembly-line QC inconsistency; ECU calibration edge cases</td>
-        <td>Aggressive tuning pushing thermal limits; post-2019 piston changes (suspected)</td>
-      </tr>
-      <tr>
-        <td><strong>Compression Ratio</strong></td>
-        <td><span class="tag tag-triumph">Lower (conservative tune)</span></td>
-        <td><span class="tag tag-ktm">12.6:1 (high — creates thermal stress)</span></td>
-      </tr>
-      <tr>
-        <td><strong>Oil Consumption</strong></td>
-        <td><span class="tag tag-triumph">LOW — user reports suggest low consumption; no independently verified baseline figure</span></td>
-        <td><span class="tag tag-ktm">HIGH — multiple reports of significant consumption; figures vary widely by unit and usage</span></td>
-      </tr>
-      <tr>
-        <td><strong>Oil Capacity</strong></td>
-        <td><span class="tag tag-triumph">~2.0 L (larger buffer)</span></td>
-        <td><span class="tag tag-ktm">1.5–1.7 L (less buffer for consumption)</span></td>
-      </tr>
-      <tr>
-        <td><strong>Service Interval</strong></td>
-        <td>16,000 km (disputed for India conditions)</td>
-        <td>3,500 km (conservative interval required for health)</td>
-      </tr>
-      <tr>
-        <td><strong>Stalling Issue</strong></td>
-        <td><span class="tag tag-triumph">Present — ECU-based, being addressed</span></td>
-        <td><span class="tag tag-ktm">Present — lean fueling, partially mitigated</span></td>
-      </tr>
-      <tr>
-        <td><strong>Water Pump Issues</strong></td>
-        <td><span class="tag tag-triumph">Not documented in available user reports (platform too new for long-term data)</span></td>
-        <td><span class="tag tag-ktm">Major issue — multiple seal failures documented</span></td>
-      </tr>
-      <tr>
-        <td><strong>Valvetrain</strong></td>
-        <td>Finger-follower, DLC coated</td>
-        <td>Nearly same to Triumph</td>
-      </tr>
-      <tr>
-        <td><strong>Long-Term Reliability Outlook</strong></td>
-        <td><span class="tag tag-triumph">Unclear — ECU issue unresolved for subset; platform too new for long-term mileage data</span></td>
-        <td><span class="tag tag-ktm">Mixed — thermal issues documented accumulating with high mileage</span></td>
-      </tr>
-      <tr>
-        <td><strong>Warranty Coverage</strong></td>
-        <td>
-          <span class="tag tag-triumph">Standard: 2 yr unlimited km</span>
-          <span class="tag tag-triumph">Extended: +3 yr / 45,000 km = 5 yr total</span>
-          <div style="font-size:11px;color:var(--muted);margin-top:6px;font-family:'IBM Plex Mono',monospace;">⚠️ 5+5 yr / 10-yr bundled promo (Speed 400, Scrambler 400X, Speed T4) was offered at no extra cost until 30 Jun 2025 — now expired. Fully transferable on resale while active.</div>
-        </td>
-        <td>
-          <span class="tag tag-ktm">Standard: 2 yr + 3 yr extended = 5 yr (from Apr 2024)</span>
-          <div style="font-size:11px;color:var(--muted);margin-top:6px;font-family:'IBM Plex Mono',monospace;">⚠️ Same 5+5 yr / 10-yr promo applied to 390 Duke until 30 Jun 2025 — now expired. Warranty disputes common for oil consumption claims.</div>
-        </td>
-      </tr>
-      <tr>
-        <td><strong>Manufacturing Location</strong></td>
-        <td><span class="tag tag-shared">Bajaj Auto, Chakan, Pune</span></td>
-        <td><span class="tag tag-shared">Bajaj Auto, Chakan, Pune</span></td>
-      </tr>
-    </tbody>
-  </table>
-</section>
-
-<!-- SOURCES -->
-<section class="tab-panel" id="panel-sources">
-  <div class="section-title">Sources & References</div>
-  <div class="section-sub">ALL CLAIMS IN THIS FILE ARE TRACEABLE TO THESE SOURCES</div>
-  <p style="font-size:13px;color:var(--muted);margin-bottom:24px">Sources are categorized by type. User forum reports are treated as primary evidence for issues that Triumph has not officially acknowledged. The evidence base mixes reports from India, Europe, the US, and Brazil — usage conditions, climate, fuel quality, and road surfaces vary significantly across these contexts, and not all issues apply equally to all markets. No claim relies on a single unverified source, but frequency and severity data cannot be statistically extrapolated from forum threads.</p>
-
-  <div class="source-grid">
-    <a class="source-card" href="https://www.triumph400forum.com/threads/engine-stalling-problem.653/" target="_blank"><div class="source-type st-forum">User Forum</div><h4>Triumph 400 Forum — Stalling Problem Thread</h4><p>11,000+ post community; stalling reports from India, US, Europe; ECU update history; NHTSA filings</p></a>
-    <a class="source-card" href="https://www.team-bhp.com/forum/motorbikes/283371-my-triumph-speed-400-problems-reviewers-brush-aside.html" target="_blank"><div class="source-type st-user">Team-BHP</div><h4>Team-BHP — Triumph Speed 400 Problems</h4><p>Real-world Indian owner issues; fork seals, overheating, service concerns</p></a>
-    <a class="source-card" href="https://www.team-bhp.com/news/coolant-leakage-my-triumph-speed-400-what-could-be-cause" target="_blank"><div class="source-type st-user">Team-BHP</div><h4>Team-BHP — Coolant Leakage Speed 400</h4><p>Coolant leakage from unusual location; gasket involvement suspected; community diagnosis</p></a>
-    <a class="source-card" href="https://www.triumph400forum.com/threads/oil-leak.149/" target="_blank"><div class="source-type st-forum">User Forum</div><h4>Triumph 400 Forum — Oil Leak Thread</h4><p>Head gasket failure confirmed; cylinder-piston assembly replaced; 2 separate oil leaks at 600 miles</p></a>
-    <a class="source-card" href="https://www.triumph400forum.com/threads/engine-ticking-loudly-at-idle-anyone-else-have-this-issue.101/" target="_blank"><div class="source-type st-forum">User Forum</div><h4>Triumph 400 Forum — Engine Ticking</h4><p>Valve clearance issue from delivery; new floor unit confirmed different sound; lemon law discussion</p></a>
-    <a class="source-card" href="https://www.team-bhp.com/news/why-i-did-preventive-maintenance-my-triumph-speed-400-4500-km" target="_blank"><div class="source-type st-user">Team-BHP</div><h4>Team-BHP — Speed 400 Service at 4,500 km</h4><p>16,000 km interval dispute; fork seal leak; Motul 7100 10W50 usage; fork seals shared with KTM</p></a>
-    <a class="source-card" href="https://www.triumphmotorcycles.com/motorcycles/classic/speed-400/reasons-to-ride/engine" target="_blank"><div class="source-type st-official">Official</div><h4>Triumph Motorcycles — Speed 400 Engine Page</h4><p>TR-Series official specs; finger-follower DLC valvetrain; ride-by-wire; 2-year unlimited warranty</p></a>
-    <a class="source-card" href="https://en.wikipedia.org/wiki/KTM_390_series" target="_blank"><div class="source-type st-wiki">Wikipedia</div><h4>KTM 390 Series — Wikipedia</h4><p>Cross-reference for 373cc/399cc comparison context; platform production details</p></a>
-    <a class="source-card" href="https://www.bikedekho.com/news/ktm-390-duke-and-triumph-400cc-bikes-get-10-year-warranty-18069" target="_blank"><div class="source-type st-official">Official / News</div><h4>BikeDekho — KTM 390 Duke & Triumph 400cc 10-Year Warranty</h4><p>Confirms 5+5 yr / 10-yr bundled promo structure for Speed 400, Scrambler 400X, Speed T4 and KTM 390 Duke; valid until 30 Jun 2025; fully transferable; no extra cost. Normal structure: 2 yr unlimited km + 3 yr/45,000 km extended = 5 yr total.</p></a>
-    <a class="source-card" href="https://www.bajajauto.com/corporate/media-centre/press-releases/ktm-offers-5-year-warranty-and-roadside-assistance-free-with-all-its-models" target="_blank"><div class="source-type st-official">Official — Bajaj Press Release</div><h4>Bajaj Auto — KTM 5-Year Warranty & Roadside Assistance</h4><p>Confirms KTM and Husqvarna standard warranty upgraded to 5 years (2 yr standard + 3 yr extended) from April 2024, plus 1-year roadside assistance, at no extra cost across all models.</p></a>
-  </div>
-
-  <div class="verdict-box" style="margin-top:28px;border-color:var(--muted)">
-    <h3 style="color:var(--muted)">SOURCE QUALITY NOTE</h3>
-    <p>The Triumph TR-Series has a shorter on-road history (2023 onwards) than the KTM 373cc platform, which means the evidence base is still growing and long-term mileage data is limited. User reports from Team-BHP and Triumph 400 Forum are considered primary evidence given the absence of official Triumph documentation on many of these issues. Reports span India, Europe, the US, and Brazil — local riding conditions (heat, traffic density, fuel quality, road surface) affect which issues manifest and how severely. Cross-geography comparisons should be interpreted with that variation in mind. All sources were verified as of April 2026.</p>
-  </div>
-</section>
-
-</main>
-
-<footer class="doc-footer">
-  Triumph TR-Series Engine Issue Compendium — File 2 of 3 · Compiled April 2026<br>
-  Triumph Speed 400 · Triumph Scrambler 400 X · 398.15cc TR-Series Engine · 2023 Onwards<br>
-  Not affiliated with Triumph Motorcycles Ltd. or Bajaj Auto Ltd. · For informational and research use only, made by @kjridesabike
-</footer>
-
-<script>
-function switchTab(id) {
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('panel-' + id).classList.add('active');
-  event.currentTarget.classList.add('active');
-}
-function toggleIssue(header) {
-  const body = header.nextElementSibling;
-  const isOpen = body.classList.contains('open');
-  document.querySelectorAll('.issue-body').forEach(b => b.classList.remove('open'));
-  document.querySelectorAll('.issue-header').forEach(h => h.classList.remove('open'));
-  if (!isOpen) { body.classList.add('open'); header.classList.add('open'); }
-}
-</script>
-</body>
+    <script>
+      function switchTab(id) {
+        document
+          .querySelectorAll(".tab-panel")
+          .forEach((p) => p.classList.remove("active"));
+        document
+          .querySelectorAll(".tab-btn")
+          .forEach((b) => b.classList.remove("active"));
+        document.getElementById("panel-" + id).classList.add("active");
+        event.currentTarget.classList.add("active");
+      }
+      function toggleIssue(header) {
+        const body = header.nextElementSibling;
+        const isOpen = body.classList.contains("open");
+        document
+          .querySelectorAll(".issue-body")
+          .forEach((b) => b.classList.remove("open"));
+        document
+          .querySelectorAll(".issue-header")
+          .forEach((h) => h.classList.remove("open"));
+        if (!isOpen) {
+          body.classList.add("open");
+          header.classList.add("open");
+        }
+      }
+    </script>
+  </body>
 </html>

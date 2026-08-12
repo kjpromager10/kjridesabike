@@ -1,0 +1,221 @@
+:root {
+  --bg: #0b0b10;
+  --surface: #14141c;
+  --card: #1a1a24;
+  --border: #2a2a3a;
+  --accent: #4a9eff;
+  --accent2: #f0a500;
+  --accent3: #e8530a;
+  --text: #e8e8f0;
+  --muted: #8a8aa5;
+}
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+html {
+  scrollbar-gutter: stable;
+  scrollbar-width: auto;
+  scrollbar-color: #3a3a52 #0f1220;
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "IBM Plex Sans", sans-serif;
+  min-height: 100vh;
+  overflow-y: scroll;
+}
+header {
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(74, 158, 255, 0.18),
+      transparent 55%
+    ),
+    linear-gradient(135deg, #0b0b10 0%, #0f1220 45%, #0b0b10 100%);
+  border-bottom: 2px solid var(--accent);
+  padding: 44px 24px 32px;
+}
+.header-inner {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+.kicker {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+header h1 {
+  font-family: "Syne", sans-serif;
+  font-size: clamp(28px, 5vw, 52px);
+  font-weight: 800;
+  line-height: 1.05;
+  margin-bottom: 14px;
+}
+header h1 span {
+  color: var(--accent);
+}
+.header-sub {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+main {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 32px 24px 56px;
+}
+.section-title {
+  font-family: "Syne", sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  margin-bottom: 6px;
+}
+.section-sub {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px;
+  text-decoration: none;
+  color: inherit;
+  transition:
+    border-color 0.2s,
+    transform 0.2s,
+    background 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  background: #20202c;
+}
+.card-tag {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent2);
+}
+.card-title {
+  font-family: "Syne", sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.25;
+  padding-bottom: 1px;
+}
+.card-desc {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.card-meta {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  color: var(--muted);
+  display: flex;
+  gap: 12px;
+}
+.footer {
+  border-top: 1px solid var(--border);
+  padding: 22px 24px 40px;
+  text-align: center;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* Search UI */
+.search-wrap {
+  margin: 12px 0 18px;
+}
+.search-input {
+  width: 100%;
+  max-width: 520px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-family: "IBM Plex Sans", sans-serif;
+  font-size: 14px;
+}
+.search-input::placeholder {
+  color: var(--muted);
+}
+.search-input:focus-visible {
+  outline: 2px solid rgba(74, 158, 255, 0.45);
+  outline-offset: 2px;
+  border-color: var(--accent);
+}
+.no-results {
+  display: none;
+  color: var(--muted);
+  font-family: "IBM Plex Mono", monospace;
+  margin-bottom: 12px;
+}
+
+/* Accessibility / focus */
+.card:focus {
+  outline: none;
+}
+.card:focus-visible {
+  box-shadow: 0 0 0 4px rgba(74, 158, 255, 0.12);
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+.card:focus-visible .card-title {
+  text-decoration: underline;
+}
+
+/* Scrollbar */
+html::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+html::-webkit-scrollbar-track {
+  background: #0f1220;
+}
+html::-webkit-scrollbar-thumb {
+  background: #3a3a52;
+  border-radius: 999px;
+  border: 2px solid #0f1220;
+}
+html::-webkit-scrollbar-thumb:hover {
+  background: #4b4b6a;
+}
+html::-webkit-scrollbar-corner {
+  background: #0f1220;
+}
+
+/* Selection */
+::selection {
+  background: rgba(74, 158, 255, 0.35);
+  color: var(--text);
+}
+
+/* small responsive tweak */
+@media (max-width: 480px) {
+  .search-input {
+    max-width: 100%;
+  }
+}

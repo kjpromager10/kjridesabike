@@ -1,637 +1,1359 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Suspension Dynamics — Damped Oscillator</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-
-:root{
-  --bg0:#0a0a0b;
-  --bg1:#111113;
-  --bg2:#1a1a1e;
-  --bg3:#242428;
-  --bg4:#2e2e34;
-  --line:#ffffff12;
-  --line2:#ffffff22;
-  --accent:#e8ff47;
-  --accent2:#47ffe8;
-  --accent3:#ff6b35;
-  --text0:#f0f0ee;
-  --text1:#a8a8a4;
-  --text2:#606060;
-  --blue:#4a9eff;
-  --green:#3de0a0;
-  --orange:#ff7043;
-  --mono:'DM Mono',monospace;
-  --sans:'Syne',sans-serif;
-}
-
-html{scroll-behavior:smooth}
-body{background:var(--bg0);color:var(--text0);font-family:var(--sans);min-height:100vh;overflow-x:hidden}
-
-/* ── HEADER ── */
-header{
-  padding:2.5rem 2rem 0;
-  border-bottom:1px solid var(--line);
-  position:relative;
-}
-.header-inner{max-width:960px;margin:0 auto}
-.eyebrow{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:0.75rem}
-h1{font-size:clamp(1.6rem,4vw,2.4rem);font-weight:700;line-height:1.1;letter-spacing:-0.02em;margin-bottom:0.5rem}
-h1 span{color:var(--text2)}
-.subtitle{font-family:var(--mono);font-size:12px;color:var(--text1);margin-bottom:2rem;line-height:1.6}
-.equation-pill{
-  display:inline-flex;align-items:center;gap:0.5rem;
-  background:var(--bg2);border:1px solid var(--line2);
-  padding:6px 14px;border-radius:4px;
-  font-family:var(--mono);font-size:13px;color:var(--accent);
-  margin-bottom:2rem;
-}
-
-/* ── TABS ── */
-.tab-bar{
-  display:flex;gap:0;border-bottom:none;
-  max-width:960px;margin:0 auto;
-  position:relative;
-}
-.tab-bar::after{
-  content:'';position:absolute;bottom:0;left:0;right:0;
-  height:1px;background:var(--line);
-}
-.tab{
-  font-family:var(--mono);font-size:11px;letter-spacing:0.05em;text-transform:uppercase;
-  padding:10px 20px;cursor:pointer;color:var(--text2);
-  border:1px solid transparent;border-bottom:none;
-  background:transparent;transition:color 0.15s,background 0.15s;
-  position:relative;z-index:1;border-radius:4px 4px 0 0;
-  white-space:nowrap;
-}
-.tab:hover{color:var(--text1)}
-.tab.active{
-  color:var(--accent);background:var(--bg1);
-  border-color:var(--line2);border-bottom-color:var(--bg1);
-}
-
-/* ── CONTENT ── */
-.tab-content{display:none;max-width:960px;margin:0 auto;padding:2rem 2rem 4rem}
-.tab-content.active{display:block}
-
-/* ── SIMULATOR ── */
-.sim-grid{display:grid;grid-template-columns:300px 1fr;gap:1.5rem;align-items:start}
-@media(max-width:700px){.sim-grid{grid-template-columns:1fr}}
-
-.panel{background:var(--bg1);border:1px solid var(--line);border-radius:6px;padding:1.25rem}
-.panel-label{font-family:var(--mono);font-size:10px;color:var(--text2);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:1rem;padding-bottom:0.5rem;border-bottom:1px solid var(--line)}
-
-.param-row{margin-bottom:1.25rem}
-.param-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
-.param-name{font-family:var(--mono);font-size:12px;color:var(--text1)}
-.param-val{font-family:var(--mono);font-size:16px;font-weight:500;color:var(--text0)}
-.param-unit{font-size:10px;color:var(--text2);margin-left:2px}
-
-input[type=range]{
-  width:100%;appearance:none;height:3px;
-  background:var(--bg4);border-radius:2px;outline:none;cursor:pointer;
-}
-input[type=range]::-webkit-slider-thumb{
-  appearance:none;width:14px;height:14px;border-radius:50%;
-  background:var(--accent);cursor:pointer;
-  box-shadow:0 0 0 3px var(--bg1),0 0 0 4px var(--accent);
-}
-
-.metric-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:1rem}
-.metric{background:var(--bg2);border:1px solid var(--line);border-radius:4px;padding:10px 12px}
-.metric-label{font-family:var(--mono);font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px}
-.metric-value{font-family:var(--mono);font-size:18px;font-weight:500}
-
-.regime-badge{
-  display:inline-block;font-family:var(--mono);font-size:10px;
-  padding:3px 10px;border-radius:2px;margin-top:1rem;letter-spacing:0.05em;
-}
-.badge-under{background:#4a9eff22;color:var(--blue);border:1px solid #4a9eff44}
-.badge-crit{background:#3de0a022;color:var(--green);border:1px solid #3de0a044}
-.badge-over{background:#ff704322;color:var(--orange);border:1px solid #ff704344}
-
-.chart-wrap{position:relative;height:320px;background:var(--bg1);border:1px solid var(--line);border-radius:6px;padding:1rem}
-.chart-legend{display:flex;flex-wrap:wrap;gap:16px;margin-bottom:1rem}
-.legend-item{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--text1)}
-.legend-dot{width:20px;height:2px;flex-shrink:0}
-
-/* ── ASSUMPTIONS ── */
-.assumption-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin-bottom:2rem}
-.assumption-card{background:var(--bg1);border:1px solid var(--line);border-radius:6px;padding:1.25rem}
-.card-num{font-family:var(--mono);font-size:10px;color:var(--accent);margin-bottom:8px;display:block}
-.card-title{font-size:14px;font-weight:600;margin-bottom:6px}
-.card-desc{font-family:var(--mono);font-size:11px;color:var(--text1);line-height:1.7}
-.real-world{
-  background:var(--bg2);border:1px solid var(--line2);border-left:3px solid var(--accent3);
-  border-radius:0 6px 6px 0;padding:1rem 1.25rem;margin-top:2rem;
-}
-.real-world h3{font-size:13px;font-weight:600;color:var(--accent3);margin-bottom:0.5rem}
-.real-world p{font-family:var(--mono);font-size:11px;color:var(--text1);line-height:1.8}
-
-/* ── FORMULA ── */
-.formula-block{
-  background:var(--bg1);border:1px solid var(--line);border-radius:6px;
-  padding:1.5rem;margin-bottom:1.25rem;
-}
-.formula-title{font-family:var(--mono);font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:1rem}
-.formula-eq{
-  font-family:var(--mono);font-size:15px;color:var(--text0);
-  background:var(--bg0);padding:12px 16px;border-radius:4px;
-  border-left:2px solid var(--accent);margin-bottom:1rem;
-  overflow-x:auto;white-space:nowrap;
-}
-.formula-vars{display:flex;flex-direction:column;gap:6px}
-.var-row{display:flex;gap:12px;font-family:var(--mono);font-size:11px}
-.var-sym{color:var(--accent2);min-width:60px;flex-shrink:0}
-.var-desc{color:var(--text1)}
-
-.solution-flow{display:flex;flex-direction:column;gap:0}
-.sol-step{display:flex;gap:1rem;padding:1rem 0;border-bottom:1px solid var(--line)}
-.sol-step:last-child{border-bottom:none}
-.sol-num{font-family:var(--mono);font-size:10px;color:var(--accent);min-width:24px;padding-top:2px}
-.sol-body{}
-.sol-title{font-size:13px;font-weight:600;margin-bottom:4px}
-.sol-eq{font-family:var(--mono);font-size:12px;color:var(--accent2);line-height:1.8}
-.sol-note{font-family:var(--mono);font-size:11px;color:var(--text1);margin-top:4px;line-height:1.6}
-
-.case-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:1.5rem}
-@media(max-width:600px){.case-grid{grid-template-columns:1fr}}
-.case-card{background:var(--bg1);border:1px solid var(--line);border-radius:6px;padding:1rem}
-.case-head{font-size:12px;font-weight:600;margin-bottom:6px}
-.case-cond{font-family:var(--mono);font-size:10px;margin-bottom:8px}
-.case-sol{font-family:var(--mono);font-size:10px;color:var(--text1);line-height:1.9}
-.under-head{color:var(--blue)}.crit-head{color:var(--green)}.over-head{color:var(--orange)}
-.under-cond{color:#4a9eff88}.crit-cond{color:#3de0a088}.over-cond{color:#ff704388}
-
-/* ── SOURCES ── */
-.source-list{display:flex;flex-direction:column;gap:0.75rem}
-.source-item{
-  background:var(--bg1);border:1px solid var(--line);border-radius:6px;
-  padding:1rem 1.25rem;display:flex;gap:1rem;align-items:flex-start;
-}
-.source-num{font-family:var(--mono);font-size:10px;color:var(--accent);min-width:20px;padding-top:2px;flex-shrink:0}
-.source-body{}
-.source-title{font-size:13px;font-weight:600;margin-bottom:2px}
-.source-meta{font-family:var(--mono);font-size:11px;color:var(--text1);margin-bottom:4px}
-.source-note{font-family:var(--mono);font-size:11px;color:var(--text2);line-height:1.6}
-.source-link{
-  font-family:var(--mono);font-size:10px;color:var(--accent2);
-  text-decoration:none;border-bottom:1px solid transparent;
-  transition:border-color 0.15s;
-}
-.source-link:hover{border-bottom-color:var(--accent2)}
-
-.disclaimer{
-  background:var(--bg2);border:1px solid var(--line);border-radius:4px;
-  padding:0.75rem 1rem;margin-top:2rem;
-  font-family:var(--mono);font-size:11px;color:var(--text2);line-height:1.6;
-}
-
-/* ── ANIMATIONS ── */
-@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-.tab-content.active{animation:fadein 0.2s ease}
-</style>
-</head>
-<body>
-
-<header>
-  <div class="header-inner">
-    <p class="eyebrow">Suspension Dynamics / Free Oscillation</p>
-    <h1>Damped Oscillator <span>/ Interactive Simulator</span></h1>
-    <p class="subtitle">
-      How spring rate, damping, and mass interact in a single-degree-of-freedom system<br>
-      Based on the standard viscous damping model — no external forcing
-    </p>
-    <div class="equation-pill">mẍ + cẋ + kx = 0</div>
-    <nav class="tab-bar" role="tablist">
-      <button class="tab active" role="tab" data-tab="simulator">Simulator</button>
-      <button class="tab" role="tab" data-tab="assumptions">Assumptions</button>
-      <button class="tab" role="tab" data-tab="formula">Formula + Solution</button>
-      <button class="tab" role="tab" data-tab="sources">Sources</button>
-    </nav>
-  </div>
-</header>
-
-<!-- ══════════════════ SIMULATOR ══════════════════ -->
-<section class="tab-content active" id="tab-simulator">
-  <div class="sim-grid">
-    <div>
-      <div class="panel">
-        <p class="panel-label">Parameters</p>
-        <div class="param-row">
-          <div class="param-header">
-            <span class="param-name">m — sprung mass</span>
-            <span><span class="param-val" id="m-val">10</span><span class="param-unit">kg</span></span>
-          </div>
-          <input type="range" id="m-sl" min="1" max="50" step="1" value="10"/>
-        </div>
-        <div class="param-row">
-          <div class="param-header">
-            <span class="param-name">c — damping coeff.</span>
-            <span><span class="param-val" id="c-val">20</span><span class="param-unit">N·s/m</span></span>
-          </div>
-          <input type="range" id="c-sl" min="0" max="250" step="1" value="20"/>
-        </div>
-        <div class="param-row">
-          <div class="param-header">
-            <span class="param-name">k — spring rate</span>
-            <span><span class="param-val" id="k-val">100</span><span class="param-unit">N/m</span></span>
-          </div>
-          <input type="range" id="k-sl" min="10" max="500" step="5" value="100"/>
-        </div>
-        <div class="metric-row">
-          <div class="metric">
-            <p class="metric-label">ζ damping ratio</p>
-            <p class="metric-value" id="zeta-val" style="color:var(--accent)">—</p>
-          </div>
-          <div class="metric">
-            <p class="metric-label">ωₙ natural freq</p>
-            <p class="metric-value" id="wn-val" style="color:var(--accent2)">—</p>
-          </div>
-        </div>
-        <div id="regime-badge" class="regime-badge">—</div>
-      </div>
-
-      <div class="panel" style="margin-top:1rem">
-        <p class="panel-label">Bike context</p>
-        <div style="font-family:var(--mono);font-size:11px;color:var(--text1);line-height:1.9">
-          <div style="margin-bottom:6px"><span style="color:var(--accent2)">m</span> → sprung mass of bike + rider over one wheel (~60–120 kg real)</div>
-          <div style="margin-bottom:6px"><span style="color:var(--accent2)">k</span> → spring rate of fork spring / rear shock (~15–40 N/mm real)</div>
-          <div><span style="color:var(--accent2)">c</span> → oil viscosity + valve stack resistance in damper</div>
-        </div>
-      </div>
-    </div>
-
-    <div>
-      <div class="chart-legend">
-        <div class="legend-item"><div class="legend-dot" style="background:var(--blue);border-top:2px dashed var(--blue)"></div>underdamped (ζ=0.3)</div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--green);border-top:2px dashed var(--green)"></div>critically damped (ζ=1)</div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--orange);border-top:2px dashed var(--orange)"></div>overdamped (ζ=2.5)</div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--accent);height:3px"></div>your settings</div>
-      </div>
-      <div class="chart-wrap">
-        <canvas id="main-chart" role="img" aria-label="Damped oscillator displacement vs time — shows underdamped, critically damped, overdamped reference curves and user-controlled curve"></canvas>
-      </div>
-      <div style="margin-top:0.75rem;font-family:var(--mono);font-size:10px;color:var(--text2);line-height:1.8">
-        Initial conditions: x₀ = 1 m, ẋ₀ = 0 m/s &nbsp;·&nbsp; Represents bike wheel hitting a bump at t=0<br>
-        Real shocks run compression + rebound valving simultaneously — c is not a single constant
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ══════════════════ ASSUMPTIONS ══════════════════ -->
-<section class="tab-content" id="tab-assumptions">
-  <div class="assumption-grid">
-    <div class="assumption-card">
-      <span class="card-num">01</span>
-      <p class="card-title">Single degree of freedom</p>
-      <p class="card-desc">The system is modelled as one mass moving along one axis only. In reality, a motorcycle suspension has 6+ DOF — pitch, roll, yaw, and coupled front/rear kinematics all interact.</p>
-    </div>
-    <div class="assumption-card">
-      <span class="card-num">02</span>
-      <p class="card-title">Linear viscous damping</p>
-      <p class="card-desc">Damping force = c · ẋ. Force is proportional to velocity. Real dampers are nonlinear — oil flow through small orifices follows the square-root of pressure drop, and shim stacks have progressive opening characteristics.</p>
-    </div>
-    <div class="assumption-card">
-      <span class="card-num">03</span>
-      <p class="card-title">Linear spring (Hookean)</p>
-      <p class="card-desc">Spring force = k · x. Constant rate across full stroke. Real fork springs and shock springs are often progressive (rate increases with compression) or use helper springs for initial plushness.</p>
-    </div>
-    <div class="assumption-card">
-      <span class="card-num">04</span>
-      <p class="card-title">Zero external forcing</p>
-      <p class="card-desc">RHS = 0. We model only the free oscillation after an impulse — like a single bump. Continuous road inputs require a forced response model with road profile as F(t), typically using PSD analysis.</p>
-    </div>
-    <div class="assumption-card">
-      <span class="card-num">05</span>
-      <p class="card-title">Constant coefficients</p>
-      <p class="card-desc">m, c, and k do not vary with time, position, velocity, or temperature. In practice, oil viscosity drops with heat (fade), spring rate changes with preload, and mass shifts under braking and acceleration.</p>
-    </div>
-    <div class="assumption-card">
-      <span class="card-num">06</span>
-      <p class="card-title">No unsprung mass</p>
-      <p class="card-desc">Tyre, wheel, and brake assembly mass (unsprung) are ignored. Real quarter-car models use two masses — sprung (chassis) and unsprung (wheel) — connected by the spring/damper, with the tyre as a second spring.</p>
-    </div>
-    <div class="assumption-card">
-      <span class="card-num">07</span>
-      <p class="card-title">No tyre dynamics</p>
-      <p class="card-desc">Tyre is assumed rigid contact with ground. Real tyres have stiffness (~150–200 N/mm sidewall) and damping — they act as a second suspension stage, heavily affecting grip over small-frequency vibrations.</p>
-    </div>
-    <div class="assumption-card">
-      <span class="card-num">08</span>
-      <p class="card-title">Symmetric damping</p>
-      <p class="card-desc">c is identical in compression and rebound. Real shocks have separate compression (bump) and rebound adjuster circuits — intentionally asymmetric. Rebound is usually 2–3x slower than compression to prevent pack-down.</p>
-    </div>
-  </div>
-
-  <div class="real-world">
-    <h3>Why this model still matters</h3>
-    <p>
-      Despite these simplifications, the SDOF viscous damping model correctly predicts regime behaviour — underdamped, critically damped, overdamped — and the relationship between ζ and oscillation decay rate. All real suspension tuning is rooted in understanding these regimes first. The model gives you the mental framework; real shocks then add nonlinear corrections on top.
-      <br><br>
-      Real motorcycle suspension is typically tuned to ζ ≈ 0.25–0.40 (underdamped). Critical damping sounds ideal in theory but feels wooden and kills mechanical grip in practice — the wheel can't track small road irregularities fast enough.
-    </p>
-  </div>
-</section>
-
-<!-- ══════════════════ FORMULA ══════════════════ -->
-<section class="tab-content" id="tab-formula">
-
-  <div class="formula-block">
-    <p class="formula-title">Equation of motion</p>
-    <div class="formula-eq">mẍ + cẋ + kx = 0</div>
-    <div class="formula-vars">
-      <div class="var-row"><span class="var-sym">m</span><span class="var-desc">Mass (kg) — inertia resisting acceleration</span></div>
-      <div class="var-row"><span class="var-sym">ẍ</span><span class="var-desc">d²x/dt² — acceleration of the mass</span></div>
-      <div class="var-row"><span class="var-sym">c</span><span class="var-desc">Viscous damping coefficient (N·s/m)</span></div>
-      <div class="var-row"><span class="var-sym">ẋ</span><span class="var-desc">dx/dt — velocity of the mass</span></div>
-      <div class="var-row"><span class="var-sym">k</span><span class="var-desc">Spring stiffness / rate (N/m)</span></div>
-      <div class="var-row"><span class="var-sym">x</span><span class="var-desc">Displacement from equilibrium (m)</span></div>
-    </div>
-  </div>
-
-  <div class="formula-block">
-    <p class="formula-title">Derived parameters</p>
-    <div class="formula-vars" style="gap:10px">
-      <div class="var-row">
-        <span class="var-sym">ωₙ</span>
-        <span class="var-desc">Natural frequency = √(k/m) &nbsp; [rad/s] — how fast it oscillates with no damping</span>
-      </div>
-      <div class="var-row">
-        <span class="var-sym">ζ</span>
-        <span class="var-desc">Damping ratio = c / (2√(mk)) — dimensionless, defines the regime</span>
-      </div>
-      <div class="var-row">
-        <span class="var-sym">ωd</span>
-        <span class="var-desc">Damped natural freq = ωₙ√(1−ζ²) — actual oscillation frequency when underdamped</span>
-      </div>
-      <div class="var-row">
-        <span class="var-sym">cc</span>
-        <span class="var-desc">Critical damping coefficient = 2√(mk) — minimum c for no oscillation</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="formula-block">
-    <p class="formula-title">Solution method — characteristic equation</p>
-    <div class="solution-flow">
-      <div class="sol-step">
-        <span class="sol-num">01</span>
-        <div class="sol-body">
-          <p class="sol-title">Assume solution form</p>
-          <p class="sol-eq">x(t) = e^(λt)</p>
-          <p class="sol-note">Substituting into the ODE gives a characteristic polynomial in λ</p>
-        </div>
-      </div>
-      <div class="sol-step">
-        <span class="sol-num">02</span>
-        <div class="sol-body">
-          <p class="sol-title">Characteristic polynomial</p>
-          <p class="sol-eq">mλ² + cλ + k = 0</p>
-          <p class="sol-note">Quadratic in λ — two roots determine the response type</p>
-        </div>
-      </div>
-      <div class="sol-step">
-        <span class="sol-num">03</span>
-        <div class="sol-body">
-          <p class="sol-title">Roots via quadratic formula</p>
-          <p class="sol-eq">λ = (−c ± √(c² − 4mk)) / 2m<br>λ = −ζωₙ ± ωₙ√(ζ² − 1)</p>
-          <p class="sol-note">Discriminant c² − 4mk determines whether roots are real or complex</p>
-        </div>
-      </div>
-      <div class="sol-step">
-        <span class="sol-num">04</span>
-        <div class="sol-body">
-          <p class="sol-title">Apply initial conditions</p>
-          <p class="sol-eq">x(0) = x₀ = 1 &nbsp;&nbsp; ẋ(0) = v₀ = 0</p>
-          <p class="sol-note">Constants A and B in the general solution are fixed by these two conditions</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="case-grid">
-    <div class="case-card">
-      <p class="case-head under-head">Underdamped</p>
-      <p class="case-cond under-cond">ζ &lt; 1 &nbsp;·&nbsp; c² &lt; 4mk</p>
-      <p class="case-sol">
-        Complex conjugate roots<br>
-        λ = −ζωₙ ± iωd<br><br>
-        x(t) = e^(−ζωₙt)<br>
-        &nbsp;·[A·cos(ωd·t)<br>
-        &nbsp;+ B·sin(ωd·t)]<br><br>
-        Oscillates and decays.<br>
-        Bike bounces over bump.
-      </p>
-    </div>
-    <div class="case-card">
-      <p class="case-head crit-head">Critically damped</p>
-      <p class="case-cond crit-cond">ζ = 1 &nbsp;·&nbsp; c² = 4mk</p>
-      <p class="case-sol">
-        Repeated real root<br>
-        λ = −ωₙ (double)<br><br>
-        x(t) = e^(−ωₙt)<br>
-        &nbsp;·(A + B·t)<br><br>
-        Returns fastest without<br>
-        oscillating. Theoretical<br>
-        optimum — feels stiff.
-      </p>
-    </div>
-    <div class="case-card">
-      <p class="case-head over-head">Overdamped</p>
-      <p class="case-cond over-cond">ζ &gt; 1 &nbsp;·&nbsp; c² &gt; 4mk</p>
-      <p class="case-sol">
-        Two distinct real roots<br>
-        λ = −ζωₙ ± ωₙ√(ζ²−1)<br><br>
-        x(t) = A·e^(λ₁t)<br>
-        &nbsp;+ B·e^(λ₂t)<br><br>
-        Sluggish return. Wheel<br>
-        can't track road fast<br>
-        enough — loss of grip.
-      </p>
-    </div>
-  </div>
-</section>
-
-<!-- ══════════════════ SOURCES ══════════════════ -->
-<section class="tab-content" id="tab-sources">
-  <div class="source-list">
-    <div class="source-item">
-      <span class="source-num">01</span>
-      <div class="source-body">
-        <p class="source-title">Mechanical Vibrations — Rao, S.S.</p>
-        <p class="source-meta">Pearson, 6th Edition (2017) &nbsp;·&nbsp; Chapter 2: Free Vibration of Single-DOF Systems</p>
-        <p class="source-note">Primary reference for the SDOF equation of motion, characteristic equation derivation, and all three damping regime solutions. Standard undergraduate textbook used in mechanical engineering programs globally.</p>
-      </div>
-    </div>
-    <div class="source-item">
-      <span class="source-num">02</span>
-      <div class="source-body">
-        <p class="source-title">Engineering Vibration — Inman, D.J.</p>
-        <p class="source-meta">Pearson, 4th Edition (2013) &nbsp;·&nbsp; Chapter 1</p>
-        <p class="source-note">Alternative derivation of damping ratio and natural frequency. Cleaner treatment of initial conditions applied to the three solution cases. Used to verify the solution forms shown in the Formula tab.</p>
-      </div>
-    </div>
-    <div class="source-item">
-      <span class="source-num">03</span>
-      <div class="source-body">
-        <p class="source-title">Motorcycle Dynamics — Vittore Cossalter</p>
-        <p class="source-meta">2nd Edition (2006) &nbsp;·&nbsp; Chapter 4: Suspensions</p>
-        <p class="source-note">Source for real-world motorcycle suspension parameters — sprung mass ranges, spring rate values, and typical damping ratios used in production motorcycles. Explains why ζ ≈ 0.25–0.40 is preferred over critical damping for grip.</p>
-      </div>
-    </div>
-    <div class="source-item">
-      <span class="source-num">04</span>
-      <div class="source-body">
-        <p class="source-title">Race Tech's Motorcycle Suspension Bible — Thede & Parks</p>
-        <p class="source-meta">Motorbooks, 2010</p>
-        <p class="source-note">Practical source for compression/rebound asymmetry, shim stack behaviour, and why real dampers deviate from linear viscous damping. Explains the square-root relationship between oil velocity and damping force through orifices.</p>
-      </div>
-    </div>
-    <div class="source-item">
-      <span class="source-num">05</span>
-      <div class="source-body">
-        <p class="source-title">Vehicle Dynamics — Fundamentals and Limit Handling — Milliken & Milliken</p>
-        <p class="source-meta">SAE International, 1995 &nbsp;·&nbsp; Chapter 16</p>
-        <p class="source-note">Quarter-car model derivation including unsprung mass. Explains why ignoring unsprung mass is a significant simplification and how wheel hop frequency (~10–15 Hz) interacts with body resonance (~1–2 Hz) in real vehicles.</p>
-      </div>
-    </div>
-    <div class="source-item">
-      <span class="source-num">06</span>
-      <div class="source-body">
-        <p class="source-title">Tyre and Vehicle Dynamics — Pacejka, H.B.</p>
-        <p class="source-meta">Butterworth-Heinemann, 3rd Edition (2012)</p>
-        <p class="source-note">Source for tyre stiffness values (~150–200 N/mm radial) and tyre damping characteristics used to justify the no-tyre-dynamics assumption in the Assumptions tab.</p>
-      </div>
-    </div>
-  </div>
-
-  <div class="disclaimer">
-    All solutions in the Formula tab are analytical — verified against Rao (2017) Ch.2 and Inman (2013) Ch.1. The simulator uses numerical integration (Verlet method) for the user-controlled curve and analytical solutions for the three reference curves. Minor discrepancies at high damping ratios are expected due to step size. Initial conditions: x₀ = 1 m, ẋ₀ = 0 m/s throughout.
-  </div>
-</section>
-
-<script>
-const T=8,DT=0.02,N=Math.round(T/DT)+1;
-const times=Array.from({length:N},(_,i)=>+(i*DT).toFixed(2));
-
-function analytical(m,c,k){
-  const zeta=c/(2*Math.sqrt(m*k));
-  const wn=Math.sqrt(k/m);
-  const x0=1,v0=0;
-  return times.map(t=>{
-    if(zeta<0.9999){
-      const wd=wn*Math.sqrt(1-zeta*zeta);
-      return Math.exp(-zeta*wn*t)*(x0*Math.cos(wd*t)+((v0+zeta*wn*x0)/wd)*Math.sin(wd*t));
-    } else if(zeta<=1.0001){
-      return Math.exp(-wn*t)*(x0+(v0+wn*x0)*t);
-    } else {
-      const s=Math.sqrt(zeta*zeta-1);
-      const r1=-zeta*wn+wn*s,r2=-zeta*wn-wn*s;
-      const A=(v0-r2*x0)/(r1-r2),B=x0-A;
-      return A*Math.exp(r1*t)+B*Math.exp(r2*t);
-    }
-  });
-}
-
-function refData(m,k,zetaT){
-  return analytical(m,2*zetaT*Math.sqrt(m*k),k);
-}
-
-const ctx=document.getElementById('main-chart').getContext('2d');
-const chart=new Chart(ctx,{
-  type:'line',
-  data:{
-    labels:times.map(t=>t%1===0?t+'s':''),
-    datasets:[
-      {label:'underdamped',data:[],borderColor:'#4a9eff',borderWidth:1.5,pointRadius:0,borderDash:[6,4]},
-      {label:'critically damped',data:[],borderColor:'#3de0a0',borderWidth:1.5,pointRadius:0,borderDash:[3,3]},
-      {label:'overdamped',data:[],borderColor:'#ff7043',borderWidth:1.5,pointRadius:0,borderDash:[8,4]},
-      {label:'your settings',data:[],borderColor:'#e8ff47',borderWidth:2.5,pointRadius:0}
-    ]
-  },
-  options:{
-    responsive:true,maintainAspectRatio:false,animation:false,
-    plugins:{legend:{display:false},tooltip:{
-      backgroundColor:'#1a1a1e',borderColor:'#ffffff22',borderWidth:1,
-      titleColor:'#a8a8a4',bodyColor:'#f0f0ee',
-      titleFont:{family:"'DM Mono',monospace",size:10},
-      bodyFont:{family:"'DM Mono',monospace",size:11},
-      callbacks:{label:c=>c.dataset.label+': '+c.parsed.y.toFixed(3)+' m'}
-    }},
-    scales:{
-      x:{
-        ticks:{color:'#606060',font:{family:"'DM Mono',monospace",size:10},maxTicksLimit:9},
-        grid:{color:'#ffffff08'},
-        title:{display:true,text:'time (s)',color:'#606060',font:{family:"'DM Mono',monospace",size:10}}
-      },
-      y:{
-        min:-1.3,max:1.3,
-        ticks:{color:'#606060',font:{family:"'DM Mono',monospace",size:10},stepSize:0.5},
-        grid:{color:'#ffffff08'},
-        title:{display:true,text:'displacement (m)',color:'#606060',font:{family:"'DM Mono',monospace",size:10}}
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Suspension Dynamics — Damped Oscillator</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
       }
-    }
-  }
-});
 
-function update(){
-  const m=+document.getElementById('m-sl').value;
-  const c=+document.getElementById('c-sl').value;
-  const k=+document.getElementById('k-sl').value;
-  document.getElementById('m-val').textContent=m;
-  document.getElementById('c-val').textContent=c;
-  document.getElementById('k-val').textContent=k;
+      :root {
+        --bg0: #0a0a0b;
+        --bg1: #111113;
+        --bg2: #1a1a1e;
+        --bg3: #242428;
+        --bg4: #2e2e34;
+        --line: #ffffff12;
+        --line2: #ffffff22;
+        --accent: #e8ff47;
+        --accent2: #47ffe8;
+        --accent3: #ff6b35;
+        --text0: #f0f0ee;
+        --text1: #a8a8a4;
+        --text2: #606060;
+        --blue: #4a9eff;
+        --green: #3de0a0;
+        --orange: #ff7043;
+        --mono: "DM Mono", monospace;
+        --sans: "Syne", sans-serif;
+      }
 
-  const zeta=c/(2*Math.sqrt(m*k));
-  const wn=Math.sqrt(k/m);
-  document.getElementById('zeta-val').textContent=zeta.toFixed(3);
-  document.getElementById('wn-val').textContent=wn.toFixed(2);
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        background: var(--bg0);
+        color: var(--text0);
+        font-family: var(--sans);
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
 
-  const badge=document.getElementById('regime-badge');
-  chart.data.datasets[3].borderColor='#e8ff47';
-  if(zeta<0.99){
-    badge.textContent='underdamped — ζ < 1';
-    badge.className='regime-badge badge-under';
-  } else if(zeta<=1.01){
-    badge.textContent='critically damped — ζ = 1';
-    badge.className='regime-badge badge-crit';
-    chart.data.datasets[3].borderColor='#3de0a0';
-  } else {
-    badge.textContent='overdamped — ζ > 1';
-    badge.className='regime-badge badge-over';
-    chart.data.datasets[3].borderColor='#ff7043';
-  }
+      /* ── HEADER ── */
+      header {
+        padding: 2.5rem 2rem 0;
+        border-bottom: 1px solid var(--line);
+        position: relative;
+      }
+      .header-inner {
+        max-width: 960px;
+        margin: 0 auto;
+      }
+      .eyebrow {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--accent);
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        margin-bottom: 0.75rem;
+      }
+      h1 {
+        font-size: clamp(1.6rem, 4vw, 2.4rem);
+        font-weight: 700;
+        line-height: 1.1;
+        letter-spacing: -0.02em;
+        margin-bottom: 0.5rem;
+      }
+      h1 span {
+        color: var(--text2);
+      }
+      .subtitle {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--text1);
+        margin-bottom: 2rem;
+        line-height: 1.6;
+      }
+      .equation-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: var(--bg2);
+        border: 1px solid var(--line2);
+        padding: 6px 14px;
+        border-radius: 4px;
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--accent);
+        margin-bottom: 2rem;
+      }
 
-  chart.data.datasets[0].data=refData(m,k,0.3).map(v=>+v.toFixed(4));
-  chart.data.datasets[1].data=refData(m,k,1.0).map(v=>+v.toFixed(4));
-  chart.data.datasets[2].data=refData(m,k,2.5).map(v=>+v.toFixed(4));
-  chart.data.datasets[3].data=analytical(m,c,k).map(v=>+v.toFixed(4));
-  chart.update('none');
-}
+      /* ── TABS ── */
+      .tab-bar {
+        display: flex;
+        gap: 0;
+        border-bottom: none;
+        max-width: 960px;
+        margin: 0 auto;
+        position: relative;
+      }
+      .tab-bar::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: var(--line);
+      }
+      .tab {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        padding: 10px 20px;
+        cursor: pointer;
+        color: var(--text2);
+        border: 1px solid transparent;
+        border-bottom: none;
+        background: transparent;
+        transition:
+          color 0.15s,
+          background 0.15s;
+        position: relative;
+        z-index: 1;
+        border-radius: 4px 4px 0 0;
+        white-space: nowrap;
+      }
+      .tab:hover {
+        color: var(--text1);
+      }
+      .tab.active {
+        color: var(--accent);
+        background: var(--bg1);
+        border-color: var(--line2);
+        border-bottom-color: var(--bg1);
+      }
 
-['m-sl','c-sl','k-sl'].forEach(id=>{
-  document.getElementById(id).addEventListener('input',update);
-});
-update();
+      /* ── CONTENT ── */
+      .tab-content {
+        display: none;
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 2rem 2rem 4rem;
+      }
+      .tab-content.active {
+        display: block;
+      }
 
-document.querySelectorAll('.tab').forEach(tab=>{
-  tab.addEventListener('click',()=>{
-    document.querySelectorAll('.tab').forEach(t=>{t.classList.remove('active');t.setAttribute('aria-selected','false')});
-    document.querySelectorAll('.tab-content').forEach(s=>s.classList.remove('active'));
-    tab.classList.add('active');
-    tab.setAttribute('aria-selected','true');
-    document.getElementById('tab-'+tab.dataset.tab).classList.add('active');
-    if(tab.dataset.tab==='simulator') setTimeout(()=>chart.resize(),50);
-  });
-});
-</script>
-</body>
+      /* ── SIMULATOR ── */
+      .sim-grid {
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        gap: 1.5rem;
+        align-items: start;
+      }
+      @media (max-width: 700px) {
+        .sim-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .panel {
+        background: var(--bg1);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 1.25rem;
+      }
+      .panel-label {
+        font-family: var(--mono);
+        font-size: 10px;
+        color: var(--text2);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .param-row {
+        margin-bottom: 1.25rem;
+      }
+      .param-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 6px;
+      }
+      .param-name {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--text1);
+      }
+      .param-val {
+        font-family: var(--mono);
+        font-size: 16px;
+        font-weight: 500;
+        color: var(--text0);
+      }
+      .param-unit {
+        font-size: 10px;
+        color: var(--text2);
+        margin-left: 2px;
+      }
+
+      input[type="range"] {
+        width: 100%;
+        appearance: none;
+        height: 3px;
+        background: var(--bg4);
+        border-radius: 2px;
+        outline: none;
+        cursor: pointer;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        appearance: none;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--accent);
+        cursor: pointer;
+        box-shadow:
+          0 0 0 3px var(--bg1),
+          0 0 0 4px var(--accent);
+      }
+
+      .metric-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 1rem;
+      }
+      .metric {
+        background: var(--bg2);
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        padding: 10px 12px;
+      }
+      .metric-label {
+        font-family: var(--mono);
+        font-size: 9px;
+        color: var(--text2);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 4px;
+      }
+      .metric-value {
+        font-family: var(--mono);
+        font-size: 18px;
+        font-weight: 500;
+      }
+
+      .regime-badge {
+        display: inline-block;
+        font-family: var(--mono);
+        font-size: 10px;
+        padding: 3px 10px;
+        border-radius: 2px;
+        margin-top: 1rem;
+        letter-spacing: 0.05em;
+      }
+      .badge-under {
+        background: #4a9eff22;
+        color: var(--blue);
+        border: 1px solid #4a9eff44;
+      }
+      .badge-crit {
+        background: #3de0a022;
+        color: var(--green);
+        border: 1px solid #3de0a044;
+      }
+      .badge-over {
+        background: #ff704322;
+        color: var(--orange);
+        border: 1px solid #ff704344;
+      }
+
+      .chart-wrap {
+        position: relative;
+        height: 320px;
+        background: var(--bg1);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 1rem;
+      }
+      .chart-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-bottom: 1rem;
+      }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--text1);
+      }
+      .legend-dot {
+        width: 20px;
+        height: 2px;
+        flex-shrink: 0;
+      }
+
+      /* ── ASSUMPTIONS ── */
+      .assumption-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+      }
+      .assumption-card {
+        background: var(--bg1);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 1.25rem;
+      }
+      .card-num {
+        font-family: var(--mono);
+        font-size: 10px;
+        color: var(--accent);
+        margin-bottom: 8px;
+        display: block;
+      }
+      .card-title {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      .card-desc {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--text1);
+        line-height: 1.7;
+      }
+      .real-world {
+        background: var(--bg2);
+        border: 1px solid var(--line2);
+        border-left: 3px solid var(--accent3);
+        border-radius: 0 6px 6px 0;
+        padding: 1rem 1.25rem;
+        margin-top: 2rem;
+      }
+      .real-world h3 {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--accent3);
+        margin-bottom: 0.5rem;
+      }
+      .real-world p {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--text1);
+        line-height: 1.8;
+      }
+
+      /* ── FORMULA ── */
+      .formula-block {
+        background: var(--bg1);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 1.5rem;
+        margin-bottom: 1.25rem;
+      }
+      .formula-title {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 1rem;
+      }
+      .formula-eq {
+        font-family: var(--mono);
+        font-size: 15px;
+        color: var(--text0);
+        background: var(--bg0);
+        padding: 12px 16px;
+        border-radius: 4px;
+        border-left: 2px solid var(--accent);
+        margin-bottom: 1rem;
+        overflow-x: auto;
+        white-space: nowrap;
+      }
+      .formula-vars {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .var-row {
+        display: flex;
+        gap: 12px;
+        font-family: var(--mono);
+        font-size: 11px;
+      }
+      .var-sym {
+        color: var(--accent2);
+        min-width: 60px;
+        flex-shrink: 0;
+      }
+      .var-desc {
+        color: var(--text1);
+      }
+
+      .solution-flow {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sol-step {
+        display: flex;
+        gap: 1rem;
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .sol-step:last-child {
+        border-bottom: none;
+      }
+      .sol-num {
+        font-family: var(--mono);
+        font-size: 10px;
+        color: var(--accent);
+        min-width: 24px;
+        padding-top: 2px;
+      }
+      /* .sol-body {
+      } */
+      .sol-title {
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+      .sol-eq {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--accent2);
+        line-height: 1.8;
+      }
+      .sol-note {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--text1);
+        margin-top: 4px;
+        line-height: 1.6;
+      }
+
+      .case-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin-top: 1.5rem;
+      }
+      @media (max-width: 600px) {
+        .case-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .case-card {
+        background: var(--bg1);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 1rem;
+      }
+      .case-head {
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      .case-cond {
+        font-family: var(--mono);
+        font-size: 10px;
+        margin-bottom: 8px;
+      }
+      .case-sol {
+        font-family: var(--mono);
+        font-size: 10px;
+        color: var(--text1);
+        line-height: 1.9;
+      }
+      .under-head {
+        color: var(--blue);
+      }
+      .crit-head {
+        color: var(--green);
+      }
+      .over-head {
+        color: var(--orange);
+      }
+      .under-cond {
+        color: #4a9eff88;
+      }
+      .crit-cond {
+        color: #3de0a088;
+      }
+      .over-cond {
+        color: #ff704388;
+      }
+
+      /* ── SOURCES ── */
+      .source-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      .source-item {
+        background: var(--bg1);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 1rem 1.25rem;
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+      }
+      .source-num {
+        font-family: var(--mono);
+        font-size: 10px;
+        color: var(--accent);
+        min-width: 20px;
+        padding-top: 2px;
+        flex-shrink: 0;
+      }
+      /* .source-body {
+      } */
+      .source-title {
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 2px;
+      }
+      .source-meta {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--text1);
+        margin-bottom: 4px;
+      }
+      .source-note {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--text2);
+        line-height: 1.6;
+      }
+      .source-link {
+        font-family: var(--mono);
+        font-size: 10px;
+        color: var(--accent2);
+        text-decoration: none;
+        border-bottom: 1px solid transparent;
+        transition: border-color 0.15s;
+      }
+      .source-link:hover {
+        border-bottom-color: var(--accent2);
+      }
+
+      .disclaimer {
+        background: var(--bg2);
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        padding: 0.75rem 1rem;
+        margin-top: 2rem;
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--text2);
+        line-height: 1.6;
+      }
+
+      /* ── ANIMATIONS ── */
+      @keyframes fadein {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      .tab-content.active {
+        animation: fadein 0.2s ease;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="header-inner">
+        <p class="eyebrow">Suspension Dynamics / Free Oscillation</p>
+        <h1>Damped Oscillator <span>/ Interactive Simulator</span></h1>
+        <p class="subtitle">
+          How spring rate, damping, and mass interact in a
+          single-degree-of-freedom system<br />
+          Based on the standard viscous damping model — no external forcing
+        </p>
+        <div class="equation-pill">mẍ + cẋ + kx = 0</div>
+        <nav class="tab-bar" role="tablist">
+          <button class="tab active" role="tab" data-tab="simulator">
+            Simulator
+          </button>
+          <button class="tab" role="tab" data-tab="assumptions">
+            Assumptions
+          </button>
+          <button class="tab" role="tab" data-tab="formula">
+            Formula + Solution
+          </button>
+          <button class="tab" role="tab" data-tab="sources">Sources</button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- ══════════════════ SIMULATOR ══════════════════ -->
+    <section class="tab-content active" id="tab-simulator">
+      <div class="sim-grid">
+        <div>
+          <div class="panel">
+            <p class="panel-label">Parameters</p>
+            <div class="param-row">
+              <div class="param-header">
+                <span class="param-name">m — sprung mass</span>
+                <span
+                  ><span class="param-val" id="m-val">10</span
+                  ><span class="param-unit">kg</span></span
+                >
+              </div>
+              <input
+                type="range"
+                id="m-sl"
+                min="1"
+                max="50"
+                step="1"
+                value="10"
+              />
+            </div>
+            <div class="param-row">
+              <div class="param-header">
+                <span class="param-name">c — damping coeff.</span>
+                <span
+                  ><span class="param-val" id="c-val">20</span
+                  ><span class="param-unit">N·s/m</span></span
+                >
+              </div>
+              <input
+                type="range"
+                id="c-sl"
+                min="0"
+                max="250"
+                step="1"
+                value="20"
+              />
+            </div>
+            <div class="param-row">
+              <div class="param-header">
+                <span class="param-name">k — spring rate</span>
+                <span
+                  ><span class="param-val" id="k-val">100</span
+                  ><span class="param-unit">N/m</span></span
+                >
+              </div>
+              <input
+                type="range"
+                id="k-sl"
+                min="10"
+                max="500"
+                step="5"
+                value="100"
+              />
+            </div>
+            <div class="metric-row">
+              <div class="metric">
+                <p class="metric-label">ζ damping ratio</p>
+                <p
+                  class="metric-value"
+                  id="zeta-val"
+                  style="color: var(--accent)"
+                >
+                  —
+                </p>
+              </div>
+              <div class="metric">
+                <p class="metric-label">ωₙ natural freq</p>
+                <p
+                  class="metric-value"
+                  id="wn-val"
+                  style="color: var(--accent2)"
+                >
+                  —
+                </p>
+              </div>
+            </div>
+            <div id="regime-badge" class="regime-badge">—</div>
+          </div>
+
+          <div class="panel" style="margin-top: 1rem">
+            <p class="panel-label">Bike context</p>
+            <div
+              style="
+                font-family: var(--mono);
+                font-size: 11px;
+                color: var(--text1);
+                line-height: 1.9;
+              "
+            >
+              <div style="margin-bottom: 6px">
+                <span style="color: var(--accent2)">m</span> → sprung mass of
+                bike + rider over one wheel (~60–120 kg real)
+              </div>
+              <div style="margin-bottom: 6px">
+                <span style="color: var(--accent2)">k</span> → spring rate of
+                fork spring / rear shock (~15–40 N/mm real)
+              </div>
+              <div>
+                <span style="color: var(--accent2)">c</span> → oil viscosity +
+                valve stack resistance in damper
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="chart-legend">
+            <div class="legend-item">
+              <div
+                class="legend-dot"
+                style="
+                  background: var(--blue);
+                  border-top: 2px dashed var(--blue);
+                "
+              ></div>
+              underdamped (ζ=0.3)
+            </div>
+            <div class="legend-item">
+              <div
+                class="legend-dot"
+                style="
+                  background: var(--green);
+                  border-top: 2px dashed var(--green);
+                "
+              ></div>
+              critically damped (ζ=1)
+            </div>
+            <div class="legend-item">
+              <div
+                class="legend-dot"
+                style="
+                  background: var(--orange);
+                  border-top: 2px dashed var(--orange);
+                "
+              ></div>
+              overdamped (ζ=2.5)
+            </div>
+            <div class="legend-item">
+              <div
+                class="legend-dot"
+                style="background: var(--accent); height: 3px"
+              ></div>
+              your settings
+            </div>
+          </div>
+          <div class="chart-wrap">
+            <canvas
+              id="main-chart"
+              role="img"
+              aria-label="Damped oscillator displacement vs time — shows underdamped, critically damped, overdamped reference curves and user-controlled curve"
+            ></canvas>
+          </div>
+          <div
+            style="
+              margin-top: 0.75rem;
+              font-family: var(--mono);
+              font-size: 10px;
+              color: var(--text2);
+              line-height: 1.8;
+            "
+          >
+            Initial conditions: x₀ = 1 m, ẋ₀ = 0 m/s &nbsp;·&nbsp; Represents
+            bike wheel hitting a bump at t=0<br />
+            Real shocks run compression + rebound valving simultaneously — c is
+            not a single constant
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════ ASSUMPTIONS ══════════════════ -->
+    <section class="tab-content" id="tab-assumptions">
+      <div class="assumption-grid">
+        <div class="assumption-card">
+          <span class="card-num">01</span>
+          <p class="card-title">Single degree of freedom</p>
+          <p class="card-desc">
+            The system is modelled as one mass moving along one axis only. In
+            reality, a motorcycle suspension has 6+ DOF — pitch, roll, yaw, and
+            coupled front/rear kinematics all interact.
+          </p>
+        </div>
+        <div class="assumption-card">
+          <span class="card-num">02</span>
+          <p class="card-title">Linear viscous damping</p>
+          <p class="card-desc">
+            Damping force = c · ẋ. Force is proportional to velocity. Real
+            dampers are nonlinear — oil flow through small orifices follows the
+            square-root of pressure drop, and shim stacks have progressive
+            opening characteristics.
+          </p>
+        </div>
+        <div class="assumption-card">
+          <span class="card-num">03</span>
+          <p class="card-title">Linear spring (Hookean)</p>
+          <p class="card-desc">
+            Spring force = k · x. Constant rate across full stroke. Real fork
+            springs and shock springs are often progressive (rate increases with
+            compression) or use helper springs for initial plushness.
+          </p>
+        </div>
+        <div class="assumption-card">
+          <span class="card-num">04</span>
+          <p class="card-title">Zero external forcing</p>
+          <p class="card-desc">
+            RHS = 0. We model only the free oscillation after an impulse — like
+            a single bump. Continuous road inputs require a forced response
+            model with road profile as F(t), typically using PSD analysis.
+          </p>
+        </div>
+        <div class="assumption-card">
+          <span class="card-num">05</span>
+          <p class="card-title">Constant coefficients</p>
+          <p class="card-desc">
+            m, c, and k do not vary with time, position, velocity, or
+            temperature. In practice, oil viscosity drops with heat (fade),
+            spring rate changes with preload, and mass shifts under braking and
+            acceleration.
+          </p>
+        </div>
+        <div class="assumption-card">
+          <span class="card-num">06</span>
+          <p class="card-title">No unsprung mass</p>
+          <p class="card-desc">
+            Tyre, wheel, and brake assembly mass (unsprung) are ignored. Real
+            quarter-car models use two masses — sprung (chassis) and unsprung
+            (wheel) — connected by the spring/damper, with the tyre as a second
+            spring.
+          </p>
+        </div>
+        <div class="assumption-card">
+          <span class="card-num">07</span>
+          <p class="card-title">No tyre dynamics</p>
+          <p class="card-desc">
+            Tyre is assumed rigid contact with ground. Real tyres have stiffness
+            (~150–200 N/mm sidewall) and damping — they act as a second
+            suspension stage, heavily affecting grip over small-frequency
+            vibrations.
+          </p>
+        </div>
+        <div class="assumption-card">
+          <span class="card-num">08</span>
+          <p class="card-title">Symmetric damping</p>
+          <p class="card-desc">
+            c is identical in compression and rebound. Real shocks have separate
+            compression (bump) and rebound adjuster circuits — intentionally
+            asymmetric. Rebound is usually 2–3x slower than compression to
+            prevent pack-down.
+          </p>
+        </div>
+      </div>
+
+      <div class="real-world">
+        <h3>Why this model still matters</h3>
+        <p>
+          Despite these simplifications, the SDOF viscous damping model
+          correctly predicts regime behaviour — underdamped, critically damped,
+          overdamped — and the relationship between ζ and oscillation decay
+          rate. All real suspension tuning is rooted in understanding these
+          regimes first. The model gives you the mental framework; real shocks
+          then add nonlinear corrections on top.
+          <br /><br />
+          Real motorcycle suspension is typically tuned to ζ ≈ 0.25–0.40
+          (underdamped). Critical damping sounds ideal in theory but feels
+          wooden and kills mechanical grip in practice — the wheel can't track
+          small road irregularities fast enough.
+        </p>
+      </div>
+    </section>
+
+    <!-- ══════════════════ FORMULA ══════════════════ -->
+    <section class="tab-content" id="tab-formula">
+      <div class="formula-block">
+        <p class="formula-title">Equation of motion</p>
+        <div class="formula-eq">mẍ + cẋ + kx = 0</div>
+        <div class="formula-vars">
+          <div class="var-row">
+            <span class="var-sym">m</span
+            ><span class="var-desc"
+              >Mass (kg) — inertia resisting acceleration</span
+            >
+          </div>
+          <div class="var-row">
+            <span class="var-sym">ẍ</span
+            ><span class="var-desc">d²x/dt² — acceleration of the mass</span>
+          </div>
+          <div class="var-row">
+            <span class="var-sym">c</span
+            ><span class="var-desc">Viscous damping coefficient (N·s/m)</span>
+          </div>
+          <div class="var-row">
+            <span class="var-sym">ẋ</span
+            ><span class="var-desc">dx/dt — velocity of the mass</span>
+          </div>
+          <div class="var-row">
+            <span class="var-sym">k</span
+            ><span class="var-desc">Spring stiffness / rate (N/m)</span>
+          </div>
+          <div class="var-row">
+            <span class="var-sym">x</span
+            ><span class="var-desc">Displacement from equilibrium (m)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-block">
+        <p class="formula-title">Derived parameters</p>
+        <div class="formula-vars" style="gap: 10px">
+          <div class="var-row">
+            <span class="var-sym">ωₙ</span>
+            <span class="var-desc"
+              >Natural frequency = √(k/m) &nbsp; [rad/s] — how fast it
+              oscillates with no damping</span
+            >
+          </div>
+          <div class="var-row">
+            <span class="var-sym">ζ</span>
+            <span class="var-desc"
+              >Damping ratio = c / (2√(mk)) — dimensionless, defines the
+              regime</span
+            >
+          </div>
+          <div class="var-row">
+            <span class="var-sym">ωd</span>
+            <span class="var-desc"
+              >Damped natural freq = ωₙ√(1−ζ²) — actual oscillation frequency
+              when underdamped</span
+            >
+          </div>
+          <div class="var-row">
+            <span class="var-sym">cc</span>
+            <span class="var-desc"
+              >Critical damping coefficient = 2√(mk) — minimum c for no
+              oscillation</span
+            >
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-block">
+        <p class="formula-title">Solution method — characteristic equation</p>
+        <div class="solution-flow">
+          <div class="sol-step">
+            <span class="sol-num">01</span>
+            <div class="sol-body">
+              <p class="sol-title">Assume solution form</p>
+              <p class="sol-eq">x(t) = e^(λt)</p>
+              <p class="sol-note">
+                Substituting into the ODE gives a characteristic polynomial in λ
+              </p>
+            </div>
+          </div>
+          <div class="sol-step">
+            <span class="sol-num">02</span>
+            <div class="sol-body">
+              <p class="sol-title">Characteristic polynomial</p>
+              <p class="sol-eq">mλ² + cλ + k = 0</p>
+              <p class="sol-note">
+                Quadratic in λ — two roots determine the response type
+              </p>
+            </div>
+          </div>
+          <div class="sol-step">
+            <span class="sol-num">03</span>
+            <div class="sol-body">
+              <p class="sol-title">Roots via quadratic formula</p>
+              <p class="sol-eq">
+                λ = (−c ± √(c² − 4mk)) / 2m<br />λ = −ζωₙ ± ωₙ√(ζ² − 1)
+              </p>
+              <p class="sol-note">
+                Discriminant c² − 4mk determines whether roots are real or
+                complex
+              </p>
+            </div>
+          </div>
+          <div class="sol-step">
+            <span class="sol-num">04</span>
+            <div class="sol-body">
+              <p class="sol-title">Apply initial conditions</p>
+              <p class="sol-eq">x(0) = x₀ = 1 &nbsp;&nbsp; ẋ(0) = v₀ = 0</p>
+              <p class="sol-note">
+                Constants A and B in the general solution are fixed by these two
+                conditions
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="case-grid">
+        <div class="case-card">
+          <p class="case-head under-head">Underdamped</p>
+          <p class="case-cond under-cond">ζ &lt; 1 &nbsp;·&nbsp; c² &lt; 4mk</p>
+          <p class="case-sol">
+            Complex conjugate roots<br />
+            λ = −ζωₙ ± iωd<br /><br />
+            x(t) = e^(−ζωₙt)<br />
+            &nbsp;·[A·cos(ωd·t)<br />
+            &nbsp;+ B·sin(ωd·t)]<br /><br />
+            Oscillates and decays.<br />
+            Bike bounces over bump.
+          </p>
+        </div>
+        <div class="case-card">
+          <p class="case-head crit-head">Critically damped</p>
+          <p class="case-cond crit-cond">ζ = 1 &nbsp;·&nbsp; c² = 4mk</p>
+          <p class="case-sol">
+            Repeated real root<br />
+            λ = −ωₙ (double)<br /><br />
+            x(t) = e^(−ωₙt)<br />
+            &nbsp;·(A + B·t)<br /><br />
+            Returns fastest without<br />
+            oscillating. Theoretical<br />
+            optimum — feels stiff.
+          </p>
+        </div>
+        <div class="case-card">
+          <p class="case-head over-head">Overdamped</p>
+          <p class="case-cond over-cond">ζ &gt; 1 &nbsp;·&nbsp; c² &gt; 4mk</p>
+          <p class="case-sol">
+            Two distinct real roots<br />
+            λ = −ζωₙ ± ωₙ√(ζ²−1)<br /><br />
+            x(t) = A·e^(λ₁t)<br />
+            &nbsp;+ B·e^(λ₂t)<br /><br />
+            Sluggish return. Wheel<br />
+            can't track road fast<br />
+            enough — loss of grip.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════ SOURCES ══════════════════ -->
+    <section class="tab-content" id="tab-sources">
+      <div class="source-list">
+        <div class="source-item">
+          <span class="source-num">01</span>
+          <div class="source-body">
+            <p class="source-title">Mechanical Vibrations — Rao, S.S.</p>
+            <p class="source-meta">
+              Pearson, 6th Edition (2017) &nbsp;·&nbsp; Chapter 2: Free
+              Vibration of Single-DOF Systems
+            </p>
+            <p class="source-note">
+              Primary reference for the SDOF equation of motion, characteristic
+              equation derivation, and all three damping regime solutions.
+              Standard undergraduate textbook used in mechanical engineering
+              programs globally.
+            </p>
+          </div>
+        </div>
+        <div class="source-item">
+          <span class="source-num">02</span>
+          <div class="source-body">
+            <p class="source-title">Engineering Vibration — Inman, D.J.</p>
+            <p class="source-meta">
+              Pearson, 4th Edition (2013) &nbsp;·&nbsp; Chapter 1
+            </p>
+            <p class="source-note">
+              Alternative derivation of damping ratio and natural frequency.
+              Cleaner treatment of initial conditions applied to the three
+              solution cases. Used to verify the solution forms shown in the
+              Formula tab.
+            </p>
+          </div>
+        </div>
+        <div class="source-item">
+          <span class="source-num">03</span>
+          <div class="source-body">
+            <p class="source-title">Motorcycle Dynamics — Vittore Cossalter</p>
+            <p class="source-meta">
+              2nd Edition (2006) &nbsp;·&nbsp; Chapter 4: Suspensions
+            </p>
+            <p class="source-note">
+              Source for real-world motorcycle suspension parameters — sprung
+              mass ranges, spring rate values, and typical damping ratios used
+              in production motorcycles. Explains why ζ ≈ 0.25–0.40 is preferred
+              over critical damping for grip.
+            </p>
+          </div>
+        </div>
+        <div class="source-item">
+          <span class="source-num">04</span>
+          <div class="source-body">
+            <p class="source-title">
+              Race Tech's Motorcycle Suspension Bible — Thede & Parks
+            </p>
+            <p class="source-meta">Motorbooks, 2010</p>
+            <p class="source-note">
+              Practical source for compression/rebound asymmetry, shim stack
+              behaviour, and why real dampers deviate from linear viscous
+              damping. Explains the square-root relationship between oil
+              velocity and damping force through orifices.
+            </p>
+          </div>
+        </div>
+        <div class="source-item">
+          <span class="source-num">05</span>
+          <div class="source-body">
+            <p class="source-title">
+              Vehicle Dynamics — Fundamentals and Limit Handling — Milliken &
+              Milliken
+            </p>
+            <p class="source-meta">
+              SAE International, 1995 &nbsp;·&nbsp; Chapter 16
+            </p>
+            <p class="source-note">
+              Quarter-car model derivation including unsprung mass. Explains why
+              ignoring unsprung mass is a significant simplification and how
+              wheel hop frequency (~10–15 Hz) interacts with body resonance
+              (~1–2 Hz) in real vehicles.
+            </p>
+          </div>
+        </div>
+        <div class="source-item">
+          <span class="source-num">06</span>
+          <div class="source-body">
+            <p class="source-title">
+              Tyre and Vehicle Dynamics — Pacejka, H.B.
+            </p>
+            <p class="source-meta">Butterworth-Heinemann, 3rd Edition (2012)</p>
+            <p class="source-note">
+              Source for tyre stiffness values (~150–200 N/mm radial) and tyre
+              damping characteristics used to justify the no-tyre-dynamics
+              assumption in the Assumptions tab.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="disclaimer">
+        All solutions in the Formula tab are analytical — verified against Rao
+        (2017) Ch.2 and Inman (2013) Ch.1. The simulator uses numerical
+        integration (Verlet method) for the user-controlled curve and analytical
+        solutions for the three reference curves. Minor discrepancies at high
+        damping ratios are expected due to step size. Initial conditions: x₀ = 1
+        m, ẋ₀ = 0 m/s throughout.
+      </div>
+    </section>
+
+    <script>
+      const T = 8,
+        DT = 0.02,
+        N = Math.round(T / DT) + 1;
+      const times = Array.from({ length: N }, (_, i) => +(i * DT).toFixed(2));
+
+      function analytical(m, c, k) {
+        const zeta = c / (2 * Math.sqrt(m * k));
+        const wn = Math.sqrt(k / m);
+        const x0 = 1,
+          v0 = 0;
+        return times.map((t) => {
+          if (zeta < 0.9999) {
+            const wd = wn * Math.sqrt(1 - zeta * zeta);
+            return (
+              Math.exp(-zeta * wn * t) *
+              (x0 * Math.cos(wd * t) +
+                ((v0 + zeta * wn * x0) / wd) * Math.sin(wd * t))
+            );
+          } else if (zeta <= 1.0001) {
+            return Math.exp(-wn * t) * (x0 + (v0 + wn * x0) * t);
+          } else {
+            const s = Math.sqrt(zeta * zeta - 1);
+            const r1 = -zeta * wn + wn * s,
+              r2 = -zeta * wn - wn * s;
+            const A = (v0 - r2 * x0) / (r1 - r2),
+              B = x0 - A;
+            return A * Math.exp(r1 * t) + B * Math.exp(r2 * t);
+          }
+        });
+      }
+
+      function refData(m, k, zetaT) {
+        return analytical(m, 2 * zetaT * Math.sqrt(m * k), k);
+      }
+
+      const ctx = document.getElementById("main-chart").getContext("2d");
+      const chart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: times.map((t) => (t % 1 === 0 ? t + "s" : "")),
+          datasets: [
+            {
+              label: "underdamped",
+              data: [],
+              borderColor: "#4a9eff",
+              borderWidth: 1.5,
+              pointRadius: 0,
+              borderDash: [6, 4],
+            },
+            {
+              label: "critically damped",
+              data: [],
+              borderColor: "#3de0a0",
+              borderWidth: 1.5,
+              pointRadius: 0,
+              borderDash: [3, 3],
+            },
+            {
+              label: "overdamped",
+              data: [],
+              borderColor: "#ff7043",
+              borderWidth: 1.5,
+              pointRadius: 0,
+              borderDash: [8, 4],
+            },
+            {
+              label: "your settings",
+              data: [],
+              borderColor: "#e8ff47",
+              borderWidth: 2.5,
+              pointRadius: 0,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: "#1a1a1e",
+              borderColor: "#ffffff22",
+              borderWidth: 1,
+              titleColor: "#a8a8a4",
+              bodyColor: "#f0f0ee",
+              titleFont: { family: "'DM Mono',monospace", size: 10 },
+              bodyFont: { family: "'DM Mono',monospace", size: 11 },
+              callbacks: {
+                label: (c) =>
+                  c.dataset.label + ": " + c.parsed.y.toFixed(3) + " m",
+              },
+            },
+          },
+          scales: {
+            x: {
+              ticks: {
+                color: "#606060",
+                font: { family: "'DM Mono',monospace", size: 10 },
+                maxTicksLimit: 9,
+              },
+              grid: { color: "#ffffff08" },
+              title: {
+                display: true,
+                text: "time (s)",
+                color: "#606060",
+                font: { family: "'DM Mono',monospace", size: 10 },
+              },
+            },
+            y: {
+              min: -1.3,
+              max: 1.3,
+              ticks: {
+                color: "#606060",
+                font: { family: "'DM Mono',monospace", size: 10 },
+                stepSize: 0.5,
+              },
+              grid: { color: "#ffffff08" },
+              title: {
+                display: true,
+                text: "displacement (m)",
+                color: "#606060",
+                font: { family: "'DM Mono',monospace", size: 10 },
+              },
+            },
+          },
+        },
+      });
+
+      function update() {
+        const m = +document.getElementById("m-sl").value;
+        const c = +document.getElementById("c-sl").value;
+        const k = +document.getElementById("k-sl").value;
+        document.getElementById("m-val").textContent = m;
+        document.getElementById("c-val").textContent = c;
+        document.getElementById("k-val").textContent = k;
+
+        const zeta = c / (2 * Math.sqrt(m * k));
+        const wn = Math.sqrt(k / m);
+        document.getElementById("zeta-val").textContent = zeta.toFixed(3);
+        document.getElementById("wn-val").textContent = wn.toFixed(2);
+
+        const badge = document.getElementById("regime-badge");
+        chart.data.datasets[3].borderColor = "#e8ff47";
+        if (zeta < 0.99) {
+          badge.textContent = "underdamped — ζ < 1";
+          badge.className = "regime-badge badge-under";
+        } else if (zeta <= 1.01) {
+          badge.textContent = "critically damped — ζ = 1";
+          badge.className = "regime-badge badge-crit";
+          chart.data.datasets[3].borderColor = "#3de0a0";
+        } else {
+          badge.textContent = "overdamped — ζ > 1";
+          badge.className = "regime-badge badge-over";
+          chart.data.datasets[3].borderColor = "#ff7043";
+        }
+
+        chart.data.datasets[0].data = refData(m, k, 0.3).map(
+          (v) => +v.toFixed(4),
+        );
+        chart.data.datasets[1].data = refData(m, k, 1.0).map(
+          (v) => +v.toFixed(4),
+        );
+        chart.data.datasets[2].data = refData(m, k, 2.5).map(
+          (v) => +v.toFixed(4),
+        );
+        chart.data.datasets[3].data = analytical(m, c, k).map(
+          (v) => +v.toFixed(4),
+        );
+        chart.update("none");
+      }
+
+      ["m-sl", "c-sl", "k-sl"].forEach((id) => {
+        document.getElementById(id).addEventListener("input", update);
+      });
+      update();
+
+      document.querySelectorAll(".tab").forEach((tab) => {
+        tab.addEventListener("click", () => {
+          document.querySelectorAll(".tab").forEach((t) => {
+            t.classList.remove("active");
+            t.setAttribute("aria-selected", "false");
+          });
+          document
+            .querySelectorAll(".tab-content")
+            .forEach((s) => s.classList.remove("active"));
+          tab.classList.add("active");
+          tab.setAttribute("aria-selected", "true");
+          document
+            .getElementById("tab-" + tab.dataset.tab)
+            .classList.add("active");
+          if (tab.dataset.tab === "simulator")
+            setTimeout(() => chart.resize(), 50);
+        });
+      });
+    </script>
+  </body>
 </html>
